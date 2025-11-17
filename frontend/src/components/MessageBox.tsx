@@ -19,10 +19,10 @@ const MessageBox = ({handleSend, input, setInput, currentRoom}: MessageBoxProps)
   };
 
   return (
-    <div className="p-4 bg-white flex-shrink-0 flex">
+    <div className="p-4 bg-background flex-shrink-0 flex">
         <input
             type="text"
-            className="flex-1 border p-2 rounded mr-2"
+            className="flex-1 border p-2 rounded mr-2 text-foreground"
             value={input}
             disabled={!currentRoom?.isMember}
             onChange={(e) => { 
@@ -35,8 +35,8 @@ const MessageBox = ({handleSend, input, setInput, currentRoom}: MessageBoxProps)
         <button
             onClick={handleSend}
             disabled={!currentRoom?.isMember}
-            className={`text-white px-4 rounded  
-              ${currentRoom?.isMember ? 'cursor-pointer bg-blue-500 hover:bg-blue-600' : 'cursor-default bg-gray-500' }`}
+            className={`bg-button-main hover:bg-button-hover text-foreground px-4 rounded  
+              ${currentRoom?.isMember ? 'cursor-pointer' : 'cursor-default' }`}
         >
         Send
         </button>

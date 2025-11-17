@@ -9,17 +9,20 @@ html, body, * {
      Light mode (default)
      ----------------------- */
   /* Backgrounds */
-  .bg-background { background-color: #f3f4f6; }   /* page background */
-  .bg-component-background { background-color: #e8e5eb; }  /* component background */
-  .bg-card { background-color: #ffffff; }         /* cards, modals, panels */
-  .bg-input { background-color: #ffffff; }        /* inputs, textareas */
-  .bg-button { background-color: #1d4ed8; }       /* primary button */
-  .bg-button-secondary { background-color: #9333ea; }
-  .bg-selected-room { background-color: #fbbf24; }
-  .bg-room { background-color: #736b6b; }
+  .bg-background { background-color: #f3f4f6; }          /* page background: very light gray */
+  .bg-component-background { background-color: #ffffff; } /* component background: white */
+  .bg-card { background-color: #ffffff; }                /* cards, modals: white */
+  .bg-input { background-color: #f9fafb; }               /* inputs: slightly off-white */
+  .bg-button-main { background-color: #1d4ed8; }         /* primary button: blue */
+  .hover\:bg-button-hover:hover { background-color: #2563eb; } /* hover blue */
+  .disabled\:bg-button-disabled:disabled { background-color: #d1d5db; } /* disabled: gray */
+  .bg-surface-selected { background-color: #fbbf24; }    /* selected: yellow */
+  .bg-surface { background-color: #e5e7eb; }             /* generic panel/card surface: light gray */
+  .bg-message-user { background-color: #3b82f6; }        /* user message: blue */
+  .bg-message-other-user { background-color: #e5e7eb; }  /* other user message: light gray */
   
   /* lines */
-  .border-border-line { border-color: #d0cad6; }
+  .border-border-line { border-color: #d1d5db; }
 
   /* Text */
   .text-foreground { color: #111827; }           /* main text */
@@ -47,17 +50,20 @@ html, body, * {
    ======================= */
 .dark {
   /* Backgrounds */
-  .bg-background { background-color: #111827; }  /* page background */
-  .bg-component-background { background-color: #39244d;}  /* component background */
+  .bg-background { background-color: #141f31; }  /* page background */
+  .bg-component-background { background-color: #192537;}  /* component background */
   .bg-card { background-color: #1f2937; }        /* cards, modals */
   .bg-input { background-color: #1f2937; }       /* inputs */
-  .bg-button { background-color: #2563eb; }      /* primary button */
-  .bg-button-secondary { background-color: #7e22ce; }
-  .bg-selected-room { background-color: #fbbf24; }
-  .bg-room { background-color: #141414; }
+  .bg-button-main { background-color: #196679; }      /* primary button */
+  .hover\:bg-button-hover:hover { background-color: #114858; }
+  .disabled\:bg-button-disabled:disabled { background-color: #47484b; }
+  .bg-surface-selected { background-color: #fbbf24; }
+  .bg-surface { background-color: #1d3448; }
+  .bg-message-user { background-color: #0093b1; }
+  .bg-message-other-user { background-color: #1d293b; }
 
   /* lines */
-  .border-border-line { border-color: #5d2e8d; }
+  .border-border-line { border-color: #1f2937; }
 
   /* Text */
   .text-foreground { color: #f3f4f6; }           /* main text */

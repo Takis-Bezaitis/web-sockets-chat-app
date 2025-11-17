@@ -8,7 +8,7 @@ const UsersInRoom = ({ currentRoomUsers }: UsersInRoomProps) => {
       </header>
       <div className="p-4">
         {Array.isArray(currentRoomUsers) && currentRoomUsers.map((user) => (
-          <div key={user.id} className="text-foreground mb-2">
+          <div key={user.id} className="bg-surface m-2 rounded-md p-2 text-foreground">
             <p>{user.username}</p>
             <p className="text-sm text-foreground">{user.email}</p>
           </div>

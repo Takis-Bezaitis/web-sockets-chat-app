@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { type User, type Message, type RoomDTO } from "../types/custom";
+import { formatDate } from "../utils/formatDate";
 
 type UserProps = {
     user: User | null;
@@ -22,16 +23,17 @@ const Messages = ({user, messages, currentRoom}: UserProps) => {
         <header className="bg-blue-500 text-white p-4">
           Connected as: {user?.email} {currentRoom?.name}
         </header>
-        <div className="flex-1 overflow-y-auto p-4 space-y-2">
+        <div className="overflow-y-auto p-4 space-y-2">
           {messages.map((msg, index) => (
             <div
               key={msg.id || index}
-              className={`p-2 rounded ${
-                msg.userId === user?.id ? "bg-blue-200 self-end" : "bg-gray-300"
+              className={`max-w-sm text-center mb-5 p-2 rounded text-foreground ${
+                msg.userId === user?.id ? "ml-auto bg-message-user self-end" : "bg-message-other-user"
               }`}
             > 
               <span className="font-semibold">{msg.userId === user?.id ? "You" : msg.email}:</span>{" "}
               {msg.text}
+              <div>{formatDate(msg.createdAt)}</div>
             </div>
           ))}
           <div ref={messagesEndRef} />

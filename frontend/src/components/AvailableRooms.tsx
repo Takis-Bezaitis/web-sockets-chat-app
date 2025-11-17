@@ -9,7 +9,7 @@ const AvailableRooms = ({
 
   return (
     <div className="flex flex-col w-2/5 max-w-xs bg-component-background border-r border-border-line">
-      <header className="text-foreground p-4">AvailableRooms</header>
+      <header className="text-foreground p-4">Available Rooms</header>
 
       {rooms.map((room) => {
         return (
@@ -18,15 +18,15 @@ const AvailableRooms = ({
             onClick={() => onSelectRoom(room)}
             className={`flex gap-3 flex-wrap justify-between m-2 rounded-md p-2 cursor-pointer ${
               room.name === currentRoom?.name
-                ? "bg-selected-room"
-                : "bg-room"
+                ? "bg-surface-selected"
+                : "bg-surface"
             }`}
           >
             <div
-              className={`${
+              className={`text-foreground ${
                 room.name === currentRoom?.name
-                  ? "text-blue-800 italic font-bold"
-                  : "text-white"
+                  ? "italic font-bold"
+                  : ""
               }`}
             >
               #{room.name} {room.isMember}
@@ -35,7 +35,7 @@ const AvailableRooms = ({
             {room.id !== 1 && (
               <div className="flex gap-2">
                 <button
-                  className={`bg-blue-500 text-white px-4 rounded hover:bg-blue-600 disabled:opacity-50
+                  className={`bg-button-main text-white px-4 rounded hover:bg-button-hover disabled:bg-button-disabled
                     ${room.isMember ? 'cursor-default' : 'cursor-pointer'} `}
                   onClick={(e) => {
                     e.stopPropagation();
@@ -47,7 +47,7 @@ const AvailableRooms = ({
                 </button>
 
                 <button
-                  className={`bg-blue-500 text-white px-4 rounded hover:bg-blue-600 disabled:opacity-50
+                  className={`bg-button-main text-white px-4 rounded hover:bg-button-hover disabled:bg-button-disabled
                     ${room.isMember ? 'cursor-pointer' : 'cursor-default'} `}
                   onClick={(e) => {
                     e.stopPropagation();
