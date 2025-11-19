@@ -19,20 +19,15 @@ export function socketAuthMiddleware(socket: Socket, next: (err?: Error) => void
     if (!cookies) {
       return next(new Error("Not authenticated: no cookies"));
     }
-    console.log("socketAuth cookies: ",cookies)
     const parsed = cookie.parse(cookies);
-    console.log("socketAuth parsed: ",parsed)
     const token = parsed.token; // same name we used in res.cookie()
-    console.log("socketAuth token: ",token)
 
     if (!token) {
       return next(new Error("Not authenticated: no token"));
     }
 
     const decoded = jwt.verify(token, JWT_SECRET) as UserPayload;
-    console.log("-------------------------------------------------------");
-    console.log("decoded:", decoded);
-    console.log("-------------------------------------------------------");
+
     // Attach user info to socket
     (socket as CustomSocket).user = decoded;
 
