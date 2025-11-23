@@ -1,5 +1,6 @@
-import prisma from "../../prismaClient.js"
-import { type RoomDTO, type UserRoomDTO, type RoomUsers } from "../../types/custom.js"
+import prisma from "../../prismaClient.js";
+import { type RoomDTO, type UserRoomDTO, type RoomUsers } from "../../types/custom.js";
+import { getCachedRoomUsers, setCachedRoomUsers, invalidateRoomUsersCache } from "../../utils/cacheRoomUsers.js";
 
 export const getAllRooms = async (): Promise<RoomDTO[]> => {
     return prisma.room.findMany({
@@ -28,6 +29,8 @@ export const joinTheRoom = async (userId: number, roomId: number): Promise<UserR
             joinedAt: true,
         }
     });
+
+    await invalidateRoomUsersCache(roomId);
 
     return {
         ...record,
@@ -62,6 +65,8 @@ export const leaveTheRoom = async (userId: number, roomId: number): Promise<User
         },
     })
 
+    await invalidateRoomUsersCache(roomId);
+    
     return {
         user: deleted.user,
         room: deleted.room,
@@ -70,7 +75,12 @@ export const leaveTheRoom = async (userId: number, roomId: number): Promise<User
 };
 
 export const getAllRoomUsers = async (roomId: number): Promise<RoomUsers[]> => {
-    const users = await prisma.userRoom.findMany({
+    // 1️⃣ Try Redis cache first
+    const cached = await getCachedRoomUsers(roomId);
+    if (cached) return cached;
+
+    // 2️⃣ Fallback to Prisma if not cached
+    const roomUsers = await prisma.userRoom.findMany({
     where: { roomId },
     select: {
       user: {
@@ -79,8 +89,13 @@ export const getAllRoomUsers = async (roomId: number): Promise<RoomUsers[]> => {
     }
   });
 
-  // Flatten the data 
-  return users.map(u => u.user);
+  // Flatten the data
+  const users = roomUsers.map(u => u.user);
+
+  // 3️⃣ Store in Redis cache
+  await setCachedRoomUsers(roomId, users);
+   
+  return users;
 };
 
 export const getTheUserRoomsWithMembership = async (userId: number) => {

@@ -4,7 +4,7 @@ const UsersInRoom = ({ currentRoomUsers }: UsersInRoomProps) => {
   return (
     <div className="flex flex-col w-2/5 max-w-xs bg-component-background border-l border-border-line">
       <header className="text-foreground p-4">
-        Users in the room
+        Room members
       </header>
       <div className="p-4">
         {Array.isArray(currentRoomUsers) && currentRoomUsers.map((user) => (

@@ -1,98 +1,179 @@
+// frontend/src/store/socketStore.ts
 import { io, Socket } from "socket.io-client";
 import { create } from "zustand";
 import { useAuthStore } from "./authStore";
 import type { Message } from "../types/custom";
 
-interface OutgoingMessagePayload {
-  roomId: string;
-  text: string;
-}
-
 interface SocketState {
   socket: Socket | null;
+  currentRoomId: number | null;
+  messagesByRoom: Record<number, Message[]>;
+  typingUserByRoom: Record<number, string | null>;
   connect: () => void;
   disconnect: () => void;
-  sendMessage: (roomId: string, text: string) => void;
-  messages: Message[];
-  addMessages: (msgs: Message[]) => void;
-  clearMessages: () => void;
-  fetchedAll: boolean;
-  setFetchedAll: (value: boolean) => void;
+  enterRoom: (roomId: number) => Promise<void>;
+  exitRoom: (roomId: number) => void;
+  sendMessage: (roomId: number, text: string) => void;
+  appendMessage: (roomId: number, msg: Message) => void;
+  getMessagesForRoom: (roomId: number) => Message[];
+  clearRoomMessages: (roomId: number) => void;
 }
 
 export const useSocketStore = create<SocketState>((set, get) => ({
   socket: null,
-  messages: [],
-  fetchedAll: false,
+  currentRoomId: null,
+  messagesByRoom: {},
+  typingUserByRoom: {},
 
   connect: () => {
     const { user } = useAuthStore.getState();
     if (!user) return;
+    if (get().socket) return; // already connected
 
-    // Already connected?
-    if (get().socket) return;
-
-    // Token is not needed, cookie will be sent automatically
     const socket = io(`${import.meta.env.VITE_BACKEND_URL}`, {
-      withCredentials: true, // important for sending cookies
+      withCredentials: true,
     });
 
     socket.on("connect", () => {
-      console.log("✅ Connected to WebSocket server", socket.id);
+      console.log("✅ socket connected", socket.id);
     });
 
     socket.on("disconnect", (reason) => {
-      console.log("❌ Disconnected:", reason);
+      console.log("⛔ socket disconnected", reason);
       set({ socket: null });
     });
 
-    // 🔹 Listen for new messages broadcast from the backend
-    socket.on("newMessage", (msg: Message) => {
-      console.log("📩 Received new message:", msg);
-      set((state) => ({ messages: [...state.messages, msg] }));
+    // Central socket listeners
+    // New messages broadcasted by server
+    socket.on("message:new", (msg: Message) => {
+      console.log("📩 message:new", msg);
+      // append to the correct room list (ensure immutability)
+      set((state) => {
+        const roomId = Number(msg.roomId);
+        const prev = state.messagesByRoom[roomId] ?? [];
+        return { messagesByRoom: { ...state.messagesByRoom, [roomId]: [...prev, msg] } };
+      });
     });
 
+    // Typing indicator
+    socket.on("typing:someone", (payload: { roomId: string; userEmail: string }) => {
+      const roomId = Number(payload.roomId);
+      console.log("userEmail:",payload.userEmail)
+      set((state) => ({ typingUserByRoom: { ...state.typingUserByRoom, [roomId]: payload.userEmail } }));
+      const { typingUserByRoom } = get();
+      console.log("typingUserByRoom:",typingUserByRoom)
+      // clear after timeout
+      setTimeout(() => {
+        set((state) => ({ typingUserByRoom: { ...state.typingUserByRoom, [roomId]: null } }));
+      }, 1000);
+    });
+
+    // Presence events (UI-level)
+    socket.on("presence:entered", (payload: { user: any; roomId: string }) => {
+      console.log("presence:entered", payload);
+      // UI can read typingUserByRoom / messagesByRoom as needed
+    });
+
+    socket.on("presence:left", (payload: { user: any; roomId: string }) => {
+      console.log("presence:left", payload);
+    });
+
+    /*
+    socket.on("membership:joined", (payload: any) => {
+      console.log("membership:joined", payload);
+    });
+
+    socket.on("membership:left", (payload: any) => {
+      console.log("membership:left", payload);
+    });
+    */
     set({ socket });
   },
 
   disconnect: () => {
     const { socket } = get();
-    if (socket) {
-        socket.removeAllListeners(); // clean up all event listeners
-        socket.disconnect();
-        set({ socket: null });
-        console.log("🧹 Socket disconnected and listeners removed.");
-    }
+    if (!socket) return;
+    socket.removeAllListeners();
+    socket.disconnect();
+    set({ socket: null, currentRoomId: null });
+    console.log("🧹 socket disconnected & listeners removed");
   },
 
-  sendMessage: (roomId: string, text: string) => {
-    const { socket } = get();
-    const { user } = useAuthStore.getState();
-    
-    if (!socket || !user) {
-      console.warn("⚠️ Cannot send message — socket or user missing");
+  // Enter a room: subscribe socket, fetch messages (cache-backed), set currentRoom
+  enterRoom: async (roomId: number) => {
+    const { socket, messagesByRoom } = get();
+    if (!socket) {
+      console.warn("Socket not connected; connecting now.");
+      get().connect();
+      // Wait a small amount: in your app you can also await a 'connect' event if needed.
+    }
+
+    // join socket.io room (UI-level)
+    socket?.emit("enterRoom", roomId.toString());
+
+    // If we already have cached messages in the store, skip fetch
+    if (messagesByRoom[roomId] && messagesByRoom[roomId].length > 0) {
+      set({ currentRoomId: roomId });
       return;
     }
 
-    const payload: OutgoingMessagePayload = { roomId: roomId.toString(), text };
-    socket.emit("chatMessage", payload);
-    
+    // Fetch messages for the room via HTTP (server-side redis caching is used)
+    try {
+      const res = await fetch(`${import.meta.env.VITE_BACKEND_MESSAGES_BASE_URL}/${roomId}/room-messages`, {
+        credentials: "include",
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: "fetch_failed" }));
+        console.error("Failed to fetch room messages", err);
+        set({ currentRoomId: roomId });
+        return;
+      }
+      const data = await res.json();
+      const msgs: Message[] = data.data ?? data; // adapt depending on your API shape
+      set((state) => ({ messagesByRoom: { ...state.messagesByRoom, [roomId]: msgs } }));
+      set({ currentRoomId: roomId });
+    } catch (err) {
+      console.error("Error fetching messages for room", roomId, err);
+      set({ currentRoomId: roomId });
+    }
   },
 
-  addMessages: (msgs: Message[]) => set((state) => ({ messages: [...state.messages, ...msgs] })),
+  exitRoom: (roomId: number) => {
+    const { socket } = get();
+    socket?.emit("exitRoom", roomId.toString());
+    set({ currentRoomId: null });
+  },
 
-  // Clear messages (for when switching rooms, optional)
-  clearMessages: () => set({ messages: [] }),
+  sendMessage: (roomId: number, text: string) => {
+    const { socket } = get();
+    const { user } = useAuthStore.getState();
+    if (!socket || !user) {
+      console.warn("No socket or user to send message");
+      return;
+    }
+    // emit creation request; server will save, invalidate cache, and broadcast
+    socket.emit("message:create", { roomId: roomId.toString(), text });
+    // we rely on server `message:new` broadcast to append the saved message
+    // (optionally implement optimistic UI if desired)
+  },
 
-  setFetchedAll: (value: boolean) => set({ fetchedAll: value }),
+  appendMessage: (roomId: number, msg: Message) => {
+    set((state) => {
+      const prev = state.messagesByRoom[roomId] ?? [];
+      return { messagesByRoom: { ...state.messagesByRoom, [roomId]: [...prev, msg] } };
+    });
+  },
+
+  getMessagesForRoom: (roomId: number) => {
+    const { messagesByRoom } = get();
+    return messagesByRoom[roomId] ?? [];
+  },
+
+  clearRoomMessages: (roomId: number) => {
+    set((state) => {
+      const copy = { ...state.messagesByRoom };
+      delete copy[roomId];
+      return { messagesByRoom: copy };
+    });
+  },
 }));
-
-// Auto-connect when user logs in / disconnect when logout
-useAuthStore.subscribe((state) => {
-  const socketStore = useSocketStore.getState();
-  if (state.user) {
-    socketStore.connect();
-  } else {
-    socketStore.disconnect();
-  }
-});
