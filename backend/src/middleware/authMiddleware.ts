@@ -10,7 +10,6 @@ if (!JWT_SECRET) {
 export function authMiddleware(req: AuthRequest, res: Response, next: NextFunction) {
   try {
     let token = req.cookies.token; // read cookie
-    console.log("authMiddleware token: ",token);
 
      // If no cookie token, try Authorization header (for Thunder Client, mobile apps, etc.)
     if (!token && req.headers.authorization?.startsWith("Bearer ")) {
@@ -23,8 +22,6 @@ export function authMiddleware(req: AuthRequest, res: Response, next: NextFuncti
 
     // Verify token
     const decoded = jwt.verify(token, JWT_SECRET) as { id: string; email: string };
-    console.log("authMiddleware decoded: ",decoded);
-    console.log("authMiddleware JWT_SECRET: ",JWT_SECRET);
 
     req.user = decoded; // attach user info to request
 

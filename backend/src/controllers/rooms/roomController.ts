@@ -1,7 +1,7 @@
 import { type Request, type Response } from "express";
 import { getAllRooms, joinTheRoom, leaveTheRoom, getAllRoomUsers, getTheUserRoomsWithMembership } from "../../services/rooms/roomService.js";
 import { type AuthRequest, type RoomDTO, type ApiResponse, type UserRoomDTO, type RoomUsers, type RoomWithMembershipDTO } from "../../types/custom.js";
-
+import { io } from "../../index.js";
 
 export const getRooms = async (_req: Request, res: Response<ApiResponse<RoomDTO[]>>): Promise<void> => {
     try {
@@ -23,6 +23,10 @@ export const joinRoom = async (req: Request<{ roomId: string }>, res:Response<Ap
         }
 
         const joined = await joinTheRoom(Number(userId), Number(roomId));
+
+        // 🔹 Emit event to clients in that room
+        io.to(roomId.toString()).emit("roomMembershipUpdated", { roomId });
+
         res.json({ data: joined });
         
     } catch (error) {
@@ -51,6 +55,10 @@ export const leaveRoom = async (req: Request<{ roomId: string }>, res: Response<
         }
 
         const left = await leaveTheRoom(Number(userId), Number(roomId));
+
+        // 🔹 Emit event to clients in that room
+        io.to(roomId.toString()).emit("roomMembershipUpdated", { roomId });
+        
         res.json({ data: left });
     } catch (error) {
         if (error instanceof Error) {
