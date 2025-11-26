@@ -19,7 +19,7 @@ html, body, * {
   .bg-surface-selected { background-color: #fbbf24; }    /* selected: yellow */
   .bg-surface { background-color: #e5e7eb; }             /* generic panel/card surface: light gray */
   .bg-message-user { background-color: #3b82f6; }        /* user message: blue */
-  .bg-message-other-user { background-color: #e5e7eb; }  /* other user message: light gray */
+  .bg-message-other-user { background-color: #c8ccd4; }  /* other user message: light gray */
   
   /* lines */
   .border-border-line { border-color: #d1d5db; }
@@ -30,6 +30,7 @@ html, body, * {
   .text-heading { color: #111827; }              /* headings */
   .text-primary { color: #1d4ed8; }
   .text-secondary { color: #9333ea; }
+  .text-surface-selected { color: #111827}
 
   /* Status */
   .text-success { color: #16a34a; }
@@ -71,6 +72,7 @@ html, body, * {
   .text-heading { color: #f3f4f6; }              /* headings */
   .text-primary { color: #2563eb; }
   .text-secondary { color: #7e22ce; }
+  .text-surface-selected { color: #111827}
 
   /* Status */
   .text-success { color: #4ade80; }

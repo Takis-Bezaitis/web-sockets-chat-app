@@ -1,6 +1,9 @@
 import { type UsersInRoomProps } from "../types/custom";
+import { useSocketStore } from "../store/socketStore";
 
 const UsersInRoom = ({ currentRoomUsers }: UsersInRoomProps) => {
+  const onlineUsers = useSocketStore((s) => s.onlineUsers);
+
   return (
     <div className="flex flex-col w-2/5 max-w-xs bg-component-background border-l border-border-line">
       <header className="text-foreground p-4">
@@ -11,6 +14,7 @@ const UsersInRoom = ({ currentRoomUsers }: UsersInRoomProps) => {
           <div key={user.id} className="bg-surface m-2 rounded-md p-2 text-foreground">
             <p>{user.username}</p>
             <p className="text-sm text-foreground">{user.email}</p>
+            {onlineUsers[user.id] ? " • Present" : " • Away"}
           </div>
         ))}
       </div>

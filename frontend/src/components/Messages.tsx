@@ -27,13 +27,16 @@ const Messages = ({user, messages, currentRoom}: UserProps) => {
           {messages.map((msg, index) => (
             <div
               key={msg.id || index}
-              className={`max-w-sm text-center mb-5 p-2 rounded text-foreground ${
+              className={`flex gap-2  max-w-sm text-left mb-5 p-2 rounded text-foreground ${
                 msg.userId === user?.id ? "ml-auto bg-message-user self-end" : "bg-message-other-user"
               }`}
             > 
-              <span className="font-semibold">{msg.userId === user?.id ? "You" : msg.email}:</span>{" "}
-              {msg.text}
-              <div>{formatDate(msg.createdAt)}</div>
+              <div className="text-3xl">👤</div>
+              <div>
+                <span className="font-semibold">{msg.userId === user?.id ? "You" : msg.username}:</span>{" "}
+                {formatDate(msg.createdAt)}
+                <div>{msg.text}</div>
+              </div>
             </div>
           ))}
           <div ref={messagesEndRef} />

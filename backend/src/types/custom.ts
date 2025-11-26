@@ -2,7 +2,7 @@
 import { type Request } from "express";
 
 export interface AuthRequest extends Request {
-  user?: { id: string; email: string };
+  user?: { id: string; email: string; username: string };
 };
 
 export type RoomDTO = {
@@ -47,6 +47,7 @@ export type MessageDTO = {
   text: string;
   createdAt: string;
   roomId: number;
+  username: string;
 };
 
 

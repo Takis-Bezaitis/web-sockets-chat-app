@@ -9,6 +9,7 @@ const AvailableRooms = ({
 
   return (
     <div className="flex flex-col w-2/5 max-w-xs bg-component-background border-r border-border-line">
+      <div></div>
       <header className="text-foreground p-4">Available Rooms</header>
 
       {rooms.map((room) => {
@@ -23,13 +24,13 @@ const AvailableRooms = ({
             }`}
           >
             <div
-              className={`text-foreground ${
+              className={`text-lg ${
                 room.name === currentRoom?.name
-                  ? "italic font-bold"
-                  : ""
+                  ? "italic font-bold text-surface-selected"
+                  : "text-foreground"
               }`}
             >
-              #{room.name} {room.isMember}
+              # {room.name} 
             </div>
 
             {room.id !== 1 && (

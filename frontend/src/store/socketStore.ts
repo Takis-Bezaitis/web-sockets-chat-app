@@ -9,10 +9,12 @@ interface SocketState {
   currentRoomId: number | null;
   messagesByRoom: Record<number, Message[]>;
   typingUserByRoom: Record<number, string | null>;
+  onlineUsers: Record<number, boolean>;
   connect: () => void;
   disconnect: () => void;
   enterRoom: (roomId: number) => Promise<void>;
   exitRoom: (roomId: number) => void;
+  setOnlineStatus: (userId: string, isOnline: boolean) => void;
   sendMessage: (roomId: number, text: string) => void;
   appendMessage: (roomId: number, msg: Message) => void;
   getMessagesForRoom: (roomId: number) => Message[];
@@ -24,6 +26,7 @@ export const useSocketStore = create<SocketState>((set, get) => ({
   currentRoomId: null,
   messagesByRoom: {},
   typingUserByRoom: {},
+  onlineUsers: {},
 
   connect: () => {
     const { user } = useAuthStore.getState();
@@ -36,10 +39,20 @@ export const useSocketStore = create<SocketState>((set, get) => ({
 
     socket.on("connect", () => {
       console.log("✅ socket connected", socket.id);
+      // Mark the local user as online locally
+      const localUserId = useAuthStore.getState().user?.id;
+      if (localUserId) {
+        get().setOnlineStatus(String(localUserId), true);
+      }
     });
 
     socket.on("disconnect", (reason) => {
       console.log("⛔ socket disconnected", reason);
+      // Mark local user offline on disconnect
+      const localUserId = useAuthStore.getState().user?.id;
+      if (localUserId) {
+        get().setOnlineStatus(String(localUserId), false);
+      }
       set({ socket: null });
     });
 
@@ -69,15 +82,28 @@ export const useSocketStore = create<SocketState>((set, get) => ({
     });
 
     // Presence events (UI-level)
-    socket.on("presence:entered", (payload: { user: any; roomId: string }) => {
+    socket.on("presence:entered", (payload: { user: { id: string; email?: string } | null; roomId: string }) => {
       console.log("presence:entered", payload);
-      // UI can read typingUserByRoom / messagesByRoom as needed
+      if (!payload.user?.id) return;
+      // Mark any other user that has just entered the room (not the local user aka 'me') as online
+      get().setOnlineStatus(String(payload.user.id), true);
     });
 
-    socket.on("presence:left", (payload: { user: any; roomId: string }) => {
+    socket.on("presence:left", (payload: { user: { id: string; email?: string } | null; roomId: string }) => {
       console.log("presence:left", payload);
+      if (!payload.user?.id) return;
+      // Mark any other user that has just left the room (not the local user aka 'me') as offine
+      get().setOnlineStatus(String(payload.user.id), false);
     });
 
+    socket.on("presence:list", ({ roomId, users }) => {
+      console.log("presence:list roomId:", roomId);
+      console.log("presence:list users:", users);
+
+      users.forEach((userId: string) => {
+        get().setOnlineStatus(userId, true);
+      });
+    });
     /*
     socket.on("membership:joined", (payload: any) => {
       console.log("membership:joined", payload);
@@ -110,6 +136,11 @@ export const useSocketStore = create<SocketState>((set, get) => ({
 
     // join socket.io room (UI-level)
     socket?.emit("enterRoom", roomId.toString());
+    // Mark local user online
+    const localUserId = useAuthStore.getState().user?.id;
+    if (localUserId) {
+      get().setOnlineStatus(String(localUserId), true);
+    }
 
     // If we already have cached messages in the store, skip fetch
     if (messagesByRoom[roomId] && messagesByRoom[roomId].length > 0) {
@@ -141,8 +172,22 @@ export const useSocketStore = create<SocketState>((set, get) => ({
   exitRoom: (roomId: number) => {
     const { socket } = get();
     socket?.emit("exitRoom", roomId.toString());
+    // Mark local user offline
+    const localUserId = useAuthStore.getState().user?.id;
+    if (localUserId) {
+      get().setOnlineStatus(String(localUserId), false);
+    }
+
     set({ currentRoomId: null });
   },
+
+  setOnlineStatus: (userId: string, isOnline: boolean ) => 
+    set((state) => ({
+    onlineUsers: {
+      ...state.onlineUsers,
+      [userId]: isOnline
+    }
+  })),
 
   sendMessage: (roomId: number, text: string) => {
     const { socket } = get();

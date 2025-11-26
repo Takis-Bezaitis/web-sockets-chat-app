@@ -1,6 +1,7 @@
 export interface User {
     id: number;
     email: string;
+    username: string;
 };
 
 export type ApiResponse<T> = 
@@ -38,6 +39,7 @@ export interface Message {
   text: string;
   createdAt: string;
   roomId: number;
+  username: string;
 }
 
 export type RoomWithMembershipDTO = {

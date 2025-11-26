@@ -11,7 +11,7 @@ interface SaveMessageInput {
 export const getAllTheMessages = async (): Promise<MessageDTO[]> => {
   const messages = await prisma.message.findMany({
     include: {
-      user: { select: { email: true } },
+      user: { select: { email: true, username: true } },
     },
     orderBy: { createdAt: "asc" },
   });
@@ -24,6 +24,7 @@ export const getAllTheMessages = async (): Promise<MessageDTO[]> => {
     text: msg.text,
     createdAt: msg.createdAt.toISOString(),
     roomId: msg.roomId,
+    username: msg.user.username,
   }));
 };
 
@@ -33,7 +34,7 @@ export const saveTheRoomMessage = async (
   // Create the message
   const message = await prisma.message.create({
     data: { text, userId, roomId },
-    include: { user: { select: { email: true } } } // fetch email from User
+    include: { user: { select: { email: true, username: true } } } // fetch email from User
   });
 
    // Invalidate Redis cache for this room
@@ -47,6 +48,7 @@ export const saveTheRoomMessage = async (
     userId: message.userId,
     email: message.user.email,
     roomId: message.roomId,
+    username: message.user.username,
   };
 };
 
@@ -58,7 +60,7 @@ export const getTheRoomMessages = async (roomId: number): Promise<MessageDTO[]> 
   // 2️⃣ Fallback to Prisma if not cached
   const messages = await prisma.message.findMany({
     where: { roomId },
-    include: { user: { select: { email: true } } },
+    include: { user: { select: { email: true, username: true } } },
     orderBy: { createdAt: "asc" },
   });
 
@@ -68,6 +70,7 @@ export const getTheRoomMessages = async (roomId: number): Promise<MessageDTO[]> 
     createdAt: m.createdAt.toISOString(),
     userId: m.userId,
     email: m.user.email,
+    username: m.user.username,
     roomId: m.roomId,
   }));
 

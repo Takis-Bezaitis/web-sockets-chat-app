@@ -26,6 +26,7 @@ export const getRoomMessages = async (
       }
 
       const messages = await getTheRoomMessages(Number(roomId));
+
       res.status(200).json({ data: messages });
     } catch (error) {
       console.error("Error fetching room messages:", error);
@@ -62,7 +63,7 @@ export const saveRoomMessage = async (
     // Fetch user's email to include in the DTO
     const user = await prisma.user.findUnique({
       where: { id: Number(userId) },
-      select: { email: true }
+      select: { email: true, username: true }
     });
 
     if (!user) {
@@ -77,7 +78,8 @@ export const saveRoomMessage = async (
       createdAt: message.createdAt,
       userId: message.userId,
       email: user.email,
-      roomId: message.roomId
+      roomId: message.roomId,
+      username: user.username,
     };
 
     res.status(201).json({ data: messageDTO });

@@ -8,6 +8,8 @@ export interface CustomSocket extends Socket {
 }
 
 export default function chatSocket(io: Server) {
+  const roomPresence: Record<string, Set<string>> = {};
+
   io.on("connection", (socket: Socket) => {
     const customSocket = socket as CustomSocket;
     console.log(`User connected: ${socket.id}`);
@@ -16,13 +18,28 @@ export default function chatSocket(io: Server) {
     // User opened a room in the UI and wants real-time updates for that room.
     customSocket.on("enterRoom", (roomId: string) => {
       if (!roomId) return;
+
       const roomChannel = `room:${roomId}`;
       console.log(`socket ${socket.id} enters ${roomChannel}`);
       customSocket.join(roomChannel);
-      // Optionally notify only others in the room (not the joiner)
+
+      // Track presence of the user
+      if (!roomPresence[roomId]) roomPresence[roomId] = new Set();
+
+      if (customSocket.user?.id) {
+        roomPresence[roomId].add(customSocket.user.id);
+      }
+    
+      // Notify only others in the room (not the joiner)
       customSocket.to(roomChannel).emit("presence:entered", {
         user: customSocket.user ?? null,
         roomId,
+      });
+
+      // Send presence list to the joiner 
+      customSocket.emit("presence:list", {
+        roomId,
+        users: Array.from(roomPresence[roomId]),
       });
     });
 
@@ -32,6 +49,12 @@ export default function chatSocket(io: Server) {
       const roomChannel = `room:${roomId}`;
       console.log(`socket ${socket.id} exits ${roomChannel}`);
       customSocket.leave(roomChannel);
+
+      // Remove from tracking/presence
+      if (roomPresence[roomId] && customSocket.user?.id) {
+        roomPresence[roomId].delete(customSocket.user.id);
+      }
+
       customSocket.to(roomChannel).emit("presence:left", {
         user: customSocket.user ?? null,
         roomId,
@@ -110,6 +133,33 @@ export default function chatSocket(io: Server) {
 
     customSocket.on("disconnect", (reason) => {
       console.log(`User disconnected: ${socket.id} (${reason})`);
+
+      const userId = customSocket.user?.id;
+      if (!userId) return;
+
+      try {
+        // Loop through all rooms in presence memory
+        for (const [roomId, members] of Object.entries(roomPresence)) {
+
+          // If this room contains the user, remove them and notify others
+          if (members.has(userId)) {
+
+            // Remove from memory
+            members.delete(userId);
+
+            // Notify room
+            io.to(`room:${roomId}`).emit("presence:left", {
+              user: customSocket.user,
+              roomId,
+            });
+
+            console.log(`Removed user ${userId} from room ${roomId} due to disconnect`);
+          }
+        }
+      } catch (err) {
+        console.error("Error broadcasting presence on disconnect:", err);
+      }
     });
+
   });
 }
