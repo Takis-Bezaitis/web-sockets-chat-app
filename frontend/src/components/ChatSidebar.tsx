@@ -1,17 +1,23 @@
-import { type AvailableRoomsProps } from "../types/custom";
+import { type ChatSidebarProps } from "../types/custom";
 
-const AvailableRooms = ({
+const ChatSidebar = ({
+  user,
   rooms,
   currentRoom,
   onSelectRoom,
   handleJoinLeaveRoom,
-}: AvailableRoomsProps) => {
+}: ChatSidebarProps) => {
 
   return (
     <div className="flex flex-col w-2/5 max-w-xs bg-component-background border-r border-border-line">
-      <div></div>
-      <header className="text-foreground p-4">Available Rooms</header>
+      <div className="bg-component-background text-foreground h-14 flex items-center mx-2">
+        <div className="flex gap-2 place-items-center">
+          <div className="text-3xl">👤</div>
+          <div className="text-xl">{user.username}</div>
+        </div>
+      </div>
 
+      <header className="text-foreground p-4">Available Chat Rooms</header>
       {rooms.map((room) => {
         return (
           <div
@@ -67,4 +73,4 @@ const AvailableRooms = ({
   );
 };
 
-export default AvailableRooms;
+export default ChatSidebar;

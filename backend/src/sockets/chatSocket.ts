@@ -1,7 +1,9 @@
 // backend/src/sockets/chatSocket.ts
 import { Server, Socket } from "socket.io";
 import { type UserPayload } from "../types/custom.js";
-import { saveTheRoomMessage } from "../services/messages/messageService.js";
+import { saveTheRoomMessage, addMessageReaction } from "../services/messages/messageService.js";
+import { invalidateRoomMessagesCache } from "../utils/cacheMessages.js"
+import prisma from "../prismaClient.js";
 
 export interface CustomSocket extends Socket {
   user?: UserPayload;
@@ -129,6 +131,40 @@ export default function chatSocket(io: Server) {
         roomId: payload.roomId,
         userEmail: payload.user,
       });
+    });
+
+    customSocket.on("message:react", async(data: { emoji: string, userId: number, messageId: number }) => {
+      try {
+        const { emoji, userId, messageId } = data;
+
+        // 1️⃣ Save reaction in DB
+        const reaction = await addMessageReaction({ emoji, userId, messageId });
+
+        // 2️⃣ Find the room of the message
+        const message = await prisma.message.findUnique({
+          where: { id: messageId },
+          select: { roomId: true },
+        });
+
+        if (!message) return;
+
+        await invalidateRoomMessagesCache(message.roomId);
+
+        const roomChannel = `room:${message.roomId}`;
+
+        // 3️⃣ Broadcast the new reaction to everyone in the room
+        // All clients will receive 'message:reaction:new'
+        io.to(roomChannel).emit("message:reaction:new", {
+          messageId,
+          reaction,
+        });
+
+        // Optional: acknowledge sender
+        customSocket.emit("message:reaction:ack", { success: true, reaction });
+      } catch (err) {
+        console.error("Failed to create reaction:", err);
+        customSocket.emit("message:reaction:ack", { success: false, error: "server_error" });
+      }
     });
 
     customSocket.on("disconnect", (reason) => {

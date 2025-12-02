@@ -1,5 +1,5 @@
 import prisma from "../../prismaClient.js";
-import { type MessageDTO } from "../../types/custom.js";
+import { type MessageDTO, type MessageReaction } from "../../types/custom.js";
 import { getCachedRoomMessages, setCachedRoomMessages, invalidateRoomMessagesCache } from "../../utils/cacheMessages.js";
 
 interface SaveMessageInput {
@@ -49,6 +49,7 @@ export const saveTheRoomMessage = async (
     email: message.user.email,
     roomId: message.roomId,
     username: message.user.username,
+    reactions: []
   };
 };
 
@@ -60,7 +61,14 @@ export const getTheRoomMessages = async (roomId: number): Promise<MessageDTO[]> 
   // 2️⃣ Fallback to Prisma if not cached
   const messages = await prisma.message.findMany({
     where: { roomId },
-    include: { user: { select: { email: true, username: true } } },
+    include: {
+      user: { select: { email: true, username: true } },
+      reactions: {
+        include: {
+          user: { select: { id: true, username: true } } // include user info for reactions
+        }
+      }
+    },
     orderBy: { createdAt: "asc" },
   });
 
@@ -72,6 +80,11 @@ export const getTheRoomMessages = async (roomId: number): Promise<MessageDTO[]> 
     email: m.user.email,
     username: m.user.username,
     roomId: m.roomId,
+    reactions: m.reactions.map((r) => ({
+      userId: r.userId,
+      username: r.user.username,
+      emoji: r.emoji
+    }))
   }));
 
   // 3️⃣ Store in Redis cache
@@ -79,3 +92,43 @@ export const getTheRoomMessages = async (roomId: number): Promise<MessageDTO[]> 
 
   return dto;
 };
+
+interface AddMessageReactionInput  {
+  messageId: number;
+  emoji: string;
+  userId: number;
+};
+
+export const addMessageReaction = async({ messageId, emoji, userId }: AddMessageReactionInput ): Promise<MessageReaction> => {
+  // Check if exists
+  const existing = await prisma.messageReaction.findUnique({
+    where: { messageId_userId_emoji: { messageId, userId, emoji } },
+    include: { user: { select: { id: true, username: true } } }
+  });
+
+  if (existing) {
+    return {
+      userId: existing.user.id,
+      username: existing.user.username,
+      emoji: existing.emoji,
+    };
+  }
+  
+  // Else create
+  const reaction = await prisma.messageReaction.create({
+    data: { messageId, emoji, userId },
+    include: { user: { select: { id: true, username: true } } },
+  });
+
+  // Invalidate Redis cache for the room of this message
+  const message = await prisma.message.findUnique({ where: { id: messageId } });
+  if (message) {
+    await invalidateRoomMessagesCache(message.roomId);
+  }
+  
+  return {
+    userId: reaction.user.id,
+    username: reaction.user.username,
+    emoji: reaction.emoji,
+  };
+}

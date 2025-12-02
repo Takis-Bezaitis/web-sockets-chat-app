@@ -1,9 +1,12 @@
 // frontend/src/pages/Chat.tsx
 import { useEffect, useMemo, useState } from "react";
-import { useSocketStore } from "../store/socketStore";
 import { useAuthStore } from "../store/authStore";
+import { useSocketStore } from "../store/socketStore";
+import { useMessageStore } from "../store/messageStore";
+import { useTypingStore } from "../store/typingStore";
 import type { RoomWithMembershipDTO, RoomUsers } from "../types/custom";
-import AvailableRooms from "../components/AvailableRooms";
+import ChatSidebar from "../components/ChatSidebar";
+import ChatHeader from "../components/ChatHeader";
 import UsersInRoom from "../components/UsersInRoom";
 import Messages from "../components/Messages";
 import MessageBox from "../components/MessageBox";
@@ -18,11 +21,10 @@ const Chat = () => {
     enterRoom,
     exitRoom,
     sendMessage,
-    getMessagesForRoom,
-    messagesByRoom,
-    typingUserByRoom,
   } = useSocketStore();
-
+  const { messagesByRoom } = useMessageStore();
+  const { typingUserByRoom } = useTypingStore();
+  const { getMessagesForRoom, fetchRoomMessages } = useMessageStore();
   // local UI state
   const [rooms, setRooms] = useState<RoomWithMembershipDTO[]>([]);
   const [currentRoom, setCurrentRoom] = useState<RoomWithMembershipDTO | undefined>(undefined);
@@ -80,6 +82,7 @@ const Chat = () => {
         setCurrentRoom(general);
         // fetch members and subscribe to messages (no need to await)
         void getRoomUsers(general.id);
+        void fetchRoomMessages(general.id);
         void enterRoom(general.id);
       }
     }
@@ -138,7 +141,10 @@ const Chat = () => {
 
       setCurrentRoom(room);
 
-      // store handles socket subscription + fetch (cache-backed)
+      // Fetch messages first (REST + cache)
+      await fetchRoomMessages(room.id);
+
+      // Then subscribe via socket
       await enterRoom(room.id);
 
       // fetch the members for the newly selected room
@@ -149,7 +155,7 @@ const Chat = () => {
   };
 
   // Join / leave room membership via REST then emit membership event
-  // AvailableRooms expects handleJoinLeaveRoom: (room, action: string) => void,
+  // ChatSidebar expects handleJoinLeaveRoom: (room, action: string) => void,
   // so we accept action: string and validate it here.
   const handleJoinLeaveRoom = async (room: RoomWithMembershipDTO, action: string) => {
     if (action !== "join" && action !== "leave") {
@@ -199,20 +205,31 @@ const Chat = () => {
 
   return (
     <div id="chat" className="flex flex-1 h-full">
-      <AvailableRooms
+      {user && (
+        <ChatSidebar
+        user={user}
         rooms={rooms}
         currentRoom={currentRoom}
         onSelectRoom={onSelectRoom}
         handleJoinLeaveRoom={handleJoinLeaveRoom}
       />
-      <div id="messages-area" className="flex flex-col flex-1 bg-background overflow-hidden px-3 sm:px-6 md:px-10 lg:px-15 xl:px-20 2xl:px-35">
-        <Messages user={user} messages={roomMessages} currentRoom={currentRoom} />
-        {currentRoom && typingUserByRoom[currentRoom.id] && (
-          <div className="text-sm text-gray-500 italic mb-1 px-4 flex items-center gap-2">
-            <span className="animate-pulse">💬 {typingUserByRoom[currentRoom.id]} is typing...</span>
+      )}
+
+      <div className="flex-1 flex flex-col">  
+        {currentRoom && <ChatHeader currentRoom={currentRoom} />}
+
+        <div id="messages-area" className="flex flex-col flex-1 bg-background overflow-hidden px-3 sm:px-6 md:px-10 lg:px-15 xl:px-20 2xl:px-35">
+          <div className="flex-1 overflow-y-auto no-scrollbar">
+            <Messages user={user} messages={roomMessages} currentRoom={currentRoom} />
           </div>
-        )}
-        <MessageBox handleSend={handleSend} input={input} setInput={setInput} currentRoom={currentRoom} />
+          
+          {currentRoom && typingUserByRoom[currentRoom.id] && (
+            <div className="text-sm text-gray-500 italic mb-1 px-4 flex items-center gap-2">
+              <span className="animate-pulse">💬 {typingUserByRoom[currentRoom.id]} is typing...</span>
+            </div>
+          )}
+          <MessageBox handleSend={handleSend} input={input} setInput={setInput} currentRoom={currentRoom} />
+        </div>
       </div>
       <UsersInRoom currentRoomUsers={currentRoomUsers} />
     </div>
