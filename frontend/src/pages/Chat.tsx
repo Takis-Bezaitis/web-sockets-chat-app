@@ -14,6 +14,7 @@ import MessageBox from "../components/MessageBox";
 const Chat = () => {
   const { user } = useAuthStore();
   const { socket } = useSocketStore();
+
   // store API
   const {
     connect,
@@ -22,7 +23,7 @@ const Chat = () => {
     exitRoom,
     sendMessage,
   } = useSocketStore();
-  const { messagesByRoom } = useMessageStore();
+  const { messagesByRoom, getLoadingForRoom } = useMessageStore();
   const { typingUserByRoom } = useTypingStore();
   const { getMessagesForRoom, fetchRoomMessages } = useMessageStore();
   // local UI state
@@ -36,6 +37,8 @@ const Chat = () => {
     if (!currentRoom) return [];
     return getMessagesForRoom(currentRoom.id);
   }, [currentRoom, messagesByRoom, getMessagesForRoom]);
+
+  const loading = getLoadingForRoom(currentRoom?.id ?? -1);
 
   // connect socket on mount
   useEffect(() => {
@@ -220,7 +223,7 @@ const Chat = () => {
 
         <div id="messages-area" className="flex flex-col flex-1 bg-background overflow-hidden px-3 sm:px-6 md:px-10 lg:px-15 xl:px-20 2xl:px-35">
           <div className="flex-1 overflow-y-auto no-scrollbar">
-            <Messages user={user} messages={roomMessages} currentRoom={currentRoom} />
+            <Messages user={user} messages={roomMessages} currentRoom={currentRoom} loading={loading} />
           </div>
           
           {currentRoom && typingUserByRoom[currentRoom.id] && (

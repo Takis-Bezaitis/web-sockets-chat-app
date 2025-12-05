@@ -4,13 +4,13 @@ import { useSocketStore } from "../store/socketStore";
 type MessageActionsProps = {
     userId: number | undefined;
     message: Message;
+    onEdit: (msg: Message) => void;
 };
 
-const MessageActions = ({userId, message}: MessageActionsProps) => {
+const MessageActions = ({userId, message, onEdit}: MessageActionsProps) => {
+  const socket = useSocketStore.getState().socket;
 
   const handleReactionClick = (emoji: string) => {
-    const socket = useSocketStore.getState().socket;
-
     if (!socket) return;
 
     socket.emit("message:react", {
@@ -20,16 +20,22 @@ const MessageActions = ({userId, message}: MessageActionsProps) => {
     });
   };
 
+  const handleDeleteMessage = (id: number, roomId: number) => {
+    if (!socket) return;
+
+    socket.emit("message:delete", { id, roomId });
+  };
+
   return (
-    <div className="absolute flex gap-1 top-0 right-0">
+    <div className="absolute flex gap-1 top-0 right-0 -translate-y-3/4 secondary-border-line border-1 bg-background p-1 rounded shadow">
         <div onClick={() => handleReactionClick("👍")}>👍</div>
         <div onClick={() => handleReactionClick("❤️")}>❤️</div>
         <div onClick={() => handleReactionClick("😄")}>😄</div>
 
         {userId === message.userId && (
           <div className="flex gap-1">
-              <div>✏️</div>
-              <div>🗑</div>
+              <div onClick={() => onEdit(message)}>✏️</div>
+              <div onClick={() => handleDeleteMessage(message.id, message.roomId)}>🗑</div>
           </div>
         )}
     </div>

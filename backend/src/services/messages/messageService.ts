@@ -53,6 +53,53 @@ export const saveTheRoomMessage = async (
   };
 };
 
+export const editMessage = async({id, roomId, text}: { id: number, roomId: number, text: string }) => {
+  const editedMessage = await prisma.message.update({
+    where: { id },
+    data: {
+      text,
+      editedAt: new Date(), 
+    },
+    include: {
+      user: true,
+      reactions: true,
+    },
+  });
+
+  await invalidateRoomMessagesCache(roomId);
+  
+  return {
+    id: editedMessage.id,
+    text: editedMessage.text,
+    editedAt: editedMessage.editedAt?.toISOString(),
+    createdAt: editedMessage.createdAt.toISOString(),
+    userId: editedMessage.userId,
+    roomId: editedMessage.roomId,
+    email: editedMessage.user.email,
+    username: editedMessage.user.username,
+    reactions: editedMessage.reactions,
+  };
+};
+
+export const deleteMessage = async (id: number): Promise<void> => {
+  const existing = await prisma.message.findUnique({ where: { id } });
+
+  if (!existing) {
+    throw new Error("Message not found");
+  }
+
+  // 1️⃣ Delete all reactions for this message
+  await prisma.messageReaction.deleteMany({
+    where: { messageId: id },
+  });
+
+  // 2️⃣ Delete the message itself
+  await prisma.message.delete({
+    where: { id }
+    }
+  );
+};
+
 export const getTheRoomMessages = async (roomId: number): Promise<MessageDTO[]> => {
   // 1️⃣ Try Redis cache first
   const cached = await getCachedRoomMessages(roomId);
@@ -99,14 +146,34 @@ interface AddMessageReactionInput  {
   userId: number;
 };
 
-export const addMessageReaction = async({ messageId, emoji, userId }: AddMessageReactionInput ): Promise<MessageReaction> => {
-  // Check if exists
+export const addMessageReaction = async({ messageId, emoji, userId }: AddMessageReactionInput 
+  ): Promise<MessageReaction> => {
+  
+  // 1️⃣ Check if reaction already exists
   const existing = await prisma.messageReaction.findUnique({
     where: { messageId_userId_emoji: { messageId, userId, emoji } },
     include: { user: { select: { id: true, username: true } } }
   });
 
+  // Always fetch the message to invalidate its room cache
+  const message = await prisma.message.findUnique({
+    where: { id: messageId },
+    select: { roomId: true }
+  });
+
+  if (!message) {
+    throw new Error("Message not found");
+  }
+
+  // 2️⃣ If exists → DELETE reaction (toggle off)
   if (existing) {
+    await prisma.messageReaction.delete({
+      where: { messageId_userId_emoji: { messageId, userId, emoji } }
+    });
+
+    await invalidateRoomMessagesCache(message.roomId);
+
+    // We return the same structure, so frontend can REMOVE it
     return {
       userId: existing.user.id,
       username: existing.user.username,
@@ -114,17 +181,13 @@ export const addMessageReaction = async({ messageId, emoji, userId }: AddMessage
     };
   }
   
-  // Else create
+  // 3️⃣ If not exists → ADD reaction
   const reaction = await prisma.messageReaction.create({
     data: { messageId, emoji, userId },
     include: { user: { select: { id: true, username: true } } },
   });
 
-  // Invalidate Redis cache for the room of this message
-  const message = await prisma.message.findUnique({ where: { id: messageId } });
-  if (message) {
-    await invalidateRoomMessagesCache(message.roomId);
-  }
+  await invalidateRoomMessagesCache(message.roomId);
   
   return {
     userId: reaction.user.id,

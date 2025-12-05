@@ -55,6 +55,10 @@ export const useSocketStore = create<SocketState>((set, get) => ({
       useMessageStore.getState().appendMessage(Number(msg.roomId), msg);
     });
 
+    socket.on("message:edited", (msg: Message) => {
+      useMessageStore.getState().updateEditedMessage(msg);
+    });
+
     // Typing indicator
     socket.on("typing:someone", (payload: { roomId: string; userEmail: string }) => {
       useTypingStore.getState().setTyping(Number(payload.roomId), payload.userEmail);
@@ -89,6 +93,9 @@ export const useSocketStore = create<SocketState>((set, get) => ({
       });
     });
    
+    socket.on("message:deleted", ({id, roomId}: {id: number, roomId:number}) => {
+      useMessageStore.getState().deleteMessageFromRoom(id, roomId);
+    });
 
     set({ socket });
   },

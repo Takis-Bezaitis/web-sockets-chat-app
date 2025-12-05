@@ -3,18 +3,24 @@ import type { Message, MessageReaction } from "../types/custom";
 
 interface MessageState {
   messagesByRoom: Record<number, Message[]>;
+  loadingByRoom: Record<number, boolean>;
 
   getMessagesForRoom: (roomId: number) => Message[];
   clearRoomMessages: (roomId: number) => void;
 
   fetchRoomMessages: (roomId: number) => Promise<void>;
   appendMessage: (roomId: number, msg: Message) => void;
+  updateEditedMessage: (msg: Message) => void;
+  deleteMessageFromRoom: (id: number, roomId: number) => void;
 
   addReactionToMessage: (messageId:number, reaction: MessageReaction) => void;
+  getLoadingForRoom: (roomId: number) => boolean;
+
 }
 
 export const useMessageStore = create<MessageState>((set, get) => ({
   messagesByRoom: {},
+  loadingByRoom: {},
 
   getMessagesForRoom: (roomId) => {
     return get().messagesByRoom[roomId] ?? [];
@@ -29,6 +35,13 @@ export const useMessageStore = create<MessageState>((set, get) => ({
   },
 
   fetchRoomMessages: async (roomId: number) => {
+    const alreadyLoaded = get().messagesByRoom[roomId];
+    if (alreadyLoaded) return;
+
+    set((state) => ({
+      loadingByRoom: { ...state.loadingByRoom, [roomId]: true }
+    }));
+
     try {
       const res = await fetch(
         `${import.meta.env.VITE_BACKEND_MESSAGES_BASE_URL}/${roomId}/room-messages`,
@@ -48,6 +61,10 @@ export const useMessageStore = create<MessageState>((set, get) => ({
       }));
     } catch (err) {
       console.error("Error fetching messages", err);
+    } finally {
+      set((state) => ({
+        loadingByRoom: { ...state.loadingByRoom, [roomId]: false }
+      }));
     }
   },
 
@@ -60,6 +77,32 @@ export const useMessageStore = create<MessageState>((set, get) => ({
           [roomId]: [...prev, msg]
         }
       };
+    });
+  },
+
+  updateEditedMessage: (updatedMsg: Message) =>
+  set((state) => {
+    const messages = state.messagesByRoom[updatedMsg.roomId];
+    if (!messages) return state;
+
+    return {
+      messagesByRoom: {
+        ...state.messagesByRoom,
+        [updatedMsg.roomId]: messages.map((m) =>
+          m.id === updatedMsg.id ? updatedMsg : m
+        ),
+      },
+    };
+  }),
+
+  deleteMessageFromRoom: (id, roomId) => {
+    set((state) => {
+      const updated = { ...state.messagesByRoom };
+
+      const messages = updated[roomId];
+      updated[roomId] = messages.filter((msg) => msg.id !== id);
+
+      return { messagesByRoom: updated };
     });
   },
 
@@ -79,17 +122,27 @@ export const useMessageStore = create<MessageState>((set, get) => ({
         // Initialize reactions if missing
         const currentReactions = msg.reactions ?? [];
 
-        // Prevent duplicate identical reactions
-        const alreadyExists = currentReactions.some(
+        // Check if the reaction already exists
+        const existingIndex = currentReactions.findIndex(
           (r) => r.userId === reaction.userId && r.emoji === reaction.emoji
         );
-        
-        if (alreadyExists) return { messagesByRoom: updated };
+
+        let newReactions;
+        if (existingIndex !== -1) {
+          // Reaction exists → remove it (toggle off)
+          newReactions = [
+            ...currentReactions.slice(0, existingIndex),
+            ...currentReactions.slice(existingIndex + 1),
+          ];
+        } else {
+          // Reaction does not exist → add it
+          newReactions = [...currentReactions, reaction];
+        }
 
         // Update the message
         const updatedMessage = {
           ...msg,
-          reactions: [...currentReactions, reaction],
+          reactions: newReactions,
         };
 
         // Update the array inside the room
@@ -106,4 +159,9 @@ export const useMessageStore = create<MessageState>((set, get) => ({
       return { messagesByRoom: updated };
     });
   },
+
+  getLoadingForRoom: (roomId) => {
+    return get().loadingByRoom[roomId] ?? false;
+  },
+
 }));
