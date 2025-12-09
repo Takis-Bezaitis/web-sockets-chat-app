@@ -2,7 +2,7 @@
 import { type Request } from "express";
 
 export interface AuthRequest extends Request {
-  user?: { id: string; email: string };
+  user?: { id: string; email: string; username: string };
 };
 
 export type RoomDTO = {
@@ -31,6 +31,12 @@ export type UserPayload = {
   email: string;
 };
 
+export interface MessageReaction {
+  userId: number;
+  username: string;
+  emoji: string;
+}
+
 export interface Message {
   id: number;       
   userId: number;   
@@ -38,6 +44,7 @@ export interface Message {
   text: string;
   createdAt: string;
   roomId: number;
+  reactions?: MessageReaction[];
 }
 
 export type MessageDTO = {
@@ -47,6 +54,8 @@ export type MessageDTO = {
   text: string;
   createdAt: string;
   roomId: number;
+  username: string;
+  reactions?: MessageReaction[];
 };
 
 

@@ -1,35 +1,47 @@
-import { type AvailableRoomsProps } from "../types/custom";
+import { type ChatSidebarProps } from "../types/custom";
 
-const AvailableRooms = ({
+const ChatSidebar = ({
+  user,
   rooms,
   currentRoom,
   onSelectRoom,
   handleJoinLeaveRoom,
-}: AvailableRoomsProps) => {
+}: ChatSidebarProps) => {
 
   return (
-    <div className="flex flex-col w-2/5 max-w-xs bg-component-background border-r border-border-line">
-      <header className="text-foreground p-4">Available Rooms</header>
+    <div className="flex flex-col h-full bg-component-background border-r border-border-line">
+      <div className="bg-component-background text-foreground h-14 flex items-center border-b border-border-line">
+        <div className="flex ml-4 gap-2 place-items-center">
+          <div className="text-3xl">👤</div>
+          <div className="text-xl">{user.username}</div>
+        </div>
+      </div>
 
+      <div className="flex items-center justify-between pt-4 pb-2">
+        <header className="text-foreground ml-5 text-lg">Channels ({rooms.length})</header>
+        <div className="cursor-pointer mr-5">➕</div>
+      </div>
+      
+      <div className="overflow-y-auto no-scrollbar">
       {rooms.map((room) => {
         return (
           <div
             key={room.id}
             onClick={() => onSelectRoom(room)}
-            className={`flex gap-3 flex-wrap justify-between m-2 rounded-md p-2 cursor-pointer ${
+            className={`flex gap-3 flex-wrap justify-between mx-5 my-2 rounded-md p-2 cursor-pointer ${
               room.name === currentRoom?.name
                 ? "bg-surface-selected"
                 : "bg-surface"
             }`}
           >
             <div
-              className={`text-foreground ${
+              className={`text-lg ${
                 room.name === currentRoom?.name
-                  ? "italic font-bold"
-                  : ""
+                  ? "italic font-bold text-surface-selected"
+                  : "text-foreground"
               }`}
             >
-              #{room.name} {room.isMember}
+              # {room.name} 
             </div>
 
             {room.id !== 1 && (
@@ -62,8 +74,10 @@ const AvailableRooms = ({
           </div>
         );
       })}
+      </div>
+
     </div>
   );
 };
 
-export default AvailableRooms;
+export default ChatSidebar;

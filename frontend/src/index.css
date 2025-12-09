@@ -5,6 +5,15 @@ html, body, * {
 }
 
 @layer utilities {
+  /* Hide scrollbar but keep scroll functionality */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none; /* IE + Edge */
+    scrollbar-width: none;    /* Firefox */
+  }
+
   /* -----------------------
      Light mode (default)
      ----------------------- */
@@ -13,16 +22,17 @@ html, body, * {
   .bg-component-background { background-color: #ffffff; } /* component background: white */
   .bg-card { background-color: #ffffff; }                /* cards, modals: white */
   .bg-input { background-color: #f9fafb; }               /* inputs: slightly off-white */
-  .bg-button-main { background-color: #1d4ed8; }         /* primary button: blue */
-  .hover\:bg-button-hover:hover { background-color: #2563eb; } /* hover blue */
+  .bg-button-main { background-color: #0e7bb7; }         /* primary button: blue */
+  .hover\:bg-button-hover:hover { background-color: #0e5983; } /* hover blue */
   .disabled\:bg-button-disabled:disabled { background-color: #d1d5db; } /* disabled: gray */
   .bg-surface-selected { background-color: #fbbf24; }    /* selected: yellow */
   .bg-surface { background-color: #e5e7eb; }             /* generic panel/card surface: light gray */
-  .bg-message-user { background-color: #3b82f6; }        /* user message: blue */
-  .bg-message-other-user { background-color: #e5e7eb; }  /* other user message: light gray */
+  .bg-message-user { background-color: #87a6d7; }        /* user message: blue */
+  .bg-message-other-user { background-color: #c8ccd4; }  /* other user message: light gray */
   
   /* lines */
-  .border-border-line { border-color: #d1d5db; }
+  .border-border-line { border-color: #c8ccd4; }
+  .secondary-border-line { border-color: #111827;}
 
   /* Text */
   .text-foreground { color: #111827; }           /* main text */
@@ -30,6 +40,8 @@ html, body, * {
   .text-heading { color: #111827; }              /* headings */
   .text-primary { color: #1d4ed8; }
   .text-secondary { color: #9333ea; }
+  .text-surface-selected { color: #111827}
+  .text-button { color: #ffffff; }
 
   /* Status */
   .text-success { color: #16a34a; }
@@ -63,7 +75,8 @@ html, body, * {
   .bg-message-other-user { background-color: #1d293b; }
 
   /* lines */
-  .border-border-line { border-color: #1f2937; }
+  .border-border-line { border-color: #202d3f; }
+  .secondary-border-line { border-color: #f3f4f6;}
 
   /* Text */
   .text-foreground { color: #f3f4f6; }           /* main text */
@@ -71,6 +84,8 @@ html, body, * {
   .text-heading { color: #f3f4f6; }              /* headings */
   .text-primary { color: #2563eb; }
   .text-secondary { color: #7e22ce; }
+  .text-surface-selected { color: #111827}
+  .text-button { color: #ffffff; }
 
   /* Status */
   .text-success { color: #4ade80; }

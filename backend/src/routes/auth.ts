@@ -76,7 +76,7 @@ router.post('/login', async (req, res) => {
 
     // Generate JWT
     const token = jwt.sign(
-      { id: existingUser.id, email: existingUser.email },
+      { id: existingUser.id, email: existingUser.email, username: existingUser.username},
       JWT_SECRET,
       { expiresIn: '5h'}
     );
@@ -108,8 +108,8 @@ router.get("/me", authMiddleware, async (req: AuthRequest, res: Response) => {
     const user = req.user;
     if (!user) return res.status(401).json({ error: "Not authenticated" });
 
-    const { id, email } = user;
-    res.json({ user: { id, email } });
+    const { id, email, username } = user;
+    res.json({ user: { id, email, username } });
   } catch {
     res.status(500).json({ error: "Something went wrong" });
   }

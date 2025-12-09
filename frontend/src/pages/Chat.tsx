@@ -1,16 +1,21 @@
 // frontend/src/pages/Chat.tsx
 import { useEffect, useMemo, useState } from "react";
-import { useSocketStore } from "../store/socketStore";
 import { useAuthStore } from "../store/authStore";
+import { useSocketStore } from "../store/socketStore";
+import { useMessageStore } from "../store/messageStore";
+import { useTypingStore } from "../store/typingStore";
 import type { RoomWithMembershipDTO, RoomUsers } from "../types/custom";
-import AvailableRooms from "../components/AvailableRooms";
+import ChatSidebar from "../components/ChatSidebar";
+import ChatHeader from "../components/ChatHeader";
 import UsersInRoom from "../components/UsersInRoom";
 import Messages from "../components/Messages";
 import MessageBox from "../components/MessageBox";
+import MobileNavBar from "../components/MobileNavBar";
 
 const Chat = () => {
   const { user } = useAuthStore();
   const { socket } = useSocketStore();
+
   // store API
   const {
     connect,
@@ -18,22 +23,25 @@ const Chat = () => {
     enterRoom,
     exitRoom,
     sendMessage,
-    getMessagesForRoom,
-    messagesByRoom,
-    typingUserByRoom,
   } = useSocketStore();
-
+  const { messagesByRoom, getLoadingForRoom } = useMessageStore();
+  const { typingUserByRoom } = useTypingStore();
+  const { getMessagesForRoom, fetchRoomMessages } = useMessageStore();
   // local UI state
   const [rooms, setRooms] = useState<RoomWithMembershipDTO[]>([]);
   const [currentRoom, setCurrentRoom] = useState<RoomWithMembershipDTO | undefined>(undefined);
   const [currentRoomUsers, setCurrentRoomUsers] = useState<RoomUsers[]>([]);
   const [input, setInput] = useState("");
+  const [mobileView, setMobileView] = useState<"chat" | "rooms" | "members">("chat");
+  const [showMembers, setShowMembers] = useState(false);
 
   // messages for currently selected room (derived from store)
   const roomMessages = useMemo(() => {
     if (!currentRoom) return [];
     return getMessagesForRoom(currentRoom.id);
   }, [currentRoom, messagesByRoom, getMessagesForRoom]);
+
+  const loading = getLoadingForRoom(currentRoom?.id ?? -1);
 
   // connect socket on mount
   useEffect(() => {
@@ -80,6 +88,7 @@ const Chat = () => {
         setCurrentRoom(general);
         // fetch members and subscribe to messages (no need to await)
         void getRoomUsers(general.id);
+        void fetchRoomMessages(general.id);
         void enterRoom(general.id);
       }
     }
@@ -138,7 +147,10 @@ const Chat = () => {
 
       setCurrentRoom(room);
 
-      // store handles socket subscription + fetch (cache-backed)
+      // Fetch messages first (REST + cache)
+      await fetchRoomMessages(room.id);
+
+      // Then subscribe via socket
       await enterRoom(room.id);
 
       // fetch the members for the newly selected room
@@ -149,7 +161,7 @@ const Chat = () => {
   };
 
   // Join / leave room membership via REST then emit membership event
-  // AvailableRooms expects handleJoinLeaveRoom: (room, action: string) => void,
+  // ChatSidebar expects handleJoinLeaveRoom: (room, action: string) => void,
   // so we accept action: string and validate it here.
   const handleJoinLeaveRoom = async (room: RoomWithMembershipDTO, action: string) => {
     if (action !== "join" && action !== "leave") {
@@ -198,23 +210,93 @@ const Chat = () => {
   };
 
   return (
-    <div id="chat" className="flex flex-1 h-full">
-      <AvailableRooms
-        rooms={rooms}
-        currentRoom={currentRoom}
-        onSelectRoom={onSelectRoom}
-        handleJoinLeaveRoom={handleJoinLeaveRoom}
-      />
-      <div id="messages-area" className="flex flex-col flex-1 bg-background overflow-hidden px-3 sm:px-6 md:px-10 lg:px-15 xl:px-20 2xl:px-35">
-        <Messages user={user} messages={roomMessages} currentRoom={currentRoom} />
-        {currentRoom && typingUserByRoom[currentRoom.id] && (
-          <div className="text-sm text-gray-500 italic mb-1 px-4 flex items-center gap-2">
-            <span className="animate-pulse">💬 {typingUserByRoom[currentRoom.id]} is typing...</span>
+    <div id="chat" className="flex flex-col h-full relative">
+
+      {/* ------- MOBILE NAV BAR (bottom) ------- */}
+      <div className="lg:hidden w-full fixed bottom-0 z-20 bg-background">
+        <MobileNavBar mobileView={mobileView} setMobileView={setMobileView} />
+      </div>
+
+      <div className="flex flex-1 overflow-hidden">
+
+        {/* ------- SIDEBAR (hidden on mobile) ------- */}
+        {user && (
+          <div className="hidden lg:block w-2/5 max-w-xs">
+            <ChatSidebar
+              user={user}
+              rooms={rooms}
+              currentRoom={currentRoom}
+              onSelectRoom={onSelectRoom}
+              handleJoinLeaveRoom={handleJoinLeaveRoom}
+            />
           </div>
         )}
-        <MessageBox handleSend={handleSend} input={input} setInput={setInput} currentRoom={currentRoom} />
+        {user && mobileView === "rooms" && (
+          <div className="w-full lg:hidden">
+            <ChatSidebar
+              user={user}
+              rooms={rooms}
+              currentRoom={currentRoom}
+              onSelectRoom={onSelectRoom}
+              handleJoinLeaveRoom={handleJoinLeaveRoom}
+            />
+          </div>
+        )}
+
+
+
+        {/* ------- CENTER AREA (Chat section OR mobile view switching) ------- */}
+        <div className="hidden lg:flex flex-1 flex-col">  
+          {currentRoom && <ChatHeader currentRoom={currentRoom} showMembers={showMembers} setShowMembers={setShowMembers}/>}
+          <div id="messages-area" className="flex flex-col flex-1 bg-background overflow-hidden px-3 pb-10 
+          sm:px-6 md:px-10 md:pb-0 lg:px-15 xl:px-20 2xl:px-35">
+            <div className="flex-1 overflow-y-auto no-scrollbar">
+              <Messages user={user} messages={roomMessages} currentRoom={currentRoom} loading={loading} />
+            </div>
+            {currentRoom && typingUserByRoom[currentRoom.id] && (
+              <div className="text-sm text-gray-500 italic mb-1 px-4 flex items-center gap-2">
+                <span className="animate-pulse">💬 {typingUserByRoom[currentRoom.id]} is typing...</span>
+              </div>
+            )}
+            <MessageBox handleSend={handleSend} input={input} setInput={setInput} currentRoom={currentRoom} />
+          </div>
+        </div>
+
+        {mobileView === "chat" && (
+          <div className="lg:hidden flex flex-1 flex-col">  
+          {currentRoom && <ChatHeader currentRoom={currentRoom} showMembers={showMembers} setShowMembers={setShowMembers}/>}
+          <div id="messages-area" className="flex flex-col flex-1 bg-background overflow-hidden px-3 pb-10 
+          sm:px-6 md:px-10">
+            <div className="flex-1 overflow-y-auto no-scrollbar">
+              <Messages user={user} messages={roomMessages} currentRoom={currentRoom} loading={loading} />
+            </div>
+            {currentRoom && typingUserByRoom[currentRoom.id] && (
+              <div className="text-sm text-gray-500 italic mb-1 px-4 flex items-center gap-2">
+                <span className="animate-pulse">💬 {typingUserByRoom[currentRoom.id]} is typing...</span>
+              </div>
+            )}
+            <MessageBox handleSend={handleSend} input={input} setInput={setInput} currentRoom={currentRoom} />
+          </div>
+        </div>
+        )}
+
+
+        {/* ------- ROOM  ------- */}
+        <div className="hidden xl:block w-2/5 max-w-xs">
+            <UsersInRoom currentRoomUsers={currentRoomUsers} />
+        </div>
+        {showMembers && (
+          <div className="hidden lg:block xl:hidden w-2/5 max-w-xs">
+            <UsersInRoom currentRoomUsers={currentRoomUsers} />
+          </div>
+        )}
+        {mobileView === "members" && (
+          <div className="w-full lg:hidden">
+            <UsersInRoom currentRoomUsers={currentRoomUsers} />
+          </div>
+        )}
+        
       </div>
-      <UsersInRoom currentRoomUsers={currentRoomUsers} />
     </div>
   );
 };

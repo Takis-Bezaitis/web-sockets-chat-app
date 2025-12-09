@@ -1,6 +1,6 @@
 import { type Request, type Response } from "express";
-import { type AuthRequest, type ApiResponse, type MessageDTO } from "../../types/custom.js";
-import { getAllTheMessages, saveTheRoomMessage, getTheRoomMessages } from "../../services/messages/messageService.js";
+import { type AuthRequest, type ApiResponse, type MessageDTO, type MessageReaction } from "../../types/custom.js";
+import { getAllTheMessages, saveTheRoomMessage, getTheRoomMessages, addMessageReaction } from "../../services/messages/messageService.js";
 import prisma from "../../prismaClient.js";
 
 export const getAllMessages = async (_: Request, res: Response<ApiResponse<MessageDTO[]>>): Promise<void> => {
@@ -26,6 +26,7 @@ export const getRoomMessages = async (
       }
 
       const messages = await getTheRoomMessages(Number(roomId));
+
       res.status(200).json({ data: messages });
     } catch (error) {
       console.error("Error fetching room messages:", error);
@@ -62,7 +63,7 @@ export const saveRoomMessage = async (
     // Fetch user's email to include in the DTO
     const user = await prisma.user.findUnique({
       where: { id: Number(userId) },
-      select: { email: true }
+      select: { email: true, username: true }
     });
 
     if (!user) {
@@ -77,7 +78,9 @@ export const saveRoomMessage = async (
       createdAt: message.createdAt,
       userId: message.userId,
       email: user.email,
-      roomId: message.roomId
+      roomId: message.roomId,
+      username: user.username,
+      reactions: [],
     };
 
     res.status(201).json({ data: messageDTO });
@@ -85,4 +88,24 @@ export const saveRoomMessage = async (
     console.error(error);
     res.status(500).json({ error: "Failed to save message" });
  }
+};
+
+export const reactToMessage = async(req: Request<{ messageId: string }> & AuthRequest, 
+  res: Response<ApiResponse<MessageReaction>>): Promise<void> => {
+  try {
+    const { messageId } = req.params;
+    const { emoji }: { emoji: string } = req.body;
+    const userId = Number(req.user?.id);
+
+    if (!userId) {
+      res.status(401).json({ error: "Unauthorized" });
+      return;
+    }
+
+    const reaction = await addMessageReaction({ messageId: Number(messageId), emoji, userId });
+    res.status(201).json({ data: reaction });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Failed to save reaction" });
+  }
 };

@@ -1,6 +1,7 @@
 export interface User {
     id: number;
     email: string;
+    username: string;
 };
 
 export type ApiResponse<T> = 
@@ -18,8 +19,9 @@ export type RoomUsers = {
     email: string;
 };
 
-// For AvailableRooms
-export interface AvailableRoomsProps {
+// For ChatSidebar
+export interface ChatSidebarProps {
+  user: User;
   rooms: RoomWithMembershipDTO[];
   currentRoom?: RoomWithMembershipDTO;
   onSelectRoom: (room: RoomWithMembershipDTO) => void;
@@ -31,6 +33,17 @@ export interface UsersInRoomProps {
   currentRoomUsers: RoomUsers[];
 }
 
+export interface MessageReaction {
+  userId: number;
+  username: string;
+  emoji: string;
+}
+
+export interface MessageReactionEvent {
+  messageId: number;
+  reaction: MessageReaction;
+}
+
 export interface Message {
   id: number;       
   userId: number;   
@@ -38,6 +51,8 @@ export interface Message {
   text: string;
   createdAt: string;
   roomId: number;
+  username: string;
+  reactions: MessageReaction[];
 }
 
 export type RoomWithMembershipDTO = {
