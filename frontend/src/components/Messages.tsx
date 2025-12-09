@@ -60,11 +60,11 @@ const Messages = ({user, messages, loading }: UserProps) => {
   };
 
   return (
-    <div className="p-4 space-y-2">
+    <div className="px-4 pt-5 pb-4 space-y-2">
       {messages.map((msg, index) => (
         <div
           key={msg.id || index}
-          className={`relative flex gap-2 max-w-sm text-left mb-9 p-2 rounded text-foreground cursor-pointer ${
+          className={`relative flex gap-2 max-w-sm text-left mt-6 mb-11 p-2 rounded text-foreground cursor-pointer ${
             msg.userId === user?.id ? "ml-auto bg-message-user self-end" : "bg-message-other-user"
           }`}
           onMouseEnter={() => setHoveredMessageId(msg.id)}

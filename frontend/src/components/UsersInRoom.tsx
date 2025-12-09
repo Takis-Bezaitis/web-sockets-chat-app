@@ -5,11 +5,11 @@ const UsersInRoom = ({ currentRoomUsers }: UsersInRoomProps) => {
   const onlineUsers = usePresenceStore((s) => s.onlineUsers);
 
   return (
-    <div className="flex flex-col w-2/5 max-w-xs bg-component-background border-l border-border-line">
-      <header className="text-foreground p-3 text-lg h-14">
-        Room members
+    <div className="flex flex-col h-full bg-component-background border-l border-border-line">
+      <header className="text-foreground p-3 text-lg h-14 border-b border-border-line">
+        Members
       </header>
-      <div className="p-4">
+      <div className="p-4 overflow-y-auto no-scrollbar">
         {Array.isArray(currentRoomUsers) && currentRoomUsers.map((user) => {
           const isPresent = onlineUsers[user.id];
 

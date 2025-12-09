@@ -1,8 +1,6 @@
-// backend/src/sockets/chatSocket.ts
 import { Server, Socket } from "socket.io";
 import { type UserPayload } from "../types/custom.js";
 import { saveTheRoomMessage, addMessageReaction, editMessage, deleteMessage } from "../services/messages/messageService.js";
-import { invalidateRoomMessagesCache } from "../utils/cacheMessages.js"
 import prisma from "../prismaClient.js";
 
 export interface CustomSocket extends Socket {
@@ -156,8 +154,6 @@ export default function chatSocket(io: Server) {
 
         if (!message) return;
 
-        await invalidateRoomMessagesCache(message.roomId);
-
         const roomChannel = `room:${message.roomId}`;
 
         // 3️⃣ Broadcast the new reaction to everyone in the room
@@ -174,8 +170,6 @@ export default function chatSocket(io: Server) {
     customSocket.on("message:delete", async({ id, roomId }: { id: number; roomId: number }) => {
       try {
         await deleteMessage(id);
-        await invalidateRoomMessagesCache(roomId);
-        
         const roomChannel = `room:${roomId}`;
         io.to(roomChannel).emit("message:deleted", { id, roomId });
       } catch (err) {

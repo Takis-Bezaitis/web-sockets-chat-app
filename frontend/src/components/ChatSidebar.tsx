@@ -9,21 +9,26 @@ const ChatSidebar = ({
 }: ChatSidebarProps) => {
 
   return (
-    <div className="flex flex-col w-2/5 max-w-xs bg-component-background border-r border-border-line">
-      <div className="bg-component-background text-foreground h-14 flex items-center mx-2">
-        <div className="flex gap-2 place-items-center">
+    <div className="flex flex-col h-full bg-component-background border-r border-border-line">
+      <div className="bg-component-background text-foreground h-14 flex items-center border-b border-border-line">
+        <div className="flex ml-4 gap-2 place-items-center">
           <div className="text-3xl">👤</div>
           <div className="text-xl">{user.username}</div>
         </div>
       </div>
 
-      <header className="text-foreground p-4">Available Chat Rooms</header>
+      <div className="flex items-center justify-between pt-4 pb-2">
+        <header className="text-foreground ml-5 text-lg">Channels ({rooms.length})</header>
+        <div className="cursor-pointer mr-5">➕</div>
+      </div>
+      
+      <div className="overflow-y-auto no-scrollbar">
       {rooms.map((room) => {
         return (
           <div
             key={room.id}
             onClick={() => onSelectRoom(room)}
-            className={`flex gap-3 flex-wrap justify-between m-2 rounded-md p-2 cursor-pointer ${
+            className={`flex gap-3 flex-wrap justify-between mx-5 my-2 rounded-md p-2 cursor-pointer ${
               room.name === currentRoom?.name
                 ? "bg-surface-selected"
                 : "bg-surface"
@@ -69,6 +74,8 @@ const ChatSidebar = ({
           </div>
         );
       })}
+      </div>
+
     </div>
   );
 };

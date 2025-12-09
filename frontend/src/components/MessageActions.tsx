@@ -27,7 +27,7 @@ const MessageActions = ({userId, message, onEdit}: MessageActionsProps) => {
   };
 
   return (
-    <div className="absolute flex gap-1 top-0 right-0 -translate-y-3/4 secondary-border-line border-1 bg-background p-1 rounded shadow">
+    <div className="absolute flex gap-1 top-0 right-0 -translate-y-8 secondary-border-line border-1 bg-background p-1 rounded-[6px] shadow">
         <div onClick={() => handleReactionClick("👍")}>👍</div>
         <div onClick={() => handleReactionClick("❤️")}>❤️</div>
         <div onClick={() => handleReactionClick("😄")}>😄</div>

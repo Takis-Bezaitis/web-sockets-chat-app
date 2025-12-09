@@ -35,7 +35,7 @@ const MessageBox = ({handleSend, input, setInput, currentRoom}: MessageBoxProps)
         <button
             onClick={handleSend}
             disabled={!currentRoom?.isMember}
-            className={`bg-button-main hover:bg-button-hover text-foreground px-4 rounded  
+            className={`bg-button-main hover:bg-button-hover text-button px-4 rounded  
               ${currentRoom?.isMember ? 'cursor-pointer' : 'cursor-default' }`}
         >
         Send

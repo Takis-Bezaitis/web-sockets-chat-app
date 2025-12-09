@@ -18,11 +18,11 @@ const MessageReactions = ({ reactions }: Props) => {
   }, {} as Record<string, { count: number; users: string[] }>);
 
   return (
-    <div className="absolute bottom-0 left-0 translate-x-1 translate-y-6 flex gap-2">
+    <div className="absolute bottom-0 left-0 translate-x-1 translate-y-6 flex gap-0.5">
       {Object.entries(grouped).map(([emoji, info]) => (
         <div
           key={emoji}
-          className="text-sm p-1 secondary-border-line bg-surface border-1 border-solid rounded-md flex items-center gap-0.5"
+          className="text-sm p-1 flex items-center "
           title={info.users.join(", ")} // tooltip of usernames
         >
           <span>{emoji}</span>
