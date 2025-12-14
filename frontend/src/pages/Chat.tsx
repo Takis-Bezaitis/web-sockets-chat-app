@@ -1,9 +1,9 @@
-// frontend/src/pages/Chat.tsx
 import { useEffect, useMemo, useState } from "react";
 import { useAuthStore } from "../store/authStore";
 import { useSocketStore } from "../store/socketStore";
 import { useMessageStore } from "../store/messageStore";
 import { useTypingStore } from "../store/typingStore";
+import { useWebRTCStore } from "../store/webrtcStore";
 import type { RoomWithMembershipDTO, RoomUsers } from "../types/custom";
 import ChatSidebar from "../components/ChatSidebar";
 import ChatHeader from "../components/ChatHeader";
@@ -11,6 +11,8 @@ import UsersInRoom from "../components/UsersInRoom";
 import Messages from "../components/Messages";
 import MessageBox from "../components/MessageBox";
 import MobileNavBar from "../components/MobileNavBar";
+import IncomingCallModal from "../components/video/IncomingCallModal";
+import VideoCallWindow from "../components/video/VideoCallWindow";
 
 const Chat = () => {
   const { user } = useAuthStore();
@@ -34,6 +36,15 @@ const Chat = () => {
   const [input, setInput] = useState("");
   const [mobileView, setMobileView] = useState<"chat" | "rooms" | "members">("chat");
   const [showMembers, setShowMembers] = useState(false);
+
+  const [incomingCaller, setIncomingCaller] = useState<{ id: number; username: string } | undefined>(undefined);
+  const [outcomingCallee, setOutcomingCallee] = useState<{ id: number} | undefined>(undefined);
+
+  const setCallState = useWebRTCStore((state) => state.setCallState);
+  const callState = useWebRTCStore((state) => state.callState);
+  const setIsCaller = useWebRTCStore((s) => s.setIsCaller);
+  const isCaller = useWebRTCStore((state) => state.isCaller);
+  const setRemoteUserId = useWebRTCStore((s) => s.setRemoteUserId);
 
   // messages for currently selected room (derived from store)
   const roomMessages = useMemo(() => {
@@ -116,6 +127,190 @@ const Chat = () => {
       socket.off("membership:left", handleMembershipLeft);
     }
   },[socket, currentRoom]);
+
+  // video
+  useEffect(() => {
+    if (!socket) return;
+
+    // =============================
+    // 1. INCOMING CALL (callee)
+    // =============================
+    const handleCallRequest = async (data: any) => {
+      console.log("Incoming call:", data);
+
+      const { setCallState, setIsCaller } = useWebRTCStore.getState();
+
+      // 1. Show incoming call UI
+      setIncomingCaller({ id: data.callerId, username: data.callerName });
+      setOutcomingCallee({ id: data.calleeId });
+      setCallState("ringing");
+      setIsCaller(false); // important! This user is the callee
+      setRemoteUserId(data.callerId);
+    };
+
+    socket.on("video:call-request", handleCallRequest);
+
+    // =============================
+    // 2. CALL ACCEPTED BY CALLEE (caller side)
+    // =============================
+    const handleCallResponse = async (data: any) => {
+      if (!data.accepted) {
+        console.log("Call declined.");
+        return;
+      }
+
+      console.log("Call accepted — creating offer...");
+      console.log("handleCallResponse:",data)
+      const { localStream, setPeerConnection, setRemoteStream, setCallState } = useWebRTCStore.getState();
+      if (!localStream) {
+        console.error("Caller has no localStream");
+        return;
+      }
+
+      // 1️⃣ Create PeerConnection
+      const pc = new RTCPeerConnection({
+        iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
+      });
+
+      // 2️⃣ Attach ontrack immediately
+      pc.ontrack = (event) => {
+        console.log("Caller ontrack event:", event);
+        const stream = event.streams && event.streams[0] ? event.streams[0] : new MediaStream([event.track]);
+        setRemoteStream(stream);
+      };
+
+      // 3️⃣ Add local tracks
+      localStream.getTracks().forEach((track) => {
+        const exists = pc.getSenders().some((s) => s.track === track);
+        if (!exists) pc.addTrack(track, localStream);
+      });
+
+      // 4️⃣ ICE candidates
+      pc.onicecandidate = (event) => {
+        if (event.candidate && socket) {
+          socket.emit("video:webrtc-ice-candidate", {
+            candidate: event.candidate,
+            targetUserId: data.calleeId, // Simon
+          });
+        }
+      };
+
+      setPeerConnection(pc);
+      setCallState("inCall");
+
+      // 5️⃣ Create and send offer
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+
+      socket.emit("video:webrtc-offer", {
+        offer,
+        calleeId: data.calleeId, // Simon
+        callerId: data.callerId // Alice
+      });
+    };
+
+    socket.on("video:call-response", handleCallResponse);
+
+
+    // =============================
+    // 3. RECEIVING OFFER (callee)
+    // =============================
+    const handleOffer = async (data: any) => {
+      const { peerConnection, setPeerConnection, localStream, setRemoteStream } = useWebRTCStore.getState();
+      console.log("handleOffer:", data)
+      // 1️⃣ Create PeerConnection if it doesn't exist (usually already created in handleAccept)
+      const pc = peerConnection || new RTCPeerConnection({
+        iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
+      });
+
+      // 2️⃣ Attach ontrack
+      pc.ontrack = (event) => {
+        console.log("Callee ontrack event:", event);
+        const stream = event.streams && event.streams[0] ? event.streams[0] : new MediaStream([event.track]);
+        setRemoteStream(stream);
+      };
+
+      // 3️⃣ Add local tracks if they exist
+      if (localStream) {
+        localStream.getTracks().forEach((track) => {
+          const exists = pc.getSenders().some((s) => s.track === track);
+          if (!exists) pc.addTrack(track, localStream);
+        });
+      }
+
+      // 4️⃣ Handle ICE
+      pc.onicecandidate = (event) => {
+        if (event.candidate && socket) {
+          socket.emit("video:webrtc-ice-candidate", {
+            candidate: event.candidate,
+            targetUserId: data.callerId, // Alice
+          });
+        }
+      };
+
+      setPeerConnection(pc);
+
+      // 5️⃣ Set remote description
+      await pc.setRemoteDescription(new RTCSessionDescription(data.offer));
+
+      // 6️⃣ Create answer and send to caller
+      const answer = await pc.createAnswer();
+      await pc.setLocalDescription(answer);
+
+      socket.emit("video:webrtc-answer", {
+        answer,
+        callerId: data.callerId, // Alice
+        calleeId: data.calleeId, // Simon
+      });
+
+      useWebRTCStore.getState().setCallState("inCall");
+    };
+
+    socket.on("video:webrtc-offer", handleOffer);
+
+    // =============================
+    // 4. RECEIVING ANSWER (caller)
+    // =============================
+    const handleAnswer = async (data: any) => {
+      const { peerConnection } = useWebRTCStore.getState();
+      if (!peerConnection) return;
+
+      // 1️⃣ Set remote description so Alice can receive Simon's tracks
+      await peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer));
+
+      console.log("Caller: remote description set, remote tracks should flow now.");
+    };
+
+    socket.on("video:webrtc-answer", handleAnswer);
+
+    // =============================
+    // 5. ICE CANDIDATES (both sides)
+    // =============================
+    const handleIceCandidate = async (data: any) => {
+      const pc = useWebRTCStore.getState().peerConnection;
+      if (!pc) return;
+
+      try {
+        await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
+      } catch (e) {
+        console.error("Error adding ICE candidate", e);
+      }
+    };
+
+    socket.on("video:webrtc-ice-candidate", handleIceCandidate);
+
+    // =============================
+    // CLEANUP
+    // =============================
+    return () => {
+      socket.off("video:call-request", handleCallRequest);
+      socket.off("video:call-response", handleCallResponse);
+      socket.off("video:webrtc-offer", handleOffer);
+      socket.off("video:webrtc-answer", handleAnswer);
+      socket.off("video:webrtc-ice-candidate", handleIceCandidate);
+    };
+  }, [socket]);
+
 
   // helper: fetch users in a room
   const getRoomUsers = async (roomId: number) => {
@@ -243,8 +438,6 @@ const Chat = () => {
           </div>
         )}
 
-
-
         {/* ------- CENTER AREA (Chat section OR mobile view switching) ------- */}
         <div className="hidden lg:flex flex-1 flex-col">  
           {currentRoom && <ChatHeader currentRoom={currentRoom} showMembers={showMembers} setShowMembers={setShowMembers}/>}
@@ -257,6 +450,14 @@ const Chat = () => {
               <div className="text-sm text-gray-500 italic mb-1 px-4 flex items-center gap-2">
                 <span className="animate-pulse">💬 {typingUserByRoom[currentRoom.id]} is typing...</span>
               </div>
+            )}
+            <IncomingCallModal
+              visible={callState === "ringing"}
+              caller={incomingCaller || undefined}
+              callee={outcomingCallee || undefined}
+            />
+            {(callState === "inCall" || (callState === "ringing" && isCaller)) && (
+              <VideoCallWindow />
             )}
             <MessageBox handleSend={handleSend} input={input} setInput={setInput} currentRoom={currentRoom} />
           </div>
@@ -275,24 +476,31 @@ const Chat = () => {
                 <span className="animate-pulse">💬 {typingUserByRoom[currentRoom.id]} is typing...</span>
               </div>
             )}
+            <IncomingCallModal
+              visible={callState === "ringing"}
+              caller={incomingCaller || undefined}
+              callee={outcomingCallee || undefined}
+            />
+            {(callState === "inCall" || (callState === "ringing" && isCaller)) && (
+              <VideoCallWindow />
+            )}
             <MessageBox handleSend={handleSend} input={input} setInput={setInput} currentRoom={currentRoom} />
           </div>
         </div>
         )}
 
-
         {/* ------- ROOM  ------- */}
         <div className="hidden xl:block w-2/5 max-w-xs">
-            <UsersInRoom currentRoomUsers={currentRoomUsers} />
+            <UsersInRoom user={user} currentRoomUsers={currentRoomUsers} currentRoom={currentRoom} />
         </div>
         {showMembers && (
           <div className="hidden lg:block xl:hidden w-2/5 max-w-xs">
-            <UsersInRoom currentRoomUsers={currentRoomUsers} />
+            <UsersInRoom user={user} currentRoomUsers={currentRoomUsers} currentRoom={currentRoom} />
           </div>
         )}
         {mobileView === "members" && (
           <div className="w-full lg:hidden">
-            <UsersInRoom currentRoomUsers={currentRoomUsers} />
+            <UsersInRoom user={user} currentRoomUsers={currentRoomUsers} currentRoom={currentRoom} />
           </div>
         )}
         

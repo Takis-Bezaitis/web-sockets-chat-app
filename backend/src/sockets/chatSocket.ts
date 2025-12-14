@@ -14,6 +14,9 @@ export default function chatSocket(io: Server) {
     const customSocket = socket as CustomSocket;
     console.log(`User connected: ${socket.id}`);
 
+    // IMPORTANT — add the socket to a user-specific room
+    customSocket.join(`user:${customSocket.user?.id}`);
+    
     // --- ROOM SUBSCRIPTION (UI-level) ---
     // User opened a room in the UI and wants real-time updates for that room.
     customSocket.on("enterRoom", (roomId: string) => {
@@ -176,6 +179,35 @@ export default function chatSocket(io: Server) {
         console.error("Failed to delete message:", err);
       }
     }); 
+
+    /* Video listeners */
+
+    customSocket.on("video:call-request", (data) => {
+      console.log("video:call-request data:",data)
+      io.to(`user:${data.calleeId}`).emit("video:call-request", data);
+    });
+
+    customSocket.on("video:call-response", (data) => {
+      console.log("video:call-response!!", data);
+      io.to(`user:${data.callerId}`).emit("video:call-response", data);
+    });
+
+    customSocket.on("video:webrtc-offer", (data) => {
+      console.log("video:webrtc-offer:", data)
+      io.to(`user:${data.calleeId}`).emit("video:webrtc-offer", data);
+    });
+
+    customSocket.on("video:webrtc-answer", (data) => {
+      io.to(`user:${data.callerId}`).emit("video:webrtc-answer", data);
+    });
+
+    customSocket.on("video:webrtc-ice-candidate", (data) => {
+      console.log("video:webrtc-ice-candidate:",data)
+      io.to(`user:${data.targetUserId}`).emit("video:webrtc-ice-candidate", data);
+    });
+
+
+    /* --------------- */
 
     customSocket.on("disconnect", (reason) => {
       console.log(`User disconnected: ${socket.id} (${reason})`);

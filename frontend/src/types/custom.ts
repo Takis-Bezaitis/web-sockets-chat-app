@@ -31,7 +31,9 @@ export interface ChatSidebarProps {
 // For UsersInRoom
 export interface UsersInRoomProps {
   currentRoomUsers: RoomUsers[];
-}
+  user: User | null;
+  currentRoom: RoomWithMembershipDTO | undefined;
+};
 
 export interface MessageReaction {
   userId: number;
