@@ -20,13 +20,13 @@ interface WebRTCStore {
 
   setCallState: (state: CallState) => void;
   setIsCaller: (caller: boolean) => void;
-
   setRemoteUserId: (id: number | null) => void;
 
-  resetCall: () => void;
+  declineCall: () => void;
+  cleanupCall: () => void;
 }
 
-export const useWebRTCStore = create<WebRTCStore>((set) => ({
+export const useWebRTCStore = create<WebRTCStore>((set, get) => ({
   localStream: null,
   remoteStream: null,
   peerConnection: null,
@@ -41,10 +41,22 @@ export const useWebRTCStore = create<WebRTCStore>((set) => ({
 
   setCallState: (state) => set({ callState: state }),
   setIsCaller: (caller) => set({ isCaller: caller }),
-
   setRemoteUserId: (id) => set({ remoteUserId: id }),
 
-  resetCall: () =>
+  declineCall: () =>
+    set({
+      callState: "idle",
+      isCaller: false,
+      remoteUserId: null,
+    }),
+
+  cleanupCall: () => {
+    const { peerConnection, localStream, remoteStream } = get();
+
+    peerConnection?.close();
+    localStream?.getTracks().forEach((t) => t.stop());
+    remoteStream?.getTracks().forEach((t) => t.stop());
+
     set({
       localStream: null,
       remoteStream: null,
@@ -52,5 +64,6 @@ export const useWebRTCStore = create<WebRTCStore>((set) => ({
       callState: "idle",
       isCaller: false,
       remoteUserId: null,
-    }),
+    });
+  },
 }));

@@ -206,6 +206,9 @@ export default function chatSocket(io: Server) {
       io.to(`user:${data.targetUserId}`).emit("video:webrtc-ice-candidate", data);
     });
 
+    customSocket.on("video:call-ended", (data) => {
+      io.to(`user:${data.targetUserId}`).emit("video:call-ended");
+    });
 
     /* --------------- */
 

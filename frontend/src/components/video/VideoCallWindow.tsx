@@ -1,18 +1,17 @@
 import { useEffect, useRef } from "react";
 import { useWebRTCStore } from "../../store/webrtcStore";
+import { useSocketStore } from "../../store/socketStore";
 
 export default function VideoCallWindow() {
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
+  
+  const { socket } = useSocketStore();
 
   const localStream = useWebRTCStore((s) => s.localStream);
   const remoteStream = useWebRTCStore((s) => s.remoteStream);
-  const peerConnection = useWebRTCStore((s) => s.peerConnection);
-  const setCallState = useWebRTCStore((s) => s.setCallState);
-  const setLocalStream = useWebRTCStore((s) => s.setLocalStream);
-  const setRemoteStream = useWebRTCStore((s) => s.setRemoteStream);
-  const setPeerConnection = useWebRTCStore((s) => s.setPeerConnection);
-  const resetCall = useWebRTCStore((s) => s.resetCall);
+  const remoteUserId = useWebRTCStore((s) => s.remoteUserId);
+  const cleanupCall = useWebRTCStore((s) => s.cleanupCall);
 
   // Attach video streams
   useEffect(() => {
@@ -32,15 +31,15 @@ export default function VideoCallWindow() {
     }
   }, [remoteStream]);
 
-
   // Cleanup when window closes
   const endCall = () => {
-    peerConnection?.close();
+    if (socket?.connected && remoteUserId) {
+      socket.emit("video:call-ended", {
+        targetUserId: remoteUserId,
+      });
+    }
 
-    localStream?.getTracks().forEach((t) => t.stop());
-    remoteStream?.getTracks().forEach((t) => t.stop());
-
-    resetCall();
+    cleanupCall();
   };
 
   console.log("localStream:",localStream)

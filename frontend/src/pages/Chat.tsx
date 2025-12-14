@@ -40,11 +40,10 @@ const Chat = () => {
   const [incomingCaller, setIncomingCaller] = useState<{ id: number; username: string } | undefined>(undefined);
   const [outcomingCallee, setOutcomingCallee] = useState<{ id: number} | undefined>(undefined);
 
-  const setCallState = useWebRTCStore((state) => state.setCallState);
   const callState = useWebRTCStore((state) => state.callState);
-  const setIsCaller = useWebRTCStore((s) => s.setIsCaller);
   const isCaller = useWebRTCStore((state) => state.isCaller);
   const setRemoteUserId = useWebRTCStore((s) => s.setRemoteUserId);
+  const cleanupCall = useWebRTCStore((s) => s.cleanupCall);
 
   // messages for currently selected room (derived from store)
   const roomMessages = useMemo(() => {
@@ -299,6 +298,13 @@ const Chat = () => {
 
     socket.on("video:webrtc-ice-candidate", handleIceCandidate);
 
+    const onCallEnded = () => {
+      console.log("Remote user ended the call");
+      cleanupCall();
+    };
+
+    socket.on("video:call-ended", onCallEnded);
+
     // =============================
     // CLEANUP
     // =============================
@@ -308,6 +314,7 @@ const Chat = () => {
       socket.off("video:webrtc-offer", handleOffer);
       socket.off("video:webrtc-answer", handleAnswer);
       socket.off("video:webrtc-ice-candidate", handleIceCandidate);
+      socket.off("video:call-ended", onCallEnded);
     };
   }, [socket]);
 

@@ -9,13 +9,7 @@ interface IncomingCallModalProps {
 
 export default function IncomingCallModal({ visible, caller, callee }: IncomingCallModalProps) {
   const { socket } = useSocketStore();
-  const localStream = useWebRTCStore((s) => s.localStream);
-  const remoteUserId = useWebRTCStore((s) => s.remoteUserId);
-  const setLocalStream = useWebRTCStore((s) => s.setLocalStream);
   const setCallState = useWebRTCStore((s) => s.setCallState);
-  const setIsCaller = useWebRTCStore((s) => s.setIsCaller);
-  const setPeerConnection = useWebRTCStore((s) => s.setPeerConnection);
-  const setRemoteStream = useWebRTCStore((s) => s.setRemoteStream);
 
   if (!visible || !caller) return null;
 
