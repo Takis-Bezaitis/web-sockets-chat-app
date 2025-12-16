@@ -4,17 +4,20 @@ import { type User } from "../../types/custom";
 
 interface VideoCallButtonProps {
   calleeId: number;
+  calleeName: string;
   callerId: number;
   roomId?: number | null;
   user: User | null;
 };
 
-const VideoCallButton = ({ calleeId, roomId, callerId, user }: VideoCallButtonProps) => {
+const VideoCallButton = ({ calleeId, calleeName, roomId, callerId, user }: VideoCallButtonProps) => {
   const { socket } = useSocketStore();
   const setLocalStream = useWebRTCStore((s) => s.setLocalStream);
   const setCallState = useWebRTCStore((s) => s.setCallState);
   const setIsCaller = useWebRTCStore((s) => s.setIsCaller);
   const setRemoteUserId = useWebRTCStore((s) => s.setRemoteUserId);
+  const setIncomingCaller = useWebRTCStore((s) => s.setIncomingCaller);
+  const setOutcomingCallee = useWebRTCStore((s) => s.setOutcomingCallee);
 
   const startVideoHandler = async () => {
     if (!socket) return;
@@ -33,15 +36,18 @@ const VideoCallButton = ({ calleeId, roomId, callerId, user }: VideoCallButtonPr
       setCallState("ringing");
       setIsCaller(true);
       setRemoteUserId(calleeId);
+      setIncomingCaller({ id: callerId, username: user!.username });
+      setOutcomingCallee({ id: calleeId, username: calleeName });
 
       // Send call request 
       socket.emit("video:call-request", {
         callerId,
         callerName: user!.username,
         calleeId,
+        calleeName,
         roomId,
       });
-
+     
     } catch (err) {
       console.error("Failed to access media devices", err);
     }

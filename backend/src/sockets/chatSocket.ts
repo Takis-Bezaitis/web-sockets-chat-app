@@ -193,7 +193,7 @@ export default function chatSocket(io: Server) {
     });
 
     customSocket.on("video:webrtc-offer", (data) => {
-      console.log("video:webrtc-offer:", data)
+      //console.log("video:webrtc-offer:", data)
       io.to(`user:${data.calleeId}`).emit("video:webrtc-offer", data);
     });
 

@@ -2,10 +2,14 @@ import { useEffect, useRef } from "react";
 import { useWebRTCStore } from "../../store/webrtcStore";
 import { useSocketStore } from "../../store/socketStore";
 
-export default function VideoCallWindow() {
+type VideoCallWindowProps = {
+  caller: string | undefined;
+  callee: string | undefined;
+}
+
+const VideoCallWindow = ({caller, callee}: VideoCallWindowProps) => {
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
-  
   const { socket } = useSocketStore();
 
   const localStream = useWebRTCStore((s) => s.localStream);
@@ -24,7 +28,6 @@ export default function VideoCallWindow() {
   }, [localStream, remoteStream]);
 
   useEffect(() => {
-    console.log("remoteStream changed:", remoteStream?.getTracks().map(t => t.kind));
     if (remoteVideoRef.current && remoteStream) {
       remoteVideoRef.current.srcObject = remoteStream;
       remoteVideoRef.current.play().catch(() => {});
@@ -42,37 +45,45 @@ export default function VideoCallWindow() {
     cleanupCall();
   };
 
-  console.log("localStream:",localStream)
-  console.log("remoteStream:",remoteStream)
-
   return (
-    <div className="fixed inset-0 bg-black/80 flex flex-col items-center justify-center p-4 z-50">
+    <div className="h-full flex flex-col items-center place-content-center p-4">
 
-      <div className="flex gap-4">
+      <div className="grid grid-cols-1 gap-1 w-full max-w-lg">
         {/* Local video */}
-        <video
-          ref={localVideoRef}
-          autoPlay
-          playsInline
-          muted
-          className="w-48 h-36 rounded-lg border border-gray-700 bg-black"
-        />
+        <p className="text-foreground">{caller}</p>
+        <div className="relative w-full aspect-video bg-background rounded-xl overflow-hidden mb-5">
+          <video
+            ref={localVideoRef}
+            autoPlay
+            playsInline
+            muted
+            className="absolute inset-0 w-full h-full object-cover"
+          />
+        </div>
 
         {/* Remote video */}
-        <video
-          ref={remoteVideoRef}
-          autoPlay
-          playsInline
-          className="w-96 h-72 rounded-lg border border-gray-700 bg-black"
-        />
+        <p className="text-foreground">{callee}</p>
+        <div className="relative w-full aspect-video bg-video-chat-callee rounded-xl overflow-hidden">
+          <video
+            ref={remoteVideoRef}
+            autoPlay
+            playsInline
+            className="absolute inset-0 w-full h-full object-cover"
+          />
+        </div>
       </div>
 
-      <button
-        onClick={endCall}
-        className="mt-6 bg-red-600 px-6 py-3 rounded-lg text-white text-lg cursor-pointer"
-      >
-        End Call
-      </button>
+      <div className="mt-8">
+        <button
+          onClick={endCall}
+          className="bg-red-600 px-6 py-3 rounded-lg text-white text-lg cursor-pointer"
+        >
+          End Call
+        </button>
+      </div>
     </div>
+
   );
 }
+
+export default VideoCallWindow;

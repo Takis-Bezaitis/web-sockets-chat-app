@@ -44,6 +44,7 @@ const UsersInRoom = ({ user, currentRoomUsers, currentRoom }: UsersInRoomProps) 
               <div className="absolute right-2 opacity-0 group-hover:opacity-100 transition-opacity">
                 <VideoCallButton
                   calleeId={roomUser.id}
+                  calleeName={roomUser.username}
                   callerId={user!.id}
                   roomId={currentRoom?.id}
                   user={user}

@@ -14,6 +14,9 @@ interface WebRTCStore {
   // The user on the OTHER side of the call
   remoteUserId: number | null;
 
+  incomingCaller: { id: number; username: string } | null;
+  outcomingCallee: { id: number; username: string } | null;
+
   setLocalStream: (stream: MediaStream | null) => void;
   setRemoteStream: (stream: MediaStream | null) => void;
   setPeerConnection: (pc: RTCPeerConnection | null) => void;
@@ -21,6 +24,9 @@ interface WebRTCStore {
   setCallState: (state: CallState) => void;
   setIsCaller: (caller: boolean) => void;
   setRemoteUserId: (id: number | null) => void;
+
+  setIncomingCaller: (caller: { id: number; username: string } | null) => void;
+  setOutcomingCallee: (callee: { id: number; username: string } | null) => void;
 
   declineCall: () => void;
   cleanupCall: () => void;
@@ -35,6 +41,9 @@ export const useWebRTCStore = create<WebRTCStore>((set, get) => ({
   isCaller: false,
   remoteUserId: null,
 
+  incomingCaller: null,
+  outcomingCallee: null,
+
   setLocalStream: (stream) => set({ localStream: stream }),
   setRemoteStream: (stream) => set({ remoteStream: stream }),
   setPeerConnection: (pc) => set({ peerConnection: pc }),
@@ -43,11 +52,16 @@ export const useWebRTCStore = create<WebRTCStore>((set, get) => ({
   setIsCaller: (caller) => set({ isCaller: caller }),
   setRemoteUserId: (id) => set({ remoteUserId: id }),
 
+  setIncomingCaller: (caller) => set({ incomingCaller: caller }),
+  setOutcomingCallee: (callee) => set({ outcomingCallee: callee }),
+
   declineCall: () =>
     set({
       callState: "idle",
       isCaller: false,
       remoteUserId: null,
+      incomingCaller: null,
+      outcomingCallee: null,
     }),
 
   cleanupCall: () => {
@@ -64,6 +78,8 @@ export const useWebRTCStore = create<WebRTCStore>((set, get) => ({
       callState: "idle",
       isCaller: false,
       remoteUserId: null,
+      incomingCaller: null,
+      outcomingCallee: null,
     });
   },
 }));
