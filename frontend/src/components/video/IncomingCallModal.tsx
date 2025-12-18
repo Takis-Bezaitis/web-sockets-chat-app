@@ -87,7 +87,7 @@ export default function IncomingCallModal({ visible, caller, callee }: IncomingC
   };
 
   return (
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center">
+    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-1">
       <div className="bg-surface rounded-lg p-6 shadow-xl text-foreground min-w-[300px]">
         <h2 className="text-xl font-semibold mb-4">
           Incoming call from {caller.username}

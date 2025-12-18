@@ -33,6 +33,7 @@ export interface UsersInRoomProps {
   currentRoomUsers: RoomUsers[];
   user: User | null;
   currentRoom: RoomWithMembershipDTO | undefined;
+  onStartVideoCall?: () => void;
 };
 
 export interface MessageReaction {

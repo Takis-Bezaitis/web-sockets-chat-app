@@ -8,9 +8,10 @@ interface VideoCallButtonProps {
   callerId: number;
   roomId?: number | null;
   user: User | null;
+  onCallStarted?: () => void;
 };
 
-const VideoCallButton = ({ calleeId, calleeName, roomId, callerId, user }: VideoCallButtonProps) => {
+const VideoCallButton = ({ calleeId, calleeName, roomId, callerId, user, onCallStarted }: VideoCallButtonProps) => {
   const { socket } = useSocketStore();
   const setLocalStream = useWebRTCStore((s) => s.setLocalStream);
   const setCallState = useWebRTCStore((s) => s.setCallState);
@@ -47,6 +48,8 @@ const VideoCallButton = ({ calleeId, calleeName, roomId, callerId, user }: Video
         calleeName,
         roomId,
       });
+
+      onCallStarted?.();
      
     } catch (err) {
       console.error("Failed to access media devices", err);

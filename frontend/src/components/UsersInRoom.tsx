@@ -2,7 +2,7 @@ import { type UsersInRoomProps } from "../types/custom";
 import { usePresenceStore } from "../store/presenceStore";
 import VideoCallButton from "./video/VideoCallButton";
 
-const UsersInRoom = ({ user, currentRoomUsers, currentRoom }: UsersInRoomProps) => {
+const UsersInRoom = ({ user, currentRoomUsers, currentRoom, onStartVideoCall }: UsersInRoomProps) => {
   const onlineUsers = usePresenceStore((s) => s.onlineUsers);
 
   return (
@@ -19,14 +19,10 @@ const UsersInRoom = ({ user, currentRoomUsers, currentRoom }: UsersInRoomProps) 
           return (
             <div 
               key={roomUser.id} 
-              className="group flex bg-surface m-2 rounded-md p-2 text-foreground items-center gap-3 relative cursor-pointer"
+              className="group flex bg-surface m-2 rounded-md p-2 md:ml-16 md:mr-16 text-foreground items-center gap-3 relative cursor-pointer"
             >
-
-              {/* Avatar container */}
               <div className="relative text-3xl leading-none">
                 <span>👤</span>
-
-                {/* Status dot */}
                 <span
                   className={`
                     absolute bottom-0 right-0 block w-3 h-3 rounded-full translate-y-1
@@ -35,12 +31,10 @@ const UsersInRoom = ({ user, currentRoomUsers, currentRoom }: UsersInRoomProps) 
                 />
               </div>
 
-              {/* User info */}
               <div className="flex flex-col text-lg">
                 <p className="font-medium">{roomUser.username}</p>
               </div>
 
-              {/* Video call button (only visible on hover) */}
               <div className="absolute right-2 opacity-0 group-hover:opacity-100 transition-opacity">
                 <VideoCallButton
                   calleeId={roomUser.id}
@@ -48,6 +42,7 @@ const UsersInRoom = ({ user, currentRoomUsers, currentRoom }: UsersInRoomProps) 
                   callerId={user!.id}
                   roomId={currentRoom?.id}
                   user={user}
+                  onCallStarted={onStartVideoCall}
                 />
               </div>
 
