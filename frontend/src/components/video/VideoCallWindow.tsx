@@ -1,13 +1,17 @@
 import { useEffect, useRef } from "react";
 import { useWebRTCStore } from "../../store/webrtcStore";
 import { useSocketStore } from "../../store/socketStore";
+import VideoControls from "./VideoControls";
+import { useAuthStore } from "../../store/authStore";
 
 type VideoCallWindowProps = {
   caller: string | undefined;
   callee: string | undefined;
+  onEndCall?: () => void;
 }
 
-const VideoCallWindow = ({caller, callee}: VideoCallWindowProps) => {
+const VideoCallWindow = ({caller, callee, onEndCall}: VideoCallWindowProps) => {
+  const { user } = useAuthStore();
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
   const { socket } = useSocketStore();
@@ -43,46 +47,42 @@ const VideoCallWindow = ({caller, callee}: VideoCallWindowProps) => {
     }
 
     cleanupCall();
+    onEndCall?.();
   };
 
   return (
-    <div className="h-full flex flex-col items-center place-content-center p-4">
+    <div className="h-full flex flex-col items-center place-content-center p-4 bg-background border-r border-border-line">
 
       <div className="grid grid-cols-1 gap-1 w-full max-w-lg">
         {/* Local video */}
-        <p className="text-foreground">{caller}</p>
-        <div className="relative w-full aspect-video bg-background rounded-xl overflow-hidden mb-5">
+        <p className="text-foreground">{user?.username}</p>
+        <div className="relative w-full aspect-video rounded-xl overflow-hidden mb-5">
           <video
             ref={localVideoRef}
             autoPlay
             playsInline
             muted
-            className="absolute inset-0 w-full h-full object-cover"
+            className="absolute inset-0 w-full h-full object-cover bg-video-chat-window"
           />
         </div>
 
         {/* Remote video */}
-        <p className="text-foreground">{callee}</p>
-        <div className="relative w-full aspect-video bg-video-chat-callee rounded-xl overflow-hidden">
+        <p className="text-foreground">{`${caller===user?.username ? callee : caller}`}</p>
+        <div className="relative w-full aspect-video rounded-xl overflow-hidden">
           <video
             ref={remoteVideoRef}
             autoPlay
             playsInline
-            className="absolute inset-0 w-full h-full object-cover"
+            className="absolute inset-0 w-full h-full object-cover bg-video-chat-callee"
           />
         </div>
       </div>
 
-      <div className="mt-8">
-        <button
-          onClick={endCall}
-          className="bg-red-600 px-6 py-3 rounded-lg text-white text-lg cursor-pointer"
-        >
-          End Call
-        </button>
+      <div className="flex items-center justify-center gap-6 mt-4">
+        <VideoControls onEndCall={endCall} />
       </div>
-    </div>
 
+    </div>
   );
 }
 

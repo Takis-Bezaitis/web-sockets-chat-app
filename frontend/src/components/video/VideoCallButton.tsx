@@ -13,6 +13,8 @@ interface VideoCallButtonProps {
 
 const VideoCallButton = ({ calleeId, calleeName, roomId, callerId, user, onCallStarted }: VideoCallButtonProps) => {
   const { socket } = useSocketStore();
+  const callState = useWebRTCStore((s) => s.callState);
+
   const setLocalStream = useWebRTCStore((s) => s.setLocalStream);
   const setCallState = useWebRTCStore((s) => s.setCallState);
   const setIsCaller = useWebRTCStore((s) => s.setIsCaller);
@@ -22,6 +24,7 @@ const VideoCallButton = ({ calleeId, calleeName, roomId, callerId, user, onCallS
 
   const startVideoHandler = async () => {
     if (!socket) return;
+    if (callState !== "idle") return;
 
     try {
       // Caller gets media BEFORE sending request
@@ -56,12 +59,19 @@ const VideoCallButton = ({ calleeId, calleeName, roomId, callerId, user, onCallS
     }
   };
 
+  const isDisabled = callState !== "idle";
+
   return (
     <div
-      onClick={startVideoHandler}
-      className="text-xl hover:text-blue-500 cursor-pointer"
+      onClick={isDisabled ? undefined : startVideoHandler}
+      className={`${isDisabled ? "cursor-default" : "cursor-pointer"}`}
     >
-      🎥
+      <svg 
+        xmlns="http://www.w3.org/2000/svg" 
+        className={`${isDisabled ? "fill-red-500" : "fill-green-500 hover:fill-green-800"} w-full h-full`} 
+        viewBox="0 0 24 24" width="30" height="30">
+        <path d="M17 10.5V6c0-1.1-.9-2-2-2H5C3.9 4 3 4.9 3 6v12c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2v-4.5l4 4v-11l-4 4z" />
+      </svg>
     </div>
   );
 };

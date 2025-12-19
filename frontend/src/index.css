@@ -29,8 +29,12 @@ html, body, * {
   .bg-surface { background-color: #e5e7eb; }             /* generic panel/card surface: light gray */
   .bg-message-user { background-color: #87a6d7; }        /* user message: blue */
   .bg-message-other-user { background-color: #c8ccd4; }  /* other user message: light gray */
-  .bg-video-chat-window { background-color: #e5e7eb;}
-  .bg-video-chat-callee { background-color: #87a6d7; }
+  .bg-video-chat-window { background-color: black;}
+  .bg-video-chat-callee { background-color: black; }
+  
+  /* icons */
+  .icon-color { fill: #c8ccd4; }
+  .icon-color-selected { fill: #111827;}
 
   /* lines */
   .border-border-line { border-color: #c8ccd4; }
@@ -76,7 +80,11 @@ html, body, * {
   .bg-message-user { background-color: #0093b1; }
   .bg-message-other-user { background-color: #1d293b; }
   .bg-video-chat-window { background-color: black;}
-  .bg-video-chat-callee { background-color: #0093b1; }
+  .bg-video-chat-callee { background-color: black; }
+
+  /* icons */
+  .icon-color { fill: black; }
+  .icon-color-selected { fill: #f3f4f6;}
 
   /* lines */
   .border-border-line { border-color: #202d3f; }

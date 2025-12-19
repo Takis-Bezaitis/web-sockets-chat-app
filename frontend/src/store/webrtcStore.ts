@@ -17,6 +17,9 @@ interface WebRTCStore {
   incomingCaller: { id: number; username: string } | null;
   outcomingCallee: { id: number; username: string } | null;
 
+  isMicMuted: boolean;
+  isCameraOff: boolean;
+
   setLocalStream: (stream: MediaStream | null) => void;
   setRemoteStream: (stream: MediaStream | null) => void;
   setPeerConnection: (pc: RTCPeerConnection | null) => void;
@@ -27,6 +30,9 @@ interface WebRTCStore {
 
   setIncomingCaller: (caller: { id: number; username: string } | null) => void;
   setOutcomingCallee: (callee: { id: number; username: string } | null) => void;
+
+  toggleMic: () => void;
+  toggleCamera: () => void;
 
   declineCall: () => void;
   cleanupCall: () => void;
@@ -44,6 +50,9 @@ export const useWebRTCStore = create<WebRTCStore>((set, get) => ({
   incomingCaller: null,
   outcomingCallee: null,
 
+  isMicMuted: false,
+  isCameraOff: false,
+
   setLocalStream: (stream) => set({ localStream: stream }),
   setRemoteStream: (stream) => set({ remoteStream: stream }),
   setPeerConnection: (pc) => set({ peerConnection: pc }),
@@ -54,6 +63,22 @@ export const useWebRTCStore = create<WebRTCStore>((set, get) => ({
 
   setIncomingCaller: (caller) => set({ incomingCaller: caller }),
   setOutcomingCallee: (callee) => set({ outcomingCallee: callee }),
+
+  toggleMic: () => {
+    const { localStream, isMicMuted } = get();
+    localStream?.getAudioTracks().forEach(track => {
+      track.enabled = isMicMuted;
+    });
+    set({ isMicMuted: !isMicMuted });
+  },
+
+  toggleCamera: () => {
+    const { localStream, isCameraOff } = get();
+    localStream?.getVideoTracks().forEach(track => {
+      track.enabled = isCameraOff;
+    });
+    set({ isCameraOff: !isCameraOff });
+  },
 
   declineCall: () =>
     set({
@@ -80,6 +105,8 @@ export const useWebRTCStore = create<WebRTCStore>((set, get) => ({
       remoteUserId: null,
       incomingCaller: null,
       outcomingCallee: null,
+      isMicMuted: false,
+      isCameraOff: false,
     });
   },
 }));

@@ -248,13 +248,7 @@ const Chat = () => {
     sendMessage(currentRoom.id, input.trim());
     setInput("");
   };
-console.log("--------------------------------")
-console.log("mobileView:",mobileView)
-console.log("videoOverlay:",videoOverlay)
-console.log("inCall:",inCall)
-console.log("callState:",callState)
-console.log("isCaller:",isCaller)
-console.log("--------------------------------")
+
   return (
     <div id="chat" className="flex flex-col h-full relative">
 
@@ -292,8 +286,14 @@ console.log("--------------------------------")
         )}
 
         {(callState === "inCall" || (callState === "ringing" && isCaller)) && (
-          <div className="w-full lg:w-3/5 bg-video-chat-window">
-            <VideoCallWindow caller={incomingCaller?.username} callee={outcomingCallee?.username} />
+          <div className="w-full lg:w-3/5">
+            <VideoCallWindow 
+              caller={incomingCaller?.username} 
+              callee={outcomingCallee?.username} 
+              onEndCall={() => {
+                setShowMembers(false);
+              }}
+            />
           </div>
         )}
 
@@ -330,8 +330,9 @@ console.log("--------------------------------")
         {((!inCall && callState==="idle") || (!inCall && !isCaller)) && <div className="hidden xl:block xl:w-3/5 xl:max-w-xs">
             <UsersInRoom user={user} currentRoomUsers={currentRoomUsers} currentRoom={currentRoom} />
         </div>}
+
         {showMembers && (
-          <div className="hidden lg:block lg:w-3/5 lg:max-w-xs xl:hidden">
+          <div className="hidden lg:block lg:w-3/5 lg:max-w-xs">
             <UsersInRoom user={user} currentRoomUsers={currentRoomUsers} currentRoom={currentRoom} />
           </div>
         )}
