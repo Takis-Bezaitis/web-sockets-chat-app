@@ -1,16 +1,17 @@
-// frontend/src/pages/Chat.tsx
 import { useEffect, useMemo, useState } from "react";
 import { useAuthStore } from "../store/authStore";
 import { useSocketStore } from "../store/socketStore";
 import { useMessageStore } from "../store/messageStore";
 import { useTypingStore } from "../store/typingStore";
+import { useWebRTCStore } from "../store/webrtcStore";
 import type { RoomWithMembershipDTO, RoomUsers } from "../types/custom";
 import ChatSidebar from "../components/ChatSidebar";
-import ChatHeader from "../components/ChatHeader";
 import UsersInRoom from "../components/UsersInRoom";
-import Messages from "../components/Messages";
-import MessageBox from "../components/MessageBox";
 import MobileNavBar from "../components/MobileNavBar";
+import VideoCallWindow from "../components/video/VideoCallWindow";
+import { handleCallRequest, handleCallResponse, handleOffer, handleAnswer, handleIceCandidate, onCallEnded } from "../features/webrtc/videoSocketHandlers";
+import ChatContent from "../components/chat/ChatContent";
+import IncomingCallModal from "../components/video/IncomingCallModal";
 
 const Chat = () => {
   const { user } = useAuthStore();
@@ -32,8 +33,17 @@ const Chat = () => {
   const [currentRoom, setCurrentRoom] = useState<RoomWithMembershipDTO | undefined>(undefined);
   const [currentRoomUsers, setCurrentRoomUsers] = useState<RoomUsers[]>([]);
   const [input, setInput] = useState("");
-  const [mobileView, setMobileView] = useState<"chat" | "rooms" | "members">("chat");
+  const [mobileView, setMobileView] = useState<"chat" | "rooms" | "members" | "video">("chat");
+  const [videoOverlay, setVideoOverlay] = useState<"hidden" | "chat" | "members">("hidden");
   const [showMembers, setShowMembers] = useState(false);
+
+  const incomingCaller = useWebRTCStore((state) => state.incomingCaller);
+  const outcomingCallee = useWebRTCStore((state) => state.outcomingCallee);
+  const callState = useWebRTCStore((state) => state.callState);
+  const inCall = callState === "inCall";
+  const isCaller = useWebRTCStore((state) => state.isCaller);
+
+  const HEARTBEAT_INTERVAL = 25_000;
 
   // messages for currently selected room (derived from store)
   const roomMessages = useMemo(() => {
@@ -116,6 +126,71 @@ const Chat = () => {
       socket.off("membership:left", handleMembershipLeft);
     }
   },[socket, currentRoom]);
+
+  // video
+  useEffect(() => {
+    if (!socket) return;
+
+    socket.on("video:call-request", handleCallRequest);
+    socket.on("video:call-response", handleCallResponse);
+    socket.on("video:webrtc-offer", handleOffer);
+    socket.on("video:webrtc-answer", handleAnswer);
+    socket.on("video:webrtc-ice-candidate", handleIceCandidate);
+    socket.on("video:call-ended", onCallEnded);
+
+    socket.on("video:remote-media-state", ({ micMuted, cameraOff }) => {
+      useWebRTCStore.getState().setRemoteMediaState({
+        micMuted,
+        cameraOff,
+      });
+    });
+
+    return () => {
+      socket.off("video:call-request", handleCallRequest);
+      socket.off("video:call-response", handleCallResponse);
+      socket.off("video:webrtc-offer", handleOffer);
+      socket.off("video:webrtc-answer", handleAnswer);
+      socket.off("video:webrtc-ice-candidate", handleIceCandidate);
+      socket.off("video:call-ended", onCallEnded);
+      socket.off("video:remote-media-state");
+    };
+  }, [socket]);
+
+  useEffect(() => {
+    if (callState === "inCall" || (callState === "ringing" && isCaller)) {
+      setMobileView("video");
+      return;
+    }
+
+    // idle
+    setVideoOverlay("hidden");
+    setMobileView("chat");
+  }, [callState, isCaller]);
+
+  useEffect(() => {
+    if (!currentRoom) return;
+
+    const socket = useSocketStore.getState().socket;
+    if (!socket || !socket.connected) return;
+
+    socket.emit("presence:heartbeat", String(currentRoom.id));
+
+    const interval = setInterval(() => {
+      if (socket.connected) {
+        socket.emit("presence:heartbeat", String(currentRoom.id));
+      }
+    }, HEARTBEAT_INTERVAL);
+
+    return () => {
+      clearInterval(interval);
+    };
+  }, [currentRoom?.id]);
+
+  useEffect(() => {
+    if (callState === "idle") {
+      setShowMembers(false);
+    }
+  }, [callState]);
 
   // helper: fetch users in a room
   const getRoomUsers = async (roomId: number) => {
@@ -214,14 +289,16 @@ const Chat = () => {
 
       {/* ------- MOBILE NAV BAR (bottom) ------- */}
       <div className="lg:hidden w-full fixed bottom-0 z-20 bg-background">
-        <MobileNavBar mobileView={mobileView} setMobileView={setMobileView} />
+        <MobileNavBar 
+        mobileView={mobileView} setMobileView={setMobileView} 
+        videoOverlay={videoOverlay} setVideoOverlay={setVideoOverlay} />
       </div>
 
       <div className="flex flex-1 overflow-hidden">
 
         {/* ------- SIDEBAR (hidden on mobile) ------- */}
-        {user && (
-          <div className="hidden lg:block w-2/5 max-w-xs">
+        {user && ((!inCall && callState==="idle") || (!inCall && !isCaller)) &&  (
+          <div className="hidden lg:block xl:w-3/5 xl:max-w-xs">
             <ChatSidebar
               user={user}
               rooms={rooms}
@@ -231,7 +308,7 @@ const Chat = () => {
             />
           </div>
         )}
-        {user && mobileView === "rooms" && (
+        {(user && mobileView === "rooms" && callState==="idle") && (
           <div className="w-full lg:hidden">
             <ChatSidebar
               user={user}
@@ -243,58 +320,86 @@ const Chat = () => {
           </div>
         )}
 
-
+        {(callState === "inCall" || (callState === "ringing" && isCaller)) && (
+          <div className="w-full lg:w-3/5">
+            <VideoCallWindow 
+              caller={incomingCaller?.username} 
+              callee={outcomingCallee?.username} 
+            />
+          </div>
+        )}
 
         {/* ------- CENTER AREA (Chat section OR mobile view switching) ------- */}
         <div className="hidden lg:flex flex-1 flex-col">  
-          {currentRoom && <ChatHeader currentRoom={currentRoom} showMembers={showMembers} setShowMembers={setShowMembers}/>}
-          <div id="messages-area" className="flex flex-col flex-1 bg-background overflow-hidden px-3 pb-10 
-          sm:px-6 md:px-10 md:pb-0 lg:px-15 xl:px-20 2xl:px-35">
-            <div className="flex-1 overflow-y-auto no-scrollbar">
-              <Messages user={user} messages={roomMessages} currentRoom={currentRoom} loading={loading} />
-            </div>
-            {currentRoom && typingUserByRoom[currentRoom.id] && (
-              <div className="text-sm text-gray-500 italic mb-1 px-4 flex items-center gap-2">
-                <span className="animate-pulse">💬 {typingUserByRoom[currentRoom.id]} is typing...</span>
-              </div>
-            )}
-            <MessageBox handleSend={handleSend} input={input} setInput={setInput} currentRoom={currentRoom} />
-          </div>
+          <ChatContent currentRoom={currentRoom} showMembers={showMembers} setShowMembers={setShowMembers}
+          user={user} roomMessages={roomMessages} loading={loading} 
+          typingUserByRoom={typingUserByRoom} 
+          handleSend={handleSend} input={input} setInput={setInput} />
         </div>
 
-        {mobileView === "chat" && (
+        {mobileView === "chat" && ((!inCall && callState!=="ringing" && isCaller) || (!inCall && !isCaller)) && (
           <div className="lg:hidden flex flex-1 flex-col">  
-          {currentRoom && <ChatHeader currentRoom={currentRoom} showMembers={showMembers} setShowMembers={setShowMembers}/>}
-          <div id="messages-area" className="flex flex-col flex-1 bg-background overflow-hidden px-3 pb-10 
-          sm:px-6 md:px-10">
-            <div className="flex-1 overflow-y-auto no-scrollbar">
-              <Messages user={user} messages={roomMessages} currentRoom={currentRoom} loading={loading} />
-            </div>
-            {currentRoom && typingUserByRoom[currentRoom.id] && (
-              <div className="text-sm text-gray-500 italic mb-1 px-4 flex items-center gap-2">
-                <span className="animate-pulse">💬 {typingUserByRoom[currentRoom.id]} is typing...</span>
-              </div>
-            )}
-            <MessageBox handleSend={handleSend} input={input} setInput={setInput} currentRoom={currentRoom} />
+            <ChatContent currentRoom={currentRoom} showMembers={showMembers} setShowMembers={setShowMembers}
+              user={user} roomMessages={roomMessages} loading={loading} 
+              typingUserByRoom={typingUserByRoom}
+              handleSend={handleSend} input={input} setInput={setInput} />
           </div>
-        </div>
+        )}
+        
+        {videoOverlay === "chat" && ((callState!="idle" && isCaller) || (inCall && !isCaller)) && (
+          <div
+            className="lg:hidden fixed bottom-0 left-0 right-0 h-[65%] bg-background rounded-t-2xl shadow-xl flex flex-col"
+          >
+            <ChatContent currentRoom={currentRoom} showMembers={showMembers} setShowMembers={setShowMembers}
+              user={user} roomMessages={roomMessages} loading={loading}
+              typingUserByRoom={typingUserByRoom}
+              handleSend={handleSend} input={input} setInput={setInput}
+            />
+          </div>
         )}
 
+        {/* ------- Room members for screens bigger that medium  ------- */}
+        {((!inCall && callState==="idle") || (!inCall && !isCaller)) && <div className="hidden xl:block xl:w-3/5 xl:max-w-xs">
+            <UsersInRoom user={user} currentRoomUsers={currentRoomUsers} currentRoom={currentRoom} />
+        </div>}
 
-        {/* ------- ROOM  ------- */}
-        <div className="hidden xl:block w-2/5 max-w-xs">
-            <UsersInRoom currentRoomUsers={currentRoomUsers} />
-        </div>
+        {/* Toggle-based members panel (LG always, XL only during call) */}
         {showMembers && (
-          <div className="hidden lg:block xl:hidden w-2/5 max-w-xs">
-            <UsersInRoom currentRoomUsers={currentRoomUsers} />
+          <div className="hidden lg:block xl:hidden lg:w-3/5 lg:max-w-xs">
+            <UsersInRoom user={user} currentRoomUsers={currentRoomUsers} currentRoom={currentRoom}
+            />
           </div>
         )}
+
+        {/* XL toggle when IN CALL or RINGING */}
+        {showMembers && (inCall || callState==="ringing") && (
+          <div className="hidden xl:block xl:w-3/5 xl:max-w-xs">
+            <UsersInRoom
+              user={user} currentRoomUsers={currentRoomUsers} currentRoom={currentRoom}
+            />
+          </div>
+        )}
+
+        {/* Room members for mobile screens */}
         {mobileView === "members" && (
           <div className="w-full lg:hidden">
-            <UsersInRoom currentRoomUsers={currentRoomUsers} />
+            <UsersInRoom user={user} currentRoomUsers={currentRoomUsers} currentRoom={currentRoom} onStartVideoCall={() => setMobileView("video")}/>
           </div>
         )}
+        
+        {videoOverlay === "members" && ((callState!="idle" && isCaller) || (inCall && !isCaller)) && (
+          <div
+            className="lg:hidden fixed bottom-0 left-0 right-0 h-[65%] bg-background rounded-t-2xl shadow-xl flex flex-col"
+          >
+            <UsersInRoom user={user} currentRoomUsers={currentRoomUsers} currentRoom={currentRoom} onStartVideoCall={() => setMobileView("video")}/>
+          </div>
+        )}
+
+        <IncomingCallModal
+            visible={(callState === "ringing" && !isCaller )}
+            caller={incomingCaller || undefined}
+            callee={outcomingCallee || undefined}
+        />
         
       </div>
     </div>

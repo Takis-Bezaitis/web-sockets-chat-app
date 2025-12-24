@@ -28,7 +28,7 @@ const Login = () => {
       }
 
       // Backend already sets cookie with JWT
-      setUser({ id: data.id, email: data.email });
+      setUser({ id: data.id, email: data.email, username: data.username });
       navigate("/chat");
     } catch (err) {
       setError("Server error");

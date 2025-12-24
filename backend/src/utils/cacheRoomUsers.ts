@@ -1,8 +1,8 @@
 import redis from "./redisClient.js";
 import { type RoomUsers } from "../types/custom.js";
 
-const CACHE_VERSION = 1;          // increment to invalidate old caches
-const TTL_SECONDS = 30;      // 1 hour
+const CACHE_VERSION = 1;     // increment to invalidate old caches
+const ROOM_TTL_SECONDS = 30;      // seconds
 
 export const getCachedRoomUsers = async (roomId: number): Promise<RoomUsers[] | null> => {
   const key = `v${CACHE_VERSION}:room:${roomId}:users`;
@@ -19,7 +19,7 @@ export const getCachedRoomUsers = async (roomId: number): Promise<RoomUsers[] | 
 
 export const setCachedRoomUsers = async (roomId: number, roomUsers: RoomUsers[]) => {
   const key = `v${CACHE_VERSION}:room:${roomId}:users`;
-  await redis.set(key, JSON.stringify(roomUsers), "EX", TTL_SECONDS);
+  await redis.set(key, JSON.stringify(roomUsers), "EX", ROOM_TTL_SECONDS);
 };
 
 export const invalidateRoomUsersCache = async (roomId: number) => {
