@@ -15,7 +15,7 @@ const VideoControls = ({ onEndCall }: { onEndCall: () => void }) => {
   } = useWebRTCStore();
 
   return (
-    <div className="flex items-center justify-center gap-6 mt-4">
+    <div className="flex items-center justify-center gap-6">
       <ControlButton
         onClick={toggleMic}
         active={!isMicMuted}

@@ -2,13 +2,19 @@ import { Server, Socket } from "socket.io";
 import { type UserPayload } from "../types/custom.js";
 import { saveTheRoomMessage, addMessageReaction, editMessage, deleteMessage } from "../services/messages/messageService.js";
 import prisma from "../prismaClient.js";
+import {
+  addUserToRoomPresence,
+  removeUserFromRoomPresence,
+  getRoomPresence,
+  refreshRoomPresence,
+  removeUserFromAllRooms,
+} from "../utils/presence.js";
 
 export interface CustomSocket extends Socket {
   user?: UserPayload;
 }
 
 export default function chatSocket(io: Server) {
-  const roomPresence: Record<string, Set<string>> = {};
 
   io.on("connection", (socket: Socket) => {
     const customSocket = socket as CustomSocket;
@@ -19,49 +25,48 @@ export default function chatSocket(io: Server) {
     
     // --- ROOM SUBSCRIPTION (UI-level) ---
     // User opened a room in the UI and wants real-time updates for that room.
-    customSocket.on("enterRoom", (roomId: string) => {
-      if (!roomId) return;
+    customSocket.on("enterRoom", async (roomId: string) => {
+      if (!roomId || !customSocket.user) return;
 
       const roomChannel = `room:${roomId}`;
       console.log(`socket ${socket.id} enters ${roomChannel}`);
       customSocket.join(roomChannel);
 
-      // Track presence of the user
-      if (!roomPresence[roomId]) roomPresence[roomId] = new Set();
+      await addUserToRoomPresence(customSocket.user.id, roomId);
 
-      if (customSocket.user?.id) {
-        roomPresence[roomId].add(customSocket.user.id);
-      }
-    
       // Notify only others in the room (not the joiner)
       customSocket.to(roomChannel).emit("presence:entered", {
-        user: customSocket.user ?? null,
+        user: customSocket.user,
         roomId,
       });
 
       // Send presence list to the joiner 
+      const users = await getRoomPresence(roomId);
       customSocket.emit("presence:list", {
         roomId,
-        users: Array.from(roomPresence[roomId]),
+        users,
       });
     });
 
+
     // User closed/switched away from the room UI
-    customSocket.on("exitRoom", (roomId: string) => {
-      if (!roomId) return;
+    customSocket.on("exitRoom", async (roomId: string) => {
+      if (!roomId || !customSocket.user) return;
       const roomChannel = `room:${roomId}`;
       console.log(`socket ${socket.id} exits ${roomChannel}`);
       customSocket.leave(roomChannel);
 
-      // Remove from tracking/presence
-      if (roomPresence[roomId] && customSocket.user?.id) {
-        roomPresence[roomId].delete(customSocket.user.id);
-      }
+      await removeUserFromRoomPresence(customSocket.user.id, roomId);
 
       customSocket.to(roomChannel).emit("presence:left", {
-        user: customSocket.user ?? null,
+        user: customSocket.user,
         roomId,
       });
+    });
+
+    customSocket.on("presence:heartbeat", async (roomId: string) => {
+      if (!roomId || !customSocket.user) return;
+      await refreshRoomPresence(customSocket.user.id, roomId);
     });
 
     // --- ROOM MEMBERSHIP (application-level) ---
@@ -210,36 +215,27 @@ export default function chatSocket(io: Server) {
       io.to(`user:${data.targetUserId}`).emit("video:call-ended");
     });
 
+    customSocket.on("video:media-state", ({ targetUserId, micMuted, cameraOff }) => {
+      io.to(`user:${targetUserId}`).emit("video:remote-media-state",
+        { micMuted, cameraOff });
+    });
+
     /* --------------- */
 
-    customSocket.on("disconnect", (reason) => {
+    customSocket.on("disconnect", async (reason) => {
       console.log(`User disconnected: ${socket.id} (${reason})`);
 
       const userId = customSocket.user?.id;
       if (!userId) return;
 
-      try {
-        // Loop through all rooms in presence memory
-        for (const [roomId, members] of Object.entries(roomPresence)) {
-
-          // If this room contains the user, remove them and notify others
-          if (members.has(userId)) {
-
-            // Remove from memory
-            members.delete(userId);
-
-            // Notify room
-            io.to(`room:${roomId}`).emit("presence:left", {
-              user: customSocket.user,
-              roomId,
-            });
-
-            console.log(`Removed user ${userId} from room ${roomId} due to disconnect`);
-          }
-        }
-      } catch (err) {
-        console.error("Error broadcasting presence on disconnect:", err);
-      }
+      const rooms = await removeUserFromAllRooms(userId);
+      
+      rooms.forEach(roomId => {
+        io.to(`room:${roomId}`).emit("presence:left", {
+          user: customSocket.user,
+          roomId,
+        });
+      });
     });
 
   });

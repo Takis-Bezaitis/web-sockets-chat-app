@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { useSocketStore } from "./socketStore";
 
 export type CallState = "idle" | "ringing" | "inCall";
 
@@ -20,6 +21,9 @@ interface WebRTCStore {
   isMicMuted: boolean;
   isCameraOff: boolean;
 
+  isRemoteMicMuted: boolean;
+  isRemoteCameraOff: boolean;
+
   setLocalStream: (stream: MediaStream | null) => void;
   setRemoteStream: (stream: MediaStream | null) => void;
   setPeerConnection: (pc: RTCPeerConnection | null) => void;
@@ -33,6 +37,10 @@ interface WebRTCStore {
 
   toggleMic: () => void;
   toggleCamera: () => void;
+  setRemoteMediaState: (state: {
+    micMuted: boolean;
+    cameraOff: boolean;
+  }) => void;
 
   declineCall: () => void;
   cleanupCall: () => void;
@@ -53,6 +61,9 @@ export const useWebRTCStore = create<WebRTCStore>((set, get) => ({
   isMicMuted: false,
   isCameraOff: false,
 
+  isRemoteMicMuted: false,
+  isRemoteCameraOff: false,
+
   setLocalStream: (stream) => set({ localStream: stream }),
   setRemoteStream: (stream) => set({ remoteStream: stream }),
   setPeerConnection: (pc) => set({ peerConnection: pc }),
@@ -65,20 +76,50 @@ export const useWebRTCStore = create<WebRTCStore>((set, get) => ({
   setOutcomingCallee: (callee) => set({ outcomingCallee: callee }),
 
   toggleMic: () => {
-    const { localStream, isMicMuted } = get();
+    const { localStream, isMicMuted, remoteUserId } = get();
+    const socket = useSocketStore.getState().socket;
+
     localStream?.getAudioTracks().forEach(track => {
       track.enabled = isMicMuted;
     });
-    set({ isMicMuted: !isMicMuted });
+
+    const newMutedState = !isMicMuted;
+    set({ isMicMuted: newMutedState });
+
+    if (socket && remoteUserId) {
+      socket.emit("video:media-state", {
+        targetUserId: remoteUserId,
+        micMuted: newMutedState,
+        cameraOff: get().isCameraOff,
+      });
+    }
   },
 
   toggleCamera: () => {
-    const { localStream, isCameraOff } = get();
+    const { localStream, isCameraOff, remoteUserId } = get();
+    const socket = useSocketStore.getState().socket;
+
     localStream?.getVideoTracks().forEach(track => {
       track.enabled = isCameraOff;
     });
-    set({ isCameraOff: !isCameraOff });
+
+    const newCameraState = !isCameraOff;
+    set({ isCameraOff: newCameraState });
+
+    if (socket && remoteUserId) {
+      socket.emit("video:media-state", {
+        targetUserId: remoteUserId,
+        micMuted: get().isMicMuted,
+        cameraOff: newCameraState,
+      });
+    }
   },
+
+  setRemoteMediaState: ({ micMuted, cameraOff }) =>
+    set({
+      isRemoteMicMuted: micMuted,
+      isRemoteCameraOff: cameraOff,
+    }),
 
   declineCall: () =>
     set({

@@ -43,6 +43,8 @@ const Chat = () => {
   const inCall = callState === "inCall";
   const isCaller = useWebRTCStore((state) => state.isCaller);
 
+  const HEARTBEAT_INTERVAL = 25_000;
+
   // messages for currently selected room (derived from store)
   const roomMessages = useMemo(() => {
     if (!currentRoom) return [];
@@ -136,6 +138,13 @@ const Chat = () => {
     socket.on("video:webrtc-ice-candidate", handleIceCandidate);
     socket.on("video:call-ended", onCallEnded);
 
+    socket.on("video:remote-media-state", ({ micMuted, cameraOff }) => {
+      useWebRTCStore.getState().setRemoteMediaState({
+        micMuted,
+        cameraOff,
+      });
+    });
+
     return () => {
       socket.off("video:call-request", handleCallRequest);
       socket.off("video:call-response", handleCallResponse);
@@ -143,6 +152,7 @@ const Chat = () => {
       socket.off("video:webrtc-answer", handleAnswer);
       socket.off("video:webrtc-ice-candidate", handleIceCandidate);
       socket.off("video:call-ended", onCallEnded);
+      socket.off("video:remote-media-state");
     };
   }, [socket]);
 
@@ -156,6 +166,31 @@ const Chat = () => {
     setVideoOverlay("hidden");
     setMobileView("chat");
   }, [callState, isCaller]);
+
+  useEffect(() => {
+    if (!currentRoom) return;
+
+    const socket = useSocketStore.getState().socket;
+    if (!socket || !socket.connected) return;
+
+    socket.emit("presence:heartbeat", String(currentRoom.id));
+
+    const interval = setInterval(() => {
+      if (socket.connected) {
+        socket.emit("presence:heartbeat", String(currentRoom.id));
+      }
+    }, HEARTBEAT_INTERVAL);
+
+    return () => {
+      clearInterval(interval);
+    };
+  }, [currentRoom?.id]);
+
+  useEffect(() => {
+    if (callState === "idle") {
+      setShowMembers(false);
+    }
+  }, [callState]);
 
   // helper: fetch users in a room
   const getRoomUsers = async (roomId: number) => {
@@ -290,9 +325,6 @@ const Chat = () => {
             <VideoCallWindow 
               caller={incomingCaller?.username} 
               callee={outcomingCallee?.username} 
-              onEndCall={() => {
-                setShowMembers(false);
-              }}
             />
           </div>
         )}
@@ -331,9 +363,20 @@ const Chat = () => {
             <UsersInRoom user={user} currentRoomUsers={currentRoomUsers} currentRoom={currentRoom} />
         </div>}
 
+        {/* Toggle-based members panel (LG always, XL only during call) */}
         {showMembers && (
-          <div className="hidden lg:block lg:w-3/5 lg:max-w-xs">
-            <UsersInRoom user={user} currentRoomUsers={currentRoomUsers} currentRoom={currentRoom} />
+          <div className="hidden lg:block xl:hidden lg:w-3/5 lg:max-w-xs">
+            <UsersInRoom user={user} currentRoomUsers={currentRoomUsers} currentRoom={currentRoom}
+            />
+          </div>
+        )}
+
+        {/* XL toggle when IN CALL or RINGING */}
+        {showMembers && (inCall || callState==="ringing") && (
+          <div className="hidden xl:block xl:w-3/5 xl:max-w-xs">
+            <UsersInRoom
+              user={user} currentRoomUsers={currentRoomUsers} currentRoom={currentRoom}
+            />
           </div>
         )}
 
@@ -343,6 +386,7 @@ const Chat = () => {
             <UsersInRoom user={user} currentRoomUsers={currentRoomUsers} currentRoom={currentRoom} onStartVideoCall={() => setMobileView("video")}/>
           </div>
         )}
+        
         {videoOverlay === "members" && ((callState!="idle" && isCaller) || (inCall && !isCaller)) && (
           <div
             className="lg:hidden fixed bottom-0 left-0 right-0 h-[65%] bg-background rounded-t-2xl shadow-xl flex flex-col"

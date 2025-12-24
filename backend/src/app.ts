@@ -10,8 +10,8 @@ const app = express();
 
 // Middlewares 
 app.use(cors({
-  origin: process.env.FRONTEND_URL, // frontend URL
-  credentials: true,               // allow cookies to be sent
+  origin: process.env.FRONTEND_URL, 
+  credentials: true,               
 }));
 app.use(express.json());
 app.use(cookieParser());

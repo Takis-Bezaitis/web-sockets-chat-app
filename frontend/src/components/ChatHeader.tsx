@@ -18,7 +18,7 @@ const ChatHeader = ({currentRoom, showMembers, setShowMembers}: ChatHeaderProps)
         <div># {currentRoom.name}</div>
         <div className="flex items-baseline">
           <div className={`hidden lg:block hover:text-primary cursor-pointer 
-            ${((callState==='ringing' && isCaller) || (callState!=='idle' && !isCaller)) ? 'xl:block' : 'xl:hidden'}`} 
+            ${((callState!=='idle' && isCaller) || (callState==='inCall' && !isCaller)) ? 'xl:block' : 'xl:hidden'}`} 
               onClick={() => setShowMembers(!showMembers)}>
                 👥
           </div>
