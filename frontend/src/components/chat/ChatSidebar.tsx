@@ -1,4 +1,4 @@
-import { type ChatSidebarProps } from "../types/custom";
+import { type ChatSidebarProps } from "../../types/custom";
 
 const ChatSidebar = ({
   user,

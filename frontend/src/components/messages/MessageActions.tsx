@@ -1,5 +1,5 @@
-import { type Message } from "../types/custom";
-import { useSocketStore } from "../store/socketStore";
+import { type Message } from "../../types/custom";
+import { useSocketStore } from "../../store/socketStore";
 
 type MessageActionsProps = {
     userId: number | undefined;

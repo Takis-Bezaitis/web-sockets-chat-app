@@ -1,49 +1,56 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useAuthStore } from "../store/authStore";
 import { useSocketStore } from "../store/socketStore";
 import { useMessageStore } from "../store/messageStore";
 import { useTypingStore } from "../store/typingStore";
 import { useWebRTCStore } from "../store/webrtcStore";
-import type { RoomWithMembershipDTO, RoomUsers } from "../types/custom";
-import ChatSidebar from "../components/ChatSidebar";
+
+import ChatSidebar from "../components/chat/ChatSidebar";
 import UsersInRoom from "../components/UsersInRoom";
 import MobileNavBar from "../components/MobileNavBar";
 import VideoCallWindow from "../components/video/VideoCallWindow";
-import { handleCallRequest, handleCallResponse, handleOffer, handleAnswer, handleIceCandidate, onCallEnded } from "../features/webrtc/videoSocketHandlers";
 import ChatContent from "../components/chat/ChatContent";
 import IncomingCallModal from "../components/video/IncomingCallModal";
 
+// import custom hooks
+import { useChatRooms } from "../hooks/useChatRooms";
+import { useChatSockets } from "../hooks/useChatSockets";
+import { useChatLayout } from "../hooks/useChatLayout";
+
 const Chat = () => {
   const { user } = useAuthStore();
-  const { socket } = useSocketStore();
 
-  // store API
   const {
-    connect,
-    disconnect,
-    enterRoom,
-    exitRoom,
-    sendMessage,
-  } = useSocketStore();
+    rooms,
+    currentRoom,
+    currentRoomUsers,
+    onSelectRoom,
+    handleJoinLeaveRoom,
+  } = useChatRooms(user?.id);
+
+  useChatSockets(currentRoom?.id);
+
+  const {
+    mobileView,
+    videoOverlay,
+    showMembers,
+    setMobileView,
+    setVideoOverlay,
+    setShowMembers,
+    inCall,
+    callState,
+    isCaller,
+  } = useChatLayout();
+
   const { messagesByRoom, getLoadingForRoom } = useMessageStore();
   const { typingUserByRoom } = useTypingStore();
-  const { getMessagesForRoom, fetchRoomMessages } = useMessageStore();
+  const { getMessagesForRoom } = useMessageStore();
+
   // local UI state
-  const [rooms, setRooms] = useState<RoomWithMembershipDTO[]>([]);
-  const [currentRoom, setCurrentRoom] = useState<RoomWithMembershipDTO | undefined>(undefined);
-  const [currentRoomUsers, setCurrentRoomUsers] = useState<RoomUsers[]>([]);
   const [input, setInput] = useState("");
-  const [mobileView, setMobileView] = useState<"chat" | "rooms" | "members" | "video">("chat");
-  const [videoOverlay, setVideoOverlay] = useState<"hidden" | "chat" | "members">("hidden");
-  const [showMembers, setShowMembers] = useState(false);
 
-  const incomingCaller = useWebRTCStore((state) => state.incomingCaller);
-  const outcomingCallee = useWebRTCStore((state) => state.outcomingCallee);
-  const callState = useWebRTCStore((state) => state.callState);
-  const inCall = callState === "inCall";
-  const isCaller = useWebRTCStore((state) => state.isCaller);
-
-  const HEARTBEAT_INTERVAL = 25_000;
+  const incomingCaller = useWebRTCStore((s) => s.incomingCaller);
+  const outcomingCallee = useWebRTCStore((s) => s.outcomingCallee);
 
   // messages for currently selected room (derived from store)
   const roomMessages = useMemo(() => {
@@ -53,231 +60,9 @@ const Chat = () => {
 
   const loading = getLoadingForRoom(currentRoom?.id ?? -1);
 
-  // connect socket on mount
-  useEffect(() => {
-    connect();
-    return () => {
-      disconnect();
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  // send message
+  const sendMessage = useSocketStore((s) => s.sendMessage);
 
-  // === helper: fetch rooms (single source of truth) ===
-  const fetchRooms = async (): Promise<RoomWithMembershipDTO[]> => {
-    try {
-      const res = await fetch(
-        `${import.meta.env.VITE_BACKEND_ROOMS_BASE_URL}/${user?.id}/rooms`,
-        { credentials: "include" }
-      );
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({ error: "failed" }));
-        throw new Error(err.error || "Failed to fetch rooms");
-      }
-      const json = await res.json();
-      const data = json.data ?? json;
-      setRooms(data);
-      return data;
-    } catch (err) {
-      console.error("Failed to load rooms", err);
-      return [];
-    }
-  };
-
-  // fetch rooms once when user id is available
-  useEffect(() => {
-    if (!user?.id) return;
-    void fetchRooms();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.id]);
-
-  // Automatically select "general" room once rooms are loaded
-  useEffect(() => {
-    if (rooms.length > 0 && !currentRoom) {
-      const general = rooms.find((r) => r.name === "general");
-      if (general) {
-        setCurrentRoom(general);
-        // fetch members and subscribe to messages (no need to await)
-        void getRoomUsers(general.id);
-        void fetchRoomMessages(general.id);
-        void enterRoom(general.id);
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [rooms, currentRoom]);
-
-  useEffect(() => {
-    if (!socket || !currentRoom?.id) return;
-  
-    const handleMembershipJoined = ({ roomId }: { roomId: number }) => {
-      if (Number(roomId) !== currentRoom.id) return;
-      getRoomUsers(currentRoom.id);
-    };
-
-    const handleMembershipLeft = ({ roomId }: { roomId: number }) => {
-      if (Number(roomId) !== currentRoom.id) return;
-      getRoomUsers(currentRoom.id);
-    };
-
-    socket.on("membership:joined", handleMembershipJoined);
-    socket.on("membership:left", handleMembershipLeft);
-
-    return () => {
-      socket.off("membership:joined", handleMembershipJoined);
-      socket.off("membership:left", handleMembershipLeft);
-    }
-  },[socket, currentRoom]);
-
-  // video
-  useEffect(() => {
-    if (!socket) return;
-
-    socket.on("video:call-request", handleCallRequest);
-    socket.on("video:call-response", handleCallResponse);
-    socket.on("video:webrtc-offer", handleOffer);
-    socket.on("video:webrtc-answer", handleAnswer);
-    socket.on("video:webrtc-ice-candidate", handleIceCandidate);
-    socket.on("video:call-ended", onCallEnded);
-
-    socket.on("video:remote-media-state", ({ micMuted, cameraOff }) => {
-      useWebRTCStore.getState().setRemoteMediaState({
-        micMuted,
-        cameraOff,
-      });
-    });
-
-    return () => {
-      socket.off("video:call-request", handleCallRequest);
-      socket.off("video:call-response", handleCallResponse);
-      socket.off("video:webrtc-offer", handleOffer);
-      socket.off("video:webrtc-answer", handleAnswer);
-      socket.off("video:webrtc-ice-candidate", handleIceCandidate);
-      socket.off("video:call-ended", onCallEnded);
-      socket.off("video:remote-media-state");
-    };
-  }, [socket]);
-
-  useEffect(() => {
-    if (callState === "inCall" || (callState === "ringing" && isCaller)) {
-      setMobileView("video");
-      return;
-    }
-
-    // idle
-    setVideoOverlay("hidden");
-    setMobileView("chat");
-  }, [callState, isCaller]);
-
-  useEffect(() => {
-    if (!currentRoom) return;
-
-    const socket = useSocketStore.getState().socket;
-    if (!socket || !socket.connected) return;
-
-    socket.emit("presence:heartbeat", String(currentRoom.id));
-
-    const interval = setInterval(() => {
-      if (socket.connected) {
-        socket.emit("presence:heartbeat", String(currentRoom.id));
-      }
-    }, HEARTBEAT_INTERVAL);
-
-    return () => {
-      clearInterval(interval);
-    };
-  }, [currentRoom?.id]);
-
-  useEffect(() => {
-    if (callState === "idle") {
-      setShowMembers(false);
-    }
-  }, [callState]);
-
-  // helper: fetch users in a room
-  const getRoomUsers = async (roomId: number) => {
-    try {
-      const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_ROOMS_BASE_URL}/${roomId}/room-users`,
-        { credentials: "include" }
-      );
-      if (!response.ok) {
-        // try to log helpful info
-        const err = await response.json().catch(() => ({ error: "failed" }));
-        throw new Error(err.error || "Failed to fetch room users");
-      }
-      const json = await response.json();
-      setCurrentRoomUsers(json.data ?? json);
-    } catch (err) {
-      console.error("getRoomUsers failed:", err);
-      setCurrentRoomUsers([]);
-    }
-  };
-
-  // When user selects a room in the UI
-  const onSelectRoom = async (room: RoomWithMembershipDTO) => {
-    try {
-      // exit previous room (socket subscription) if any
-      if (currentRoom) {
-        exitRoom(currentRoom.id);
-      }
-
-      setCurrentRoom(room);
-
-      // Fetch messages first (REST + cache)
-      await fetchRoomMessages(room.id);
-
-      // Then subscribe via socket
-      await enterRoom(room.id);
-
-      // fetch the members for the newly selected room
-      await getRoomUsers(room.id);
-    } catch (err) {
-      console.error("onSelectRoom error:", err);
-    }
-  };
-
-  // Join / leave room membership via REST then emit membership event
-  // ChatSidebar expects handleJoinLeaveRoom: (room, action: string) => void,
-  // so we accept action: string and validate it here.
-  const handleJoinLeaveRoom = async (room: RoomWithMembershipDTO, action: string) => {
-    if (action !== "join" && action !== "leave") {
-      console.warn("Unsupported action for join/leave:", action);
-      return;
-    }
-
-    try {
-      const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_ROOMS_BASE_URL}/${room.id}/${action}`,
-        {
-          method: "POST",
-          credentials: "include",
-        }
-      );
-
-      if (!response.ok) {
-        const err = await response.json().catch(() => ({ error: "unknown" }));
-        throw new Error(err.error || "Failed to join/leave room");
-      }
-
-      // Refresh local state (members + rooms). Wait both so we can update UI consistently.
-      const [ , updatedRooms ] = await Promise.all([getRoomUsers(room.id), fetchRooms()]);
-
-      // Update currentRoom (update isMember or similar flag)
-      const updatedCurrentRoom = updatedRooms.find((r: any) => r.id === room.id);
-      if (updatedCurrentRoom) {
-        setCurrentRoom(updatedCurrentRoom);
-      }
-
-      // Notify others via socket (membership event) if socket exists
-      const sock = useSocketStore.getState().socket;
-      if (sock) {
-        sock.emit(action === "join" ? "joinRoom" : "leaveRoom", room.id.toString());
-      }
-    } catch (err) {
-      console.error("handleJoinLeaveRoom error:", err);
-    }
-  };
-
-  // handle sending using local input state (MessageBox expects handleSend(): void)
   const handleSend = () => {
     if (!input.trim() || !user || !currentRoom) return;
     sendMessage(currentRoom.id, input.trim());

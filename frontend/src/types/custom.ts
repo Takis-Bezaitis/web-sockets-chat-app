@@ -25,7 +25,7 @@ export interface ChatSidebarProps {
   rooms: RoomWithMembershipDTO[];
   currentRoom?: RoomWithMembershipDTO;
   onSelectRoom: (room: RoomWithMembershipDTO) => void;
-  handleJoinLeaveRoom: (room: RoomWithMembershipDTO, action: string) => void;
+  handleJoinLeaveRoom: (room: RoomWithMembershipDTO, action: "join" | "leave") => void;
 };
 
 // For UsersInRoom

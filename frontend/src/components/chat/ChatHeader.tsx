@@ -1,6 +1,6 @@
-import ThemeToggle from "./ThemeToggle";
-import { type RoomWithMembershipDTO } from "../types/custom";
-import { useWebRTCStore } from "../store/webrtcStore";
+import ThemeToggle from "../ThemeToggle";
+import { type RoomWithMembershipDTO } from "../../types/custom";
+import { useWebRTCStore } from "../../store/webrtcStore";
 
 type ChatHeaderProps = {
     currentRoom: RoomWithMembershipDTO;

@@ -69,19 +69,15 @@ export default function chatSocket(io: Server) {
       await refreshRoomPresence(customSocket.user.id, roomId);
     });
 
-    // --- ROOM MEMBERSHIP (application-level) ---
-    // These are semantic membership actions.
-    // You might call these after a successful REST POST /rooms/:id/join
-    // or you may call your membership service here to persist membership.
     customSocket.on("joinRoom", (roomId: string) => {
-      // NOTE: Keep membership persistence in your REST endpoint or implement here.
       console.log(
         `membership join request by ${customSocket.user?.email ?? socket.id} for room ${roomId}`
       );
       // Notify room members 
+      const numericRoomId = Number(roomId);
       customSocket.join(`room:${roomId}`);
       customSocket.to(`room:${roomId}`).emit("membership:joined", {
-        roomId,
+        roomId: numericRoomId,
       });
     });
 
@@ -90,9 +86,10 @@ export default function chatSocket(io: Server) {
         `membership leave request by ${customSocket.user?.email ?? socket.id} for room ${roomId}`
       );
       // Notify room members
+      const numericRoomId = Number(roomId);
       customSocket.leave(`room:${roomId}`);
       customSocket.to(`room:${roomId}`).emit("membership:left", {
-        roomId,
+        roomId: numericRoomId,
       });
     });
 

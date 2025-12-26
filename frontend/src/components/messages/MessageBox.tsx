@@ -1,6 +1,6 @@
-import { useAuthStore } from "../store/authStore";
-import { useSocketStore } from "../store/socketStore";
-import { type RoomWithMembershipDTO } from "../types/custom";
+import { useAuthStore } from "../../store/authStore";
+import { useSocketStore } from "../../store/socketStore";
+import { type RoomWithMembershipDTO } from "../../types/custom";
 
 type MessageBoxProps = {
     handleSend: () => void;

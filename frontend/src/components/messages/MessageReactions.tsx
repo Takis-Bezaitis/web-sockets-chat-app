@@ -1,4 +1,4 @@
-import { type MessageReaction } from "../types/custom.js";
+import { type MessageReaction } from "../../types/custom.js";
 
 interface Props {
   reactions: MessageReaction[];

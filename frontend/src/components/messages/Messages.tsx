@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from "react";
-import { useSocketStore } from "../store/socketStore";
-import { type User, type Message, type RoomDTO } from "../types/custom";
-import { formatDate } from "../utils/formatDate";
+import { useSocketStore } from "../../store/socketStore";
+import { type User, type Message, type RoomDTO } from "../../types/custom";
+import { formatDate } from "../../utils/formatDate";
 import MessageActions from "./MessageActions";
 import MessageReactions from "./MessageReactions";
-import Spinner from "./Spinner";
+import Spinner from "../Spinner";
 
 type UserProps = {
     user: User | null;

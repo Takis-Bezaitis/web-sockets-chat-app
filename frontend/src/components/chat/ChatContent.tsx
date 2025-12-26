@@ -1,7 +1,7 @@
 import type { Message, RoomWithMembershipDTO, User } from "../../types/custom";
-import ChatHeader from "../ChatHeader";
-import MessageBox from "../MessageBox";
-import Messages from "../Messages"
+import ChatHeader from "./ChatHeader";
+import MessageBox from "../messages/MessageBox";
+import Messages from "../messages/Messages"
 
 type ChatContentProps = {
   currentRoom: RoomWithMembershipDTO | undefined;
