@@ -29,7 +29,7 @@ const ChatContent = ({currentRoom, showMembers, setShowMembers,
       {currentRoom && <ChatHeader currentRoom={currentRoom} showMembers={showMembers} setShowMembers={setShowMembers}/>}
       <div id="messages-area" className="flex flex-col flex-1 bg-background overflow-hidden px-3 pb-10 
       sm:px-6 md:px-10 lg:pb-0">
-      <div className="flex-1 overflow-y-auto no-scrollbar">
+      <div className="flex-1 overflow-y-auto no-scrollbar flex flex-col">
           <Messages user={user} messages={roomMessages} currentRoom={currentRoom} loading={loading} />
       </div>
       {currentRoom && typingUserByRoom[currentRoom.id] && (

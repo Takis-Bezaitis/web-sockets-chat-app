@@ -1,9 +1,11 @@
 import { Outlet, Navigate } from "react-router";
 import { useAuthStore } from "../store/authStore";
-//import ThemeToggle from "./ThemeToggle";
+import { useInvitationStore } from "../store/invitationStore";
+import InvitationModal from "./invitations/InvitationModal";
 
 const ProtectedLayout = () => {
   const { user } = useAuthStore();
+  const invitations = Object.values(useInvitationStore((s) => s.invitations));
 
   if (!user) {
     return <Navigate to='/auth/login' replace/>
@@ -11,9 +13,8 @@ const ProtectedLayout = () => {
 
   return (
     <div className="flex flex-col h-full" >
-      {/*<div className="flex h-18 items-center justify-end bg-background border-b border-border-line">
-        <ThemeToggle />
-      </div>*/}
+      <InvitationModal invitations={invitations}/>
+      
       <div className="flex-1 overflow-hidden bg-background">
         <Outlet />
       </div>

@@ -11,6 +11,15 @@ type ChatHeaderProps = {
 const ChatHeader = ({currentRoom, showMembers, setShowMembers}: ChatHeaderProps) => {
   const callState = useWebRTCStore((state) => state.callState);
   const isCaller = useWebRTCStore((state) => state.isCaller);
+  
+  const handleLogout = async () => {
+    await fetch(`${import.meta.env.VITE_BACKEND_AUTH_BASE_URL}/logout`, {
+      method: "POST",
+      credentials: "include",
+    });
+
+    window.location.reload();
+  };
 
   return (
     <div className="bg-component-background text-foreground text-xl h-14 flex items-baseline 
@@ -23,6 +32,12 @@ const ChatHeader = ({currentRoom, showMembers, setShowMembers}: ChatHeaderProps)
                 👥
           </div>
           <ThemeToggle />
+          <button
+            onClick={handleLogout}
+            className="ml-3 mr-3 text-lg hover:text-red-500 cursor-pointer"
+          >
+            Logout
+          </button>
         </div>
     </div>
   )

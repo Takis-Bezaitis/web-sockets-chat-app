@@ -148,6 +148,8 @@ export const useWebRTCStore = create<WebRTCStore>((set, get) => ({
       outcomingCallee: null,
       isMicMuted: false,
       isCameraOff: false,
+      isRemoteMicMuted: false,
+      isRemoteCameraOff: false,
     });
   },
 }));

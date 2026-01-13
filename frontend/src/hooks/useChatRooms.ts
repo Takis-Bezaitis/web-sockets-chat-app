@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { RoomWithMembershipDTO, RoomUsers } from "../types/custom";
 import { useSocketStore } from "../store/socketStore";
 import { useMessageStore } from "../store/messageStore";
+import { useRoomStore } from "../store/roomStore";
 
 const ROOMS_BASE_URL = import.meta.env.VITE_BACKEND_ROOMS_BASE_URL;
 
@@ -9,13 +10,15 @@ export function useChatRooms(userId?: number) {
   const { enterRoom, exitRoom } = useSocketStore();
   const { fetchRoomMessages } = useMessageStore();
 
-  const [rooms, setRooms] = useState<RoomWithMembershipDTO[]>([]);
   const [currentRoom, setCurrentRoom] = useState<RoomWithMembershipDTO>();
   const [currentRoomUsers, setCurrentRoomUsers] = useState<RoomUsers[]>([]);
 
-  /* =========================
-     Fetch all rooms for user
-     ========================= */
+  const roomsById = useRoomStore((r) => r.rooms);
+  const rooms = useMemo(
+    () => Object.values(roomsById),
+    [roomsById]
+  );
+
   const fetchRooms = async (): Promise<RoomWithMembershipDTO[]> => {
     if (!userId) return [];
 
@@ -31,7 +34,9 @@ export function useChatRooms(userId?: number) {
 
       const json = await res.json();
       const data = json.data ?? json;
-      setRooms(data);
+
+      useRoomStore.getState().setRooms(data);
+
       return data;
     } catch (err) {
       console.error("fetchRooms failed:", err);
@@ -39,9 +44,6 @@ export function useChatRooms(userId?: number) {
     }
   };
 
-  /* =========================
-     Fetch users in a room
-     ========================= */
   const getRoomUsers = async (roomId: number) => {
     try {
       const res = await fetch(`${ROOMS_BASE_URL}/${roomId}/room-users`, {
@@ -61,9 +63,6 @@ export function useChatRooms(userId?: number) {
     }
   };
 
-  /* =========================
-     Select a room
-     ========================= */
   const onSelectRoom = async (room: RoomWithMembershipDTO) => {
     try {
       if (currentRoom) {
@@ -80,9 +79,6 @@ export function useChatRooms(userId?: number) {
     }
   };
 
-  /* =========================
-     Join / Leave room
-     ========================= */
   const handleJoinLeaveRoom = async (
     room: RoomWithMembershipDTO,
     action: "join" | "leave"
@@ -122,20 +118,13 @@ export function useChatRooms(userId?: number) {
     }
   };
 
-  /* =========================
-     Initial rooms fetch
-     ========================= */
   useEffect(() => {
     if (!userId) return;
     void fetchRooms();
   }, [userId]);
 
-  /* =========================
-     Auto-select general room
-     ========================= */
   useEffect(() => {
     if (rooms.length === 0 || currentRoom) return;
-
     const general = rooms.find((r) => r.name === "general");
     if (!general) return;
 
@@ -146,30 +135,30 @@ export function useChatRooms(userId?: number) {
   }, [rooms, currentRoom, enterRoom, fetchRoomMessages]);
 
   /* =========================
-   Membership socket listeners
-   ========================= */
-useEffect(() => {
-  const socket = useSocketStore.getState().socket;
-  if (!socket || !currentRoom?.id) return;
+    Membership socket listeners
+    ========================= */
+  useEffect(() => {
+    const socket = useSocketStore.getState().socket;
+    if (!socket || !currentRoom?.id) return;
 
-  const handleMembershipJoined = ({ roomId }: { roomId: number }) => {
-    if (roomId !== currentRoom.id) return;
-    getRoomUsers(currentRoom.id);
-  };
+    const handleMembershipJoined = ({ roomId }: { roomId: number }) => {
+      if (roomId !== currentRoom.id) return;
+      getRoomUsers(currentRoom.id);
+    };
 
-  const handleMembershipLeft = ({ roomId }: { roomId: number }) => {
-    if (roomId !== currentRoom.id) return;
-    getRoomUsers(currentRoom.id);
-  };
+    const handleMembershipLeft = ({ roomId }: { roomId: number }) => {
+      if (roomId !== currentRoom.id) return;
+      getRoomUsers(currentRoom.id);
+    };
 
-  socket.on("membership:joined", handleMembershipJoined);
-  socket.on("membership:left", handleMembershipLeft);
+    socket.on("membership:joined", handleMembershipJoined);
+    socket.on("membership:left", handleMembershipLeft);
 
-  return () => {
-    socket.off("membership:joined", handleMembershipJoined);
-    socket.off("membership:left", handleMembershipLeft);
-  };
-}, [currentRoom?.id]);
+    return () => {
+      socket.off("membership:joined", handleMembershipJoined);
+      socket.off("membership:left", handleMembershipLeft);
+    };
+  }, [currentRoom?.id]);
 
 
   return {

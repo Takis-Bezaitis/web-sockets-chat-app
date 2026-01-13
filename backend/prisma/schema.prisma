@@ -14,43 +14,51 @@ datasource db {
 }
 
 model User {
-  id        Int       @id @default(autoincrement())
-  username  String    @unique
-  email     String    @unique
-  password  String
-  createdAt DateTime  @default(now())
-  messages  Message[]
-  rooms     UserRoom[]
-  reactions MessageReaction[]
+  id                  Int               @id @default(autoincrement())
+  username            String            @unique
+  email               String            @unique
+  password            String
+  createdAt           DateTime          @default(now())
+  messages            Message[]
+  rooms               UserRoom[]
+  reactions           MessageReaction[]
+  sentInvitations     RoomInvitation[]  @relation("Inviter")
+  receivedInvitations RoomInvitation[]  @relation("Invitee")
+  createdRooms        Room[]
 }
 
 model Room {
-  id        Int       @id @default(autoincrement())
-  name      String    @unique
-  createdAt DateTime  @default(now())
-  messages  Message[]
-  users     UserRoom[]
+  id              Int              @id @default(autoincrement())
+  name            String           @unique
+  isPrivate       Boolean          @default(false)
+  createdAt       DateTime         @default(now())
+  creatorId       Int
+  creator         User             @relation(fields: [creatorId], references: [id])
+  hasUserMessages Boolean          @default(false)
+  messages        Message[]
+  users           UserRoom[]
+  invitations     RoomInvitation[]
 }
 
 model Message {
-  id        Int       @id @default(autoincrement())
+  id        Int               @id @default(autoincrement())
   text      String
-  createdAt DateTime  @default(now())
+  createdAt DateTime          @default(now())
   editedAt  DateTime?
   deletedAt DateTime?
-  user      User      @relation(fields: [userId], references: [id])
+  user      User              @relation(fields: [userId], references: [id])
   userId    Int
-  room      Room      @relation(fields: [roomId], references: [id])
+  room      Room              @relation(fields: [roomId], references: [id])
   roomId    Int
   reactions MessageReaction[]
 }
 
 model UserRoom {
-  user      User   @relation(fields: [userId], references: [id])
-  userId    Int
-  room      Room   @relation(fields: [roomId], references: [id])
-  roomId    Int
-  joinedAt  DateTime @default(now())
+  user     User     @relation(fields: [userId], references: [id])
+  userId   Int
+  room     Room     @relation(fields: [roomId], references: [id])
+  roomId   Int
+  joinedAt DateTime @default(now())
 
   @@id([userId, roomId]) // composite primary key
 }
@@ -65,4 +73,23 @@ model MessageReaction {
   createdAt DateTime @default(now())
 
   @@unique([messageId, userId, emoji]) // ensures a user can only react once with the same emoji
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+}
+
+model RoomInvitation {
+  id         Int              @id @default(autoincrement())
+  room       Room             @relation(fields: [roomId], references: [id])
+  roomId     Int
+  inviter    User             @relation("Inviter", fields: [inviterId], references: [id])
+  inviterId  Int
+  invitee    User             @relation("Invitee", fields: [inviteeId], references: [id])
+  inviteeId  Int
+  status     InvitationStatus @default(PENDING)
+  createdAt  DateTime         @default(now())
+  acceptedAt DateTime?
 }

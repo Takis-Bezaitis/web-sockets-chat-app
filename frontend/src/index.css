@@ -22,19 +22,26 @@ html, body, * {
   .bg-component-background { background-color: #ffffff; } /* component background: white */
   .bg-card { background-color: #ffffff; }                /* cards, modals: white */
   .bg-input { background-color: #f9fafb; }               /* inputs: slightly off-white */
-  .bg-button-main { background-color: #0e7bb7; }         /* primary button: blue */
-  .hover\:bg-button-hover:hover { background-color: #0e5983; } /* hover blue */
-  .disabled\:bg-button-disabled:disabled { background-color: #d1d5db; } /* disabled: gray */
   .bg-surface-selected { background-color: #fbbf24; }    /* selected: yellow */
   .bg-surface { background-color: #e5e7eb; }             /* generic panel/card surface: light gray */
   .bg-message-user { background-color: #87a6d7; }        /* user message: blue */
   .bg-message-other-user { background-color: #c8ccd4; }  /* other user message: light gray */
   .bg-video-chat-window { background-color: black;}
   .bg-video-chat-callee { background-color: black; }
+
+  /* buttons */
+  .bg-button-main { background-color: #0e7bb7; }         /* primary button: blue */
+  .hover\:bg-button-hover:hover { background-color: #0e5983; } /* hover blue */
+  .disabled\:bg-button-disabled:disabled { background-color: #d1d5db; } /* disabled: gray */
+  .bg-button-secondary { background-color: #d1d5db;}
+  .hover\:bg-button-secondary-hover:hover { background-color: #a2b0c4; }
   
   /* icons */
   .icon-color { fill: #c8ccd4; }
   .icon-color-selected { fill: #111827;}
+
+  /* create room */
+  .bg-create-room { background-color: #e5e7eb; }
 
   /* lines */
   .border-border-line { border-color: #c8ccd4; }
@@ -54,13 +61,6 @@ html, body, * {
   .text-error { color: #dc2626; }
   .text-warning { color: #f59e0b; }
   .text-info { color: #2563eb; }
-
-  /* Buttons 
-  .btn-primary { @apply bg-button text-white; }
-  .btn-primary:hover { @apply bg-blue-600; }
-  .btn-secondary { @apply bg-button-secondary text-white; }
-  .btn-secondary:hover { @apply bg-purple-700; }
-  .btn-disabled { @apply bg-gray-400 text-gray-700 cursor-not-allowed; } */
 }
 
 /* =======================
@@ -72,9 +72,6 @@ html, body, * {
   .bg-component-background { background-color: #192537;}  /* component background */
   .bg-card { background-color: #1f2937; }        /* cards, modals */
   .bg-input { background-color: #1f2937; }       /* inputs */
-  .bg-button-main { background-color: #196679; }      /* primary button */
-  .hover\:bg-button-hover:hover { background-color: #114858; }
-  .disabled\:bg-button-disabled:disabled { background-color: #47484b; }
   .bg-surface-selected { background-color: #fbbf24; }
   .bg-surface { background-color: #1d3448; }
   .bg-message-user { background-color: #0093b1; }
@@ -82,9 +79,19 @@ html, body, * {
   .bg-video-chat-window { background-color: black;}
   .bg-video-chat-callee { background-color: black; }
 
+  /* buttons */
+  .bg-button-main { background-color: #196679; }      /* primary button */
+  .hover\:bg-button-hover:hover { background-color: #114858; }
+  .disabled\:bg-button-disabled:disabled { background-color: #47484b; }
+  .bg-button-secondary { background-color: #47484b;}
+  .hover\:bg-button-secondary-hover:hover { background-color: #38383b; }
+
   /* icons */
   .icon-color { fill: black; }
   .icon-color-selected { fill: #f3f4f6;}
+
+  /* create room */
+  .bg-create-room { background-color: #1d3448; }
 
   /* lines */
   .border-border-line { border-color: #202d3f; }
@@ -104,11 +111,4 @@ html, body, * {
   .text-error { color: #f87171; }
   .text-warning { color: #fbbf24; }
   .text-info { color: #3b82f6; }
-
-  /* Buttons 
-  .btn-primary { @apply bg-button text-white; }
-  .btn-primary:hover { @apply bg-blue-500; }
-  .btn-secondary { @apply bg-button-secondary text-white; }
-  .btn-secondary:hover { @apply bg-purple-600; }
-  .btn-disabled { @apply bg-gray-600 text-gray-300 cursor-not-allowed; }*/
 }

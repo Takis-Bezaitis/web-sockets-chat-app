@@ -7,7 +7,7 @@ interface SaveMessageInput {
   userId: number;
   roomId: number;
 }
-
+ 
 export const getAllTheMessages = async (): Promise<MessageDTO[]> => {
   const messages = await prisma.message.findMany({
     include: {
@@ -35,6 +35,11 @@ export const saveTheRoomMessage = async (
   const message = await prisma.message.create({
     data: { text, userId, roomId },
     include: { user: { select: { email: true, username: true } } } // fetch email from User
+  });
+
+  await prisma.room.update({
+    where: { id: roomId },
+    data: { hasUserMessages: true },
   });
 
    // Invalidate Redis cache for this room
@@ -88,12 +93,10 @@ export const deleteMessage = async (id: number): Promise<void> => {
     throw new Error("Message not found");
   }
 
-  // 1️⃣ Delete all reactions for this message
   await prisma.messageReaction.deleteMany({
     where: { messageId: id },
   });
 
-  // 2️⃣ Delete the message itself
   await prisma.message.delete({
     where: { id }
     }

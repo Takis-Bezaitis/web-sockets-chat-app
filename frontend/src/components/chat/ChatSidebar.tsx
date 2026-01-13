@@ -1,4 +1,14 @@
-import { type ChatSidebarProps } from "../../types/custom";
+import type {  User, RoomWithMembershipDTO } from "../../types/custom";
+
+interface ChatSidebarProps {
+  user: User;
+  rooms: RoomWithMembershipDTO[];
+  currentRoom?: RoomWithMembershipDTO;
+  onSelectRoom: (room: RoomWithMembershipDTO) => void;
+  handleJoinLeaveRoom: (room: RoomWithMembershipDTO, action: "join" | "leave") => void;
+  onCreateRoom: () => void;
+  onInviteMembers: (roomId: number, roomName: string) => void;
+};
 
 const ChatSidebar = ({
   user,
@@ -6,7 +16,10 @@ const ChatSidebar = ({
   currentRoom,
   onSelectRoom,
   handleJoinLeaveRoom,
+  onCreateRoom,
+  onInviteMembers,
 }: ChatSidebarProps) => {
+  const filteredRooms = rooms.filter((r) => !r.isPrivate || r.isMember);
 
   return (
     <div className="flex flex-col h-full bg-component-background border-r border-border-line">
@@ -18,20 +31,20 @@ const ChatSidebar = ({
       </div>
 
       <div className="flex items-center justify-between pt-4 pb-2">
-        <header className="text-foreground ml-5 text-lg">Channels ({rooms.length})</header>
-        <div className="cursor-pointer mr-5">➕</div>
+        <header className="text-foreground ml-5 text-lg">Channels ({filteredRooms.length})</header>
+        <div className="cursor-pointer mr-5" onClick={onCreateRoom}>➕</div>
       </div>
       
       <div className="overflow-y-auto no-scrollbar">
-      {rooms.map((room) => {
+      {filteredRooms.map((room) => {
         return (
           <div
             key={room.id}
             onClick={() => onSelectRoom(room)}
-            className={`flex gap-3 flex-wrap justify-between mx-5 my-2 rounded-md p-2 cursor-pointer ${
-              room.name === currentRoom?.name
-                ? "bg-surface-selected"
-                : "bg-surface"
+            className={`flex gap-3 flex-wrap justify-between mx-5 my-2 rounded-md p-2 
+              ${room.name === currentRoom?.name
+                ? "bg-surface-selected cursor-default"
+                : "bg-surface cursor-pointer"
             }`}
           >
             <div
@@ -43,8 +56,12 @@ const ChatSidebar = ({
             >
               # {room.name} 
             </div>
+            
+            {(room.name !== "general" && (room.creatorId === user.id && room.isPrivate)) && (
+              <button className="cursor-pointer" onClick={() => onInviteMembers(room.id, room.name)}>👤+</button>
+            )}
 
-            {room.id !== 1 && (
+            {(room.name !== "general" && room.creatorId !== user.id) && (
               <div className="flex gap-2">
                 <button
                   className={`bg-button-main text-white px-4 rounded hover:bg-button-hover disabled:bg-button-disabled

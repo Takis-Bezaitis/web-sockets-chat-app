@@ -22,7 +22,7 @@ const MessageBox = ({handleSend, input, setInput, currentRoom}: MessageBoxProps)
     <div className="p-4 bg-background flex-shrink-0 flex">
         <input
             type="text"
-            className="flex-1 border p-2 rounded mr-2 text-foreground"
+            className="flex-1 border p-2 rounded mr-2 text-foreground placeholder-current"
             value={input}
             disabled={!currentRoom?.isMember}
             onChange={(e) => { 

@@ -13,7 +13,7 @@ type UserProps = {
     loading: boolean;
 }
 
-const Messages = ({user, messages, loading }: UserProps) => {
+const Messages = ({user, messages, currentRoom, loading }: UserProps) => {
   const [hoveredMessageId, setHoveredMessageId] = useState<number | null>(null);
   const [editingMessageId, setEditingMessageId] = useState<number | null>(null);
   const [editingText, setEditingText] = useState("");
@@ -60,7 +60,17 @@ const Messages = ({user, messages, loading }: UserProps) => {
   };
 
   return (
-    <div className="px-4 pt-5 pb-4 space-y-2">
+    <div className="px-4 pt-5 pb-4 space-y-2 mt-auto">
+      {!loading && currentRoom && messages.length === 0 && currentRoom.hasUserMessages === false && (
+        <section className="py-6">
+          <h2 className="text-4xl font-bold text-foreground">
+            {currentRoom?.isPrivate && '🔒'} #{currentRoom?.name}
+          </h2>
+          <p className="text-lg text-foreground mt-2">
+            Welcome! This is the start of the {currentRoom?.isPrivate && '🔒'} #{currentRoom?.name} channel.
+          </p>
+        </section>
+      )}
       {messages.map((msg, index) => (
         <div
           key={msg.id || index}

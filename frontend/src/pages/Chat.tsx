@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useAuthStore } from "../store/authStore";
 import { useSocketStore } from "../store/socketStore";
 import { useMessageStore } from "../store/messageStore";
@@ -17,30 +17,18 @@ import { useChatRooms } from "../hooks/useChatRooms";
 import { useChatSockets } from "../hooks/useChatSockets";
 import { useChatLayout } from "../hooks/useChatLayout";
 
+import { useUsersStore } from "../store/usersStore";
+import CreateNewRoom from "../components/chat/CreateNewRoom";
+import RoomMembersInvite from "../components/invitations/RoomMembersInvite";
+
 const Chat = () => {
   const { user } = useAuthStore();
-
-  const {
-    rooms,
-    currentRoom,
-    currentRoomUsers,
-    onSelectRoom,
-    handleJoinLeaveRoom,
-  } = useChatRooms(user?.id);
+  const { rooms, currentRoom, currentRoomUsers, onSelectRoom, handleJoinLeaveRoom } = useChatRooms(user?.id);
 
   useChatSockets(currentRoom?.id);
 
-  const {
-    mobileView,
-    videoOverlay,
-    showMembers,
-    setMobileView,
-    setVideoOverlay,
-    setShowMembers,
-    inCall,
-    callState,
-    isCaller,
-  } = useChatLayout();
+  const { mobileView, videoOverlay, showMembers, setMobileView, setVideoOverlay, setShowMembers, inCall,
+    callState, isCaller } = useChatLayout();
 
   const { messagesByRoom, getLoadingForRoom } = useMessageStore();
   const { typingUserByRoom } = useTypingStore();
@@ -52,6 +40,12 @@ const Chat = () => {
   const incomingCaller = useWebRTCStore((s) => s.incomingCaller);
   const outcomingCallee = useWebRTCStore((s) => s.outcomingCallee);
 
+  const [showCreateRoom, setShowCreateRoom] = useState<boolean>(false);
+  const [inviteMembersVisible, setInviteMembersVisible] = useState<boolean>(false);
+  const [inviteRoomId, setInviteRoomId] = useState<number | null>(null);
+  const [inviteRoomName, setInviteRoomName] = useState<string>("");
+  const { users, fetchUsers } = useUsersStore();
+  
   // messages for currently selected room (derived from store)
   const roomMessages = useMemo(() => {
     if (!currentRoom) return [];
@@ -69,6 +63,24 @@ const Chat = () => {
     setInput("");
   };
 
+  const handleInviteMembers = (roomId: number, roomName: string) => {
+    setInviteRoomId(roomId);
+    setInviteRoomName(roomName);
+    setInviteMembersVisible(true);
+  };
+
+  const closeInviteMembers = () => {
+    setInviteRoomId(null);
+    setInviteRoomName("");
+    setInviteMembersVisible(false);
+  };
+
+  useEffect(() => {
+    if (users.length === 0) {
+      fetchUsers();
+    }
+  }, [users.length, fetchUsers]);
+
   return (
     <div id="chat" className="flex flex-col h-full relative">
 
@@ -78,6 +90,16 @@ const Chat = () => {
         mobileView={mobileView} setMobileView={setMobileView} 
         videoOverlay={videoOverlay} setVideoOverlay={setVideoOverlay} />
       </div>
+      
+      {showCreateRoom && (
+        <CreateNewRoom onClose={() => setShowCreateRoom(false)} />
+      )}
+
+      {inviteMembersVisible && inviteRoomId !== null && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-[2px]">
+          <RoomMembersInvite inviteRoomId={inviteRoomId} roomName={inviteRoomName} mode='manage' onCloseInviteMembers={closeInviteMembers} />
+        </div>
+      )}
 
       <div className="flex flex-1 overflow-hidden">
 
@@ -90,6 +112,8 @@ const Chat = () => {
               currentRoom={currentRoom}
               onSelectRoom={onSelectRoom}
               handleJoinLeaveRoom={handleJoinLeaveRoom}
+              onCreateRoom={() => setShowCreateRoom(true)}
+              onInviteMembers={handleInviteMembers}
             />
           </div>
         )}
@@ -101,6 +125,8 @@ const Chat = () => {
               currentRoom={currentRoom}
               onSelectRoom={onSelectRoom}
               handleJoinLeaveRoom={handleJoinLeaveRoom}
+              onCreateRoom={() => setShowCreateRoom(true)}
+              onInviteMembers={() => setInviteMembersVisible(true)}
             />
           </div>
         )}
@@ -109,7 +135,7 @@ const Chat = () => {
           <div className="w-full lg:w-3/5">
             <VideoCallWindow 
               caller={incomingCaller?.username} 
-              callee={outcomingCallee?.username} 
+              callee={{id: outcomingCallee?.id, name: outcomingCallee?.username}} 
             />
           </div>
         )}

@@ -5,6 +5,8 @@ import type { Message } from "../types/custom";
 import { useMessageStore } from "./messageStore";
 import { usePresenceStore } from "./presenceStore";
 import { useTypingStore } from "./typingStore";
+import { useInvitationStore } from "./invitationStore";
+import { useRoomStore } from "./roomStore";
 
 interface SocketState {
   socket: Socket | null;
@@ -23,7 +25,7 @@ export const useSocketStore = create<SocketState>((set, get) => ({
   connect: () => {
     const { user } = useAuthStore.getState();
     if (!user) return;
-    if (get().socket) return; // already connected
+    if (get().socket) return; 
 
     const socket = io(`${import.meta.env.VITE_BACKEND_URL}`, {
       withCredentials: true,
@@ -46,6 +48,38 @@ export const useSocketStore = create<SocketState>((set, get) => ({
         usePresenceStore.getState().setOnlineStatus(Number(localUserId), false);
       }
       set({ socket: null });
+    });
+
+    socket.on("room:created", ({ room }) => {
+      const user = useAuthStore.getState().user;
+      if (!user) return;
+
+      if (!room.isPrivate) {
+        useRoomStore.getState().addRoom({
+          ...room,
+          isMember: false,
+        });
+        return;
+      }
+
+      if (room.creatorId === user.id) {
+        useRoomStore.getState().addRoom({
+          ...room,
+          isMember: true,
+        });
+      }
+    });
+
+    socket.on("room:deleted", ({ roomId }: { roomId: number }) => {
+      const user = useAuthStore.getState().user;
+      if (!user) return;
+
+      useRoomStore.getState().deleteRoom(roomId);
+    });
+
+    socket.on("room:invited", ({ invitation }) => {
+      console.log("💌 New room invitation received:", invitation);
+      useInvitationStore.getState().addInvitation(invitation);
     });
 
     // Central socket listeners

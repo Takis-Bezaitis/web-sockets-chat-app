@@ -20,11 +20,9 @@ export default function chatSocket(io: Server) {
     const customSocket = socket as CustomSocket;
     console.log(`User connected: ${socket.id}`);
 
-    // IMPORTANT — add the socket to a user-specific room
     customSocket.join(`user:${customSocket.user?.id}`);
     
-    // --- ROOM SUBSCRIPTION (UI-level) ---
-    // User opened a room in the UI and wants real-time updates for that room.
+
     customSocket.on("enterRoom", async (roomId: string) => {
       if (!roomId || !customSocket.user) return;
 
@@ -34,13 +32,11 @@ export default function chatSocket(io: Server) {
 
       await addUserToRoomPresence(customSocket.user.id, roomId);
 
-      // Notify only others in the room (not the joiner)
       customSocket.to(roomChannel).emit("presence:entered", {
         user: customSocket.user,
         roomId,
       });
 
-      // Send presence list to the joiner 
       const users = await getRoomPresence(roomId);
       customSocket.emit("presence:list", {
         roomId,
@@ -48,8 +44,6 @@ export default function chatSocket(io: Server) {
       });
     });
 
-
-    // User closed/switched away from the room UI
     customSocket.on("exitRoom", async (roomId: string) => {
       if (!roomId || !customSocket.user) return;
       const roomChannel = `room:${roomId}`;
@@ -68,7 +62,7 @@ export default function chatSocket(io: Server) {
       if (!roomId || !customSocket.user) return;
       await refreshRoomPresence(customSocket.user.id, roomId);
     });
-
+    
     customSocket.on("joinRoom", (roomId: string) => {
       console.log(
         `membership join request by ${customSocket.user?.email ?? socket.id} for room ${roomId}`
@@ -195,7 +189,6 @@ export default function chatSocket(io: Server) {
     });
 
     customSocket.on("video:webrtc-offer", (data) => {
-      //console.log("video:webrtc-offer:", data)
       io.to(`user:${data.calleeId}`).emit("video:webrtc-offer", data);
     });
 
@@ -204,7 +197,6 @@ export default function chatSocket(io: Server) {
     });
 
     customSocket.on("video:webrtc-ice-candidate", (data) => {
-      console.log("video:webrtc-ice-candidate:",data)
       io.to(`user:${data.targetUserId}`).emit("video:webrtc-ice-candidate", data);
     });
 

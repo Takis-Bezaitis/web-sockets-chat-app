@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { useWebRTCStore } from "../../store/webrtcStore";
 import { useSocketStore } from "../../store/socketStore";
+import { usePresenceStore } from "../../store/presenceStore";
 import VideoControls from "./VideoControls";
 import { useAuthStore } from "../../store/authStore";
 import MicMutedIcon from "./icons/MicMutedIcon";
@@ -8,7 +9,7 @@ import CameraOffIcon from "./icons/CameraOffIcon";
 
 type VideoCallWindowProps = {
   caller: string | undefined;
-  callee: string | undefined;
+  callee: { id: number | undefined, name: string | undefined};
 }
 
 const VideoCallWindow = ({caller, callee }: VideoCallWindowProps) => {
@@ -24,6 +25,11 @@ const VideoCallWindow = ({caller, callee }: VideoCallWindowProps) => {
   const isCameraOff = useWebRTCStore((s) => s.isCameraOff);
   const isRemoteMicMuted = useWebRTCStore((s) => s.isRemoteMicMuted);
   const isRemoteCameraOff = useWebRTCStore((s) => s.isRemoteCameraOff);
+  const callState = useWebRTCStore((s) => s.callState);
+
+  const getOnlineStatus = usePresenceStore((s) => s.onlineUsers)
+
+  const isCalleeOnline = !!(callee.id && getOnlineStatus[callee.id]);
 
   // Attach video streams
   useEffect(() => {
@@ -80,19 +86,33 @@ const VideoCallWindow = ({caller, callee }: VideoCallWindowProps) => {
         </div>
 
         {/* Remote video */}
-        <p className="text-foreground">{`${caller===user?.username ? callee : caller}`}</p>
+        <p className="text-foreground">{`${caller===user?.username ? callee.name : caller}`}</p>
         <div className="relative content-center bg-video-chat-callee w-full aspect-video rounded-xl overflow-hidden">
           <video
             ref={remoteVideoRef}
             autoPlay
             playsInline
             className={`transition-all duration-200 absolute inset-0 w-full h-full object-cover bg-video-chat-callee 
-              ${isRemoteCameraOff ? 'opacity-0' : 'opacity-100'}`}
+              ${(isRemoteCameraOff || !isCalleeOnline || remoteStream === null) ? 'opacity-0' : 'opacity-100'}`}
           />
           {isRemoteCameraOff && (
             <div className="flex flex-col items-center justify-center align-middle text-6xl text-gray-300">
               <span>👤</span>
               <span className="text-sm mt-2 text-gray-400">Camera off</span>
+            </div>
+          )}
+
+          {!isCalleeOnline && (
+            <div className="flex flex-col items-center justify-center align-middle text-6xl text-gray-300">
+              <span>👤</span>
+              <span className="text-sm mt-2 text-gray-400">{callee.name} is currently offline.</span>
+            </div>
+          )}
+
+          {isCalleeOnline && callState !== "inCall" && (
+            <div className="flex flex-col items-center justify-center align-middle text-6xl text-gray-300">
+              <span>👤</span>
+              <span className="text-sm mt-2 text-gray-400">Waiting for {callee.name} to join…</span>
             </div>
           )}
 
