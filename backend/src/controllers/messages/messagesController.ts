@@ -13,26 +13,34 @@ export const getAllMessages = async (_: Request, res: Response<ApiResponse<Messa
   }
 };
 
+ 
 export const getRoomMessages = async (
-  req: Request<{ roomId: string }>, 
-  res: Response<ApiResponse<MessageDTO[]>>): Promise<void> => {
+  req: Request<{ roomId: string }, {}, {}, { limit?: string; before?: string }>,
+  res: Response<ApiResponse<MessageDTO[]>>
+): Promise<void> => {
+  try {
+    const { roomId } = req.params;
+    const limit = Number(req.query.limit) || 30;
+    const before = req.query.before ? Number(req.query.before) : undefined;
 
-    try {
-      const { roomId } = req.params;
-
-      if (!roomId) {
-        res.status(400).json({ error: "Missing roomId." });
-        return;
-      }
-
-      const messages = await getTheRoomMessages(Number(roomId));
-
-      res.status(200).json({ data: messages });
-    } catch (error) {
-      console.error("Error fetching room messages:", error);
-      res.status(500).json({ error: "Failed to get the room messages." });
+    if (!roomId) {
+      res.status(400).json({ error: "Missing roomId." });
+      return;
     }
+
+    const messages = await getTheRoomMessages(
+      Number(roomId),
+      limit,
+      before
+    );
+
+    res.status(200).json({ data: messages });
+  } catch (error) {
+    console.error("Error fetching room messages:", error);
+    res.status(500).json({ error: "Failed to get the room messages." });
+  }
 };
+
 
 export const saveRoomMessage = async (
    req: Request<{ roomId: string}> & AuthRequest, 

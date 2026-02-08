@@ -4,63 +4,131 @@ import type { Message, MessageReaction } from "../types/custom";
 interface MessageState {
   messagesByRoom: Record<number, Message[]>;
   loadingByRoom: Record<number, boolean>;
+  cursorByRoom: Record<number, number | null>;
+  hasMoreByRoom: Record<number, boolean>;
+  draftByRoom: Record<number, string>;
 
   getMessagesForRoom: (roomId: number) => Message[];
   clearRoomMessages: (roomId: number) => void;
 
   fetchRoomMessages: (roomId: number) => Promise<void>;
-  appendMessage: (roomId: number, msg: Message) => void;
+  appendMessage: (roomId: number, msg: Message, options?: { notifyNew?: boolean }) => void;
   updateEditedMessage: (msg: Message) => void;
   deleteMessageFromRoom: (id: number, roomId: number) => void;
 
   addReactionToMessage: (messageId:number, reaction: MessageReaction) => void;
   getLoadingForRoom: (roomId: number) => boolean;
 
+  getDraftForRoom: (roomId: number) => string;
+  setDraftForRoom: (roomId: number, draft: string) => void;
+
 }
+
+const messageStoreCallbacks: Record<number, ((msg: Message) => void)[]> = {};
+
+export const onNewMessage = (roomId: number, cb: (msg: Message) => void) => {
+  if (!messageStoreCallbacks[roomId]) messageStoreCallbacks[roomId] = [];
+  messageStoreCallbacks[roomId].push(cb);
+
+  return () => {
+    messageStoreCallbacks[roomId] = messageStoreCallbacks[roomId].filter(
+      (fn) => fn !== cb
+    );
+  };
+};
+
 
 export const useMessageStore = create<MessageState>((set, get) => ({
   messagesByRoom: {},
   loadingByRoom: {},
+  cursorByRoom: {},
+  hasMoreByRoom: {},
+  draftByRoom: {},
 
   getMessagesForRoom: (roomId) => {
     return get().messagesByRoom[roomId] ?? [];
   },
 
-  clearRoomMessages: (roomId) => {
-    set((state) => {
-      const copy = { ...state.messagesByRoom };
-      delete copy[roomId];
-      return { messagesByRoom: copy };
-    });
+  getDraftForRoom: (roomId) => {
+    return get().draftByRoom[roomId] ?? "";
   },
 
-  fetchRoomMessages: async (roomId: number) => {
-    const alreadyLoaded = get().messagesByRoom[roomId];
-    if (alreadyLoaded) return;
+  setDraftForRoom: (roomId, draft) => {
+    set((state) => ({
+      draftByRoom: {...state.draftByRoom, [roomId]: draft}
+    }))},
+  
+  clearRoomMessages: (roomId) => {
+  set((state) => {
+    const messages = { ...state.messagesByRoom };
+    const cursors = { ...state.cursorByRoom };
+    const hasMore = { ...state.hasMoreByRoom };
+    const loading = { ...state.loadingByRoom };
+
+    delete messages[roomId];
+    delete cursors[roomId];
+    delete hasMore[roomId];
+    delete loading[roomId];
+
+    return {
+      messagesByRoom: messages,
+      cursorByRoom: cursors,
+      hasMoreByRoom: hasMore,
+      loadingByRoom: loading
+    };
+  });
+},
+
+
+ fetchRoomMessages: async (roomId: number) => {
+    const { cursorByRoom, hasMoreByRoom, loadingByRoom } = get();
+    
+    if (loadingByRoom[roomId]) return;
+    if (hasMoreByRoom[roomId] === false) return;
 
     set((state) => ({
       loadingByRoom: { ...state.loadingByRoom, [roomId]: true }
     }));
 
     try {
-      const res = await fetch(
-        `${import.meta.env.VITE_BACKEND_MESSAGES_BASE_URL}/${roomId}/room-messages`,
-        { credentials: "include" }
-      );
+      const before = cursorByRoom[roomId];
 
-      if (!res.ok) {
-        console.warn("Failed to fetch messages");
-        return;
-      }
+      const url = before
+        ? `${import.meta.env.VITE_BACKEND_MESSAGES_BASE_URL}/${roomId}/room-messages?before=${before}&limit=30`
+        : `${import.meta.env.VITE_BACKEND_MESSAGES_BASE_URL}/${roomId}/room-messages?limit=30`;
+
+      const res = await fetch(url, { credentials: "include" });
+      if (!res.ok) return;
 
       const data = await res.json();
-      const msgs: Message[] = data.data ?? data;
+      const newMessages: Message[] = data.data ?? data;
 
-      set((state) => ({
-        messagesByRoom: { ...state.messagesByRoom, [roomId]: msgs }
-      }));
+      set((state) => {
+        const prevMessages = state.messagesByRoom[roomId] ?? [];
+
+        return {
+          messagesByRoom: {
+            ...state.messagesByRoom,
+            // prepend older messages
+            [roomId]: [...newMessages, ...prevMessages]
+          },
+          cursorByRoom: {
+            ...state.cursorByRoom,
+            // cursor = oldest message we just received
+            [roomId]:
+              newMessages.length > 0
+                ? newMessages[0].id
+                : state.cursorByRoom[roomId] ?? null
+          },
+          hasMoreByRoom: {
+            ...state.hasMoreByRoom,
+            // if fewer than limit, backend has no more
+            [roomId]: newMessages.length === 30
+          }
+        };
+      });
     } catch (err) {
-      console.error("Error fetching messages", err);
+      console.error("fetchRoomMessages failed:", err);
     } finally {
       set((state) => ({
         loadingByRoom: { ...state.loadingByRoom, [roomId]: false }
@@ -68,7 +136,7 @@ export const useMessageStore = create<MessageState>((set, get) => ({
     }
   },
 
-  appendMessage: (roomId, msg) => {
+  appendMessage: (roomId, msg, options?: { notifyNew?: boolean }) => {
     set((state) => {
       const prev = state.messagesByRoom[roomId] ?? [];
       return {
@@ -78,6 +146,10 @@ export const useMessageStore = create<MessageState>((set, get) => ({
         }
       };
     });
+
+    if (options?.notifyNew && messageStoreCallbacks[roomId]) {
+      messageStoreCallbacks[roomId].forEach((cb) => cb(msg));
+    }
   },
 
   updateEditedMessage: (updatedMsg: Message) =>

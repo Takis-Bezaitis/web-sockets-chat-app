@@ -22,7 +22,7 @@ const MessageReactions = ({ reactions }: Props) => {
       {Object.entries(grouped).map(([emoji, info]) => (
         <div
           key={emoji}
-          className="text-sm p-1 flex items-center "
+          className="text-sm p-1 flex items-center text-foreground"
           title={info.users.join(", ")} // tooltip of usernames
         >
           <span>{emoji}</span>

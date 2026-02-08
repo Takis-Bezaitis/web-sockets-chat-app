@@ -28,11 +28,12 @@ html, body, * {
   .bg-message-other-user { background-color: #c8ccd4; }  /* other user message: light gray */
   .bg-video-chat-window { background-color: black;}
   .bg-video-chat-callee { background-color: black; }
+  .bg-member-invite { background-color: #0e7bb7; }
 
   /* buttons */
   .bg-button-main { background-color: #0e7bb7; }         /* primary button: blue */
   .hover\:bg-button-hover:hover { background-color: #0e5983; } /* hover blue */
-  .disabled\:bg-button-disabled:disabled { background-color: #d1d5db; } /* disabled: gray */
+  .disabled\:bg-button-disabled:disabled { background-color: #b3b8c0; } /* disabled: gray */
   .bg-button-secondary { background-color: #d1d5db;}
   .hover\:bg-button-secondary-hover:hover { background-color: #a2b0c4; }
   
@@ -68,16 +69,17 @@ html, body, * {
    ======================= */
 .dark {
   /* Backgrounds */
-  .bg-background { background-color: #141f31; }  /* page background */
-  .bg-component-background { background-color: #192537;}  /* component background */
+  .bg-background { background-color: #1a1a1e; }  /* page background */
+  .bg-component-background { background-color: #121214;}  /* component background */
   .bg-card { background-color: #1f2937; }        /* cards, modals */
   .bg-input { background-color: #1f2937; }       /* inputs */
   .bg-surface-selected { background-color: #fbbf24; }
   .bg-surface { background-color: #1d3448; }
   .bg-message-user { background-color: #0093b1; }
-  .bg-message-other-user { background-color: #1d293b; }
+  .bg-message-other-user { background-color: #465e81; }
   .bg-video-chat-window { background-color: black;}
   .bg-video-chat-callee { background-color: black; }
+  .bg-member-invite { background-color: #196679; }
 
   /* buttons */
   .bg-button-main { background-color: #196679; }      /* primary button */

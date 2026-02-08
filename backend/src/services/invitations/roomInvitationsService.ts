@@ -27,21 +27,74 @@ export const createInvitation = async ({
       roomId,
       inviteeId: { in: validInviteeIds },
     },
-    select: { inviteeId: true },
+    select: {
+      inviteeId: true,
+      status: true,
+    },
   });
+
+  const declinedInviteeIds = existingInvitations
+    .filter((inv) => inv.status === "DECLINED")
+    .map((inv) => inv.inviteeId);
 
   const alreadyInvitedIds = new Set(
     existingInvitations.map((inv) => inv.inviteeId)
   );
 
-  const finalInviteeIds = validInviteeIds.filter(
+  let revivedInvitations: InvitationDTO[] = [];
+
+  if (declinedInviteeIds.length > 0) {
+    await prisma.roomInvitation.updateMany({
+      where: {
+        roomId,
+        inviteeId: { in: declinedInviteeIds },
+        status: "DECLINED",
+      },
+      data: {
+        status: "PENDING",
+        inviterId,
+      },
+    });
+
+    const revived = await prisma.roomInvitation.findMany({
+      where: {
+        roomId,
+        inviteeId: { in: declinedInviteeIds },
+        status: "PENDING",
+      },
+      include: {
+        inviter: {
+          select: { id: true, username: true },
+        },
+        room: {
+          select: { id: true, name: true },
+        },
+      },
+    });
+
+    revivedInvitations = revived.map((inv) => ({
+      id: inv.id,
+      status: inv.status,
+      createdAt: inv.createdAt.toISOString(),
+      acceptedAt: inv.acceptedAt?.toISOString() || null,
+      inviteeId: inv.inviteeId,
+      inviter: {
+        id: inv.inviter.id,
+        username: inv.inviter.username,
+      },
+      room: {
+        id: inv.room.id,
+        name: inv.room.name,
+      },
+    }));
+  }
+
+  const newInviteeIds = validInviteeIds.filter(
     (id) => !alreadyInvitedIds.has(id)
   );
 
-  if (finalInviteeIds.length === 0) return [];
-
-  const invitations = await Promise.all(
-    finalInviteeIds.map((inviteeId) =>
+  const newInvitations = await Promise.all(
+    newInviteeIds.map((inviteeId) =>
       prisma.roomInvitation.create({
         data: {
           inviterId,
@@ -60,24 +113,25 @@ export const createInvitation = async ({
     )
   );
 
-  return invitations.map((inv) => ({
+  const createdInvitations: InvitationDTO[] = newInvitations.map((inv) => ({
     id: inv.id,
     status: inv.status,
     createdAt: inv.createdAt.toISOString(),
     acceptedAt: inv.acceptedAt?.toISOString() || null,
     inviteeId: inv.inviteeId,
-
     inviter: {
       id: inv.inviter.id,
       username: inv.inviter.username,
     },
-
     room: {
       id: inv.room.id,
       name: inv.room.name,
     },
   }));
+
+  return [...revivedInvitations, ...createdInvitations];
 };
+
 
 
 export const findMyInvitations = async (

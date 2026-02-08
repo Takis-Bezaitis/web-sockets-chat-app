@@ -17,6 +17,8 @@ const RoomMembersInvite = ({inviteRoomId, roomName, mode, onClose, onCloseInvite
     const [error, setError] = useState("");
 
     const users = useUsersStore((s) => s.users);
+    const hasValidInput = invites.split(/[\s,]+/).some((t) => t.trim().length > 0);
+
     const INVITATIONS_BASE_URL = import.meta.env.VITE_BACKEND_INVITATIONS_BASE_URL;
 
     if (!inviteRoomId) {
@@ -89,27 +91,23 @@ const RoomMembersInvite = ({inviteRoomId, roomName, mode, onClose, onCloseInvite
     }
 
     return (
-        <div className="bg-create-room text-foreground rounded-lg w-96 p-5 shadow-lg">
+        <div className="bg-create-room text-foreground rounded-lg w-lg m-5 p-5 shadow-lg">
             <div className="flex justify-end">
                 <span className="cursor-pointer" onClick={onCloseInviteMembers}>✖</span>
             </div>
-            <h2 className="text-lg font-semibold mb-4">Add members to room</h2>
-            <h3>#{roomName}</h3>
+            <h2 className="text-lg font-semibold mb-4">Add members to #{roomName}</h2>
 
-            <label className="block mb-4">
-                <span className="text-sm text-muted mb-1 block">Invite members</span>
-
-                {error && <p className="text-red-500 mb-4">{error}</p>}
+            <label className="block relative mb-4">
+                {error && <p className="text-red-500 mb-4 text-center">{error}</p>}
 
                 <input
                     type="text"
+                    autoFocus
                     value={invites}
                     onChange={(e) => setInvites(e.target.value)}
-                    placeholder="@username1, @username2"
+                    placeholder="ex. Juliet"
                     className="w-full border rounded px-3 py-2"
                 />
-
-                <p className="text-xs text-muted mt-1">Separate multiple users with commas</p>
 
                 {(() => {
                 const lastPartial = invites.split(/[\s,]+/).pop()?.trim().replace("@", "").toLowerCase() || "";
@@ -120,18 +118,18 @@ const RoomMembersInvite = ({inviteRoomId, roomName, mode, onClose, onCloseInvite
                 if (suggestions.length === 0) return null; 
 
                 return (
-                    <ul className="mt-1 border rounded max-h-40 overflow-auto text-sm">
+                    <ul className="absolute w-full bg-surface mt-4 border rounded h-11 overflow-auto text-sm">
                     {suggestions.map((u) => (
                         <li
-                        key={u.id}
-                        className="px-2 py-1 hover:bg-gray-200 cursor-pointer"
-                        onClick={() => {
-                            const parts = invites.split(",");
-                            parts[parts.length - 1] = `@${u.username}`;
-                            setInvites(parts.join(", ") + ", ");
-                        }}
-                        >
-                        @{u.username}
+                            key={u.id}
+                            className="w-fit ml-0.5 mt-0.5 h-[2.4rem] px-3 py-2 bg-member-invite rounded cursor-pointer"
+                            onClick={() => {
+                                const parts = invites.split(/[\s,]+/);
+                                parts[parts.length - 1] = `@${u.username}`;
+                                setInvites(parts.join(", ") + ", ");
+                            }}
+                            >
+                            @{u.username}
                         </li>
                     ))}
                     </ul>
@@ -155,7 +153,7 @@ const RoomMembersInvite = ({inviteRoomId, roomName, mode, onClose, onCloseInvite
                     disabled={isSubmitting || !roomName.trim()}
                     className="w-24 px-4 py-2 rounded bg-button-main text-white hover:bg-button-hover cursor-pointer"
                 >
-                    {invites.length === 0 ? 'Skip' : invites.length > 0 && mode === "create" ? 'Create' : 'Invite'}
+                    {!hasValidInput ? 'Skip' : mode === "create" ? 'Create' : 'Invite'}
                 </button>
             </div>
 

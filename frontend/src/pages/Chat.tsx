@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuthStore } from "../store/authStore";
 import { useSocketStore } from "../store/socketStore";
 import { useMessageStore } from "../store/messageStore";
@@ -20,6 +20,7 @@ import { useChatLayout } from "../hooks/useChatLayout";
 import { useUsersStore } from "../store/usersStore";
 import CreateNewRoom from "../components/chat/CreateNewRoom";
 import RoomMembersInvite from "../components/invitations/RoomMembersInvite";
+import ChatHeader from "../components/chat/ChatHeader";
 
 const Chat = () => {
   const { user } = useAuthStore();
@@ -27,12 +28,10 @@ const Chat = () => {
 
   useChatSockets(currentRoom?.id);
 
-  const { mobileView, videoOverlay, showMembers, setMobileView, setVideoOverlay, setShowMembers, inCall,
-    callState, isCaller } = useChatLayout();
+  const { mobileView, videoOverlay, showMembers, setMobileView, setVideoOverlay, setShowMembers, 
+    inCall, callState, isCaller } = useChatLayout();
 
-  const { messagesByRoom, getLoadingForRoom } = useMessageStore();
   const { typingUserByRoom } = useTypingStore();
-  const { getMessagesForRoom } = useMessageStore();
 
   // local UI state
   const [input, setInput] = useState("");
@@ -47,12 +46,18 @@ const Chat = () => {
   const { users, fetchUsers } = useUsersStore();
   
   // messages for currently selected room (derived from store)
-  const roomMessages = useMemo(() => {
-    if (!currentRoom) return [];
-    return getMessagesForRoom(currentRoom.id);
-  }, [currentRoom, messagesByRoom, getMessagesForRoom]);
+  const roomId = currentRoom?.id;
 
-  const loading = getLoadingForRoom(currentRoom?.id ?? -1);
+  const safeRoomMessages = useMessageStore(
+    s => (roomId !== undefined ? s.messagesByRoom[roomId] : undefined),
+  );
+
+  const safeLoading = useMessageStore(
+    s => (roomId !== undefined ? s.loadingByRoom[roomId] : undefined),
+  );
+
+  const roomMessages = safeRoomMessages ?? [];
+  const loading = safeLoading ?? false;
 
   // send message
   const sendMessage = useSocketStore((s) => s.sendMessage);
@@ -75,6 +80,10 @@ const Chat = () => {
     setInviteMembersVisible(false);
   };
 
+  const chatLayoutClasses = `
+    hidden md:flex flex-col min-w-0
+    ${(callState === "idle" || (callState === "ringing" && !isCaller)) ? "flex-1" : "md:w-1/3 md:min-w-xs xl:w-1/4 xl:min-w-md"}`;
+
   useEffect(() => {
     if (users.length === 0) {
       fetchUsers();
@@ -83,9 +92,16 @@ const Chat = () => {
 
   return (
     <div id="chat" className="flex flex-col h-full relative">
+      {currentRoom && (
+        <ChatHeader 
+          user={user} 
+          currentRoom={currentRoom} 
+          showMembers={showMembers} 
+          setShowMembers={setShowMembers}
+        />)}
 
       {/* ------- MOBILE NAV BAR (bottom) ------- */}
-      <div className="lg:hidden w-full fixed bottom-0 z-20 bg-background">
+      <div className="md:hidden w-full fixed bottom-0 z-20 bg-background">
         <MobileNavBar 
         mobileView={mobileView} setMobileView={setMobileView} 
         videoOverlay={videoOverlay} setVideoOverlay={setVideoOverlay} />
@@ -96,16 +112,16 @@ const Chat = () => {
       )}
 
       {inviteMembersVisible && inviteRoomId !== null && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-[2px]">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <RoomMembersInvite inviteRoomId={inviteRoomId} roomName={inviteRoomName} mode='manage' onCloseInviteMembers={closeInviteMembers} />
         </div>
       )}
 
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 overflow-hidden min-h-0">
 
         {/* ------- SIDEBAR (hidden on mobile) ------- */}
         {user && ((!inCall && callState==="idle") || (!inCall && !isCaller)) &&  (
-          <div className="hidden lg:block xl:w-3/5 xl:max-w-xs">
+          <div className="hidden md:block md:w-3/5 md:max-w-xs">
             <ChatSidebar
               user={user}
               rooms={rooms}
@@ -118,7 +134,7 @@ const Chat = () => {
           </div>
         )}
         {(user && mobileView === "rooms" && callState==="idle") && (
-          <div className="w-full lg:hidden">
+          <div className="w-full md:hidden">
             <ChatSidebar
               user={user}
               rooms={rooms}
@@ -132,7 +148,7 @@ const Chat = () => {
         )}
 
         {(callState === "inCall" || (callState === "ringing" && isCaller)) && (
-          <div className="w-full lg:w-3/5">
+          <div className="flex-1 w-2/3 lg:w-3/5">
             <VideoCallWindow 
               caller={incomingCaller?.username} 
               callee={{id: outcomingCallee?.id, name: outcomingCallee?.username}} 
@@ -140,69 +156,66 @@ const Chat = () => {
           </div>
         )}
 
-        {/* ------- CENTER AREA (Chat section OR mobile view switching) ------- */}
-        <div className="hidden lg:flex flex-1 flex-col">  
-          <ChatContent currentRoom={currentRoom} showMembers={showMembers} setShowMembers={setShowMembers}
-          user={user} roomMessages={roomMessages} loading={loading} 
-          typingUserByRoom={typingUserByRoom} 
-          handleSend={handleSend} input={input} setInput={setInput} />
+        <div className={chatLayoutClasses}>
+          <ChatContent
+            currentRoom={currentRoom}
+            user={user}
+            roomMessages={roomMessages}
+            loading={loading}
+            typingUserByRoom={typingUserByRoom}
+            handleSend={handleSend}
+            input={input}
+            setInput={setInput}
+            handleJoinLeaveRoom={handleJoinLeaveRoom}
+          />
         </div>
 
+
+        {/* mobile */}
+
         {mobileView === "chat" && ((!inCall && callState!=="ringing" && isCaller) || (!inCall && !isCaller)) && (
-          <div className="lg:hidden flex flex-1 flex-col">  
-            <ChatContent currentRoom={currentRoom} showMembers={showMembers} setShowMembers={setShowMembers}
+          <div className="md:hidden flex flex-1 flex-col">
+            <ChatContent currentRoom={currentRoom} 
               user={user} roomMessages={roomMessages} loading={loading} 
               typingUserByRoom={typingUserByRoom}
-              handleSend={handleSend} input={input} setInput={setInput} />
+              handleSend={handleSend} input={input} setInput={setInput} handleJoinLeaveRoom={handleJoinLeaveRoom}/>
           </div>
         )}
         
         {videoOverlay === "chat" && ((callState!="idle" && isCaller) || (inCall && !isCaller)) && (
           <div
-            className="lg:hidden fixed bottom-0 left-0 right-0 h-[65%] bg-background rounded-t-2xl shadow-xl flex flex-col"
+            className="lg:hidden fixed bottom-0 left-0 right-0 h-[50%] bg-background rounded-t-2xl shadow-xl flex flex-col"
           >
-            <ChatContent currentRoom={currentRoom} showMembers={showMembers} setShowMembers={setShowMembers}
+            <ChatContent currentRoom={currentRoom} 
               user={user} roomMessages={roomMessages} loading={loading}
               typingUserByRoom={typingUserByRoom}
-              handleSend={handleSend} input={input} setInput={setInput}
-            />
-          </div>
-        )}
-
-        {/* ------- Room members for screens bigger that medium  ------- */}
-        {((!inCall && callState==="idle") || (!inCall && !isCaller)) && <div className="hidden xl:block xl:w-3/5 xl:max-w-xs">
-            <UsersInRoom user={user} currentRoomUsers={currentRoomUsers} currentRoom={currentRoom} />
-        </div>}
-
-        {/* Toggle-based members panel (LG always, XL only during call) */}
-        {showMembers && (
-          <div className="hidden lg:block xl:hidden lg:w-3/5 lg:max-w-xs">
-            <UsersInRoom user={user} currentRoomUsers={currentRoomUsers} currentRoom={currentRoom}
-            />
-          </div>
-        )}
-
-        {/* XL toggle when IN CALL or RINGING */}
-        {showMembers && (inCall || callState==="ringing") && (
-          <div className="hidden xl:block xl:w-3/5 xl:max-w-xs">
-            <UsersInRoom
-              user={user} currentRoomUsers={currentRoomUsers} currentRoom={currentRoom}
+              handleSend={handleSend} input={input} setInput={setInput} handleJoinLeaveRoom={handleJoinLeaveRoom}
             />
           </div>
         )}
 
         {/* Room members for mobile screens */}
         {mobileView === "members" && (
-          <div className="w-full lg:hidden">
-            <UsersInRoom user={user} currentRoomUsers={currentRoomUsers} currentRoom={currentRoom} onStartVideoCall={() => setMobileView("video")}/>
+          <div className="w-full md:hidden">
+            <UsersInRoom 
+              user={user} 
+              currentRoomUsers={currentRoomUsers} 
+              currentRoom={currentRoom} 
+              mobileView={mobileView}
+              onStartVideoCall={() => setMobileView("video")}/>
           </div>
         )}
         
         {videoOverlay === "members" && ((callState!="idle" && isCaller) || (inCall && !isCaller)) && (
           <div
-            className="lg:hidden fixed bottom-0 left-0 right-0 h-[65%] bg-background rounded-t-2xl shadow-xl flex flex-col"
+            className="lg:hidden fixed bottom-0 left-0 right-0 h-[50%] bg-background rounded-t-2xl shadow-xl flex flex-col"
           >
-            <UsersInRoom user={user} currentRoomUsers={currentRoomUsers} currentRoom={currentRoom} onStartVideoCall={() => setMobileView("video")}/>
+            <UsersInRoom 
+              user={user} 
+              currentRoomUsers={currentRoomUsers} 
+              currentRoom={currentRoom}
+              videoOverlay={videoOverlay} 
+              onStartVideoCall={() => setMobileView("video")}/>
           </div>
         )}
 
@@ -211,8 +224,27 @@ const Chat = () => {
             caller={incomingCaller || undefined}
             callee={outcomingCallee || undefined}
         />
-        
+        {showMembers && (
+        <div
+          className="
+            hidden md:flex top-14 right-0 bottom-0 z-40
+            md:w-fit lg:w-80 flex-col
+            bg-component-background
+            shadow-xl
+          "
+        >
+          <UsersInRoom
+            user={user}
+            currentRoomUsers={currentRoomUsers}
+            currentRoom={currentRoom}
+            setShowMembers={setShowMembers}
+          />
+        </div>
+      )}
       </div>
+
+      
+     
     </div>
   );
 };

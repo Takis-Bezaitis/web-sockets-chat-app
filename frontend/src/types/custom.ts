@@ -22,14 +22,6 @@ export type RoomUsers = {
     email: string;
 };
 
-// For UsersInRoom
-export interface UsersInRoomProps {
-  currentRoomUsers: RoomUsers[];
-  user: User | null;
-  currentRoom: RoomWithMembershipDTO | undefined;
-  onStartVideoCall?: () => void;
-};
-
 export interface MessageReaction {
   userId: number;
   username: string;

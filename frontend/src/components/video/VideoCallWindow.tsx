@@ -30,7 +30,7 @@ const VideoCallWindow = ({caller, callee }: VideoCallWindowProps) => {
   const getOnlineStatus = usePresenceStore((s) => s.onlineUsers)
 
   const isCalleeOnline = !!(callee.id && getOnlineStatus[callee.id]);
-
+console.log("getOnlineStatus:",getOnlineStatus)
   // Attach video streams
   useEffect(() => {
     if (localVideoRef.current && localStream) {

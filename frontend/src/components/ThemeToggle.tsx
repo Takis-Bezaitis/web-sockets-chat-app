@@ -23,7 +23,7 @@ const ThemeToggle = () => {
   return (
     <div
       onClick={() => setTheme(theme === "light" ? "dark" : "light")}
-      className="p-2 cursor-pointer h-12"
+      className="mt-0.5 cursor-pointer"
     >
       {theme === "light" ? "🌙" : "☀️"}
     </div>

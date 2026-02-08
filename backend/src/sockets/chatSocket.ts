@@ -7,21 +7,39 @@ import {
   removeUserFromRoomPresence,
   getRoomPresence,
   refreshRoomPresence,
+  removeUserFromOnlineUsers,
   removeUserFromAllRooms,
+  addUserToOnlineUsers,
+  getOnlineUsers,
 } from "../utils/presence.js";
 
 export interface CustomSocket extends Socket {
   user?: UserPayload;
 }
 
+export async function syncOnlineUsers(customSocket: CustomSocket) {
+  const userId = customSocket.user?.id;
+  if (!userId) return;
+
+  const wasAdded = await addUserToOnlineUsers(userId, customSocket.id);
+
+  const onlineUsers = await getOnlineUsers();
+  customSocket.emit("onlineUsers:list", { onlineUsers });
+
+  if (wasAdded) {
+    customSocket.broadcast.emit("onlineUser:added", { userId });
+  }
+}
+
 export default function chatSocket(io: Server) {
 
   io.on("connection", (socket: Socket) => {
     const customSocket = socket as CustomSocket;
+    if (!customSocket.user) return;
     console.log(`User connected: ${socket.id}`);
 
     customSocket.join(`user:${customSocket.user?.id}`);
-    
+    syncOnlineUsers(customSocket);
 
     customSocket.on("enterRoom", async (roomId: string) => {
       if (!roomId || !customSocket.user) return;
@@ -70,6 +88,11 @@ export default function chatSocket(io: Server) {
       // Notify room members 
       const numericRoomId = Number(roomId);
       customSocket.join(`room:${roomId}`);
+
+      customSocket.emit("membership:joined", {
+        roomId: numericRoomId,
+      });
+
       customSocket.to(`room:${roomId}`).emit("membership:joined", {
         roomId: numericRoomId,
       });
@@ -225,7 +248,12 @@ export default function chatSocket(io: Server) {
           roomId,
         });
       });
-    });
 
+      const wasRemoved = await removeUserFromOnlineUsers(userId, customSocket.id);
+
+      if (wasRemoved) {
+        customSocket.broadcast.emit("onlineUser:removed", { userId });
+      }
+    });
   });
 }

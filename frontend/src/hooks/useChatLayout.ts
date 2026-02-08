@@ -30,20 +30,21 @@ export const useChatLayout = () => {
     if (callState === "idle") {
       setShowMembers(false);
     }
+
+    if (callState === "inCall" && !isCaller) {
+      setShowMembers(false);
+    }
   }, [callState]);
 
   return {
-    // state
     mobileView,
     videoOverlay,
     showMembers,
 
-    // setters
     setMobileView,
     setVideoOverlay,
     setShowMembers,
 
-    // derived flags
     inCall,
     callState,
     isCaller,

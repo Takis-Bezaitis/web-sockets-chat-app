@@ -13,7 +13,7 @@ const CreateNewRoom = ({ onClose }: CreateNewRoomProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [inviteMembersVisible, setInviteMembersVisible] = useState<boolean>(false);
   const [error, setError] = useState("");
-  
+  const maxChannelName: number = 40;
   const ROOMS_BASE_URL = import.meta.env.VITE_BACKEND_ROOMS_BASE_URL;
 
   const handleSubmit = async () => {
@@ -88,7 +88,7 @@ const CreateNewRoom = ({ onClose }: CreateNewRoomProps) => {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-[2px]">
+    <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/50">
       {inviteMembersVisible && newRoom ? (
         <RoomMembersInvite inviteRoomId={newRoom.id} roomName={name} mode='create' onClose={onClose} onCloseInviteMembers={closeInviteMembers} />
       ) : (
@@ -97,22 +97,25 @@ const CreateNewRoom = ({ onClose }: CreateNewRoomProps) => {
           <span className="cursor-pointer" onClick={onClose}>✖</span>
         </div>
         
-        <h2 className="text-lg font-semibold mb-4">Create New Room</h2>
+        <h2 className="text-lg font-semibold mb-4">Create New Channel</h2>
 
         {error && <p className="text-red-500 mb-4">{error}</p>}
 
-        <input
-          type="text"
-          autoFocus
-          value={name}
-          onChange={(e) => {
-            setName(e.target.value);
-            setError("");
-          }}
-          placeholder="Room name"
-          className="w-full border rounded px-3 py-2 mb-4"
-        />
-
+        <div className="flex gap-2 place-items-center mb-4">
+          <input
+            type="text"
+            autoFocus
+            value={name}
+            maxLength={maxChannelName}
+            onChange={(e) => {
+              setName(e.target.value);
+              setError("");
+            }}
+            placeholder="Room name"
+            className="w-full border rounded px-3 py-2"
+          />
+          <p>{maxChannelName - name.length}</p>
+        </div>
         {/* Private toggle */}
         <label className="flex justify-between items-center gap-3 mb-3 cursor-pointer">
           <span className="text-sm flex items-center gap-1">

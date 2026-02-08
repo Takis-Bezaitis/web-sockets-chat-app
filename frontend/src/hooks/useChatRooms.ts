@@ -8,7 +8,7 @@ const ROOMS_BASE_URL = import.meta.env.VITE_BACKEND_ROOMS_BASE_URL;
 
 export function useChatRooms(userId?: number) {
   const { enterRoom, exitRoom } = useSocketStore();
-  const { fetchRoomMessages } = useMessageStore();
+  const { fetchRoomMessages, clearRoomMessages } = useMessageStore();
 
   const [currentRoom, setCurrentRoom] = useState<RoomWithMembershipDTO>();
   const [currentRoomUsers, setCurrentRoomUsers] = useState<RoomUsers[]>([]);
@@ -64,16 +64,21 @@ export function useChatRooms(userId?: number) {
   };
 
   const onSelectRoom = async (room: RoomWithMembershipDTO) => {
+    if (room.id === currentRoom?.id) return;
+    
     try {
       if (currentRoom) {
         exitRoom(currentRoom.id);
+        clearRoomMessages(currentRoom.id);
       }
 
-      setCurrentRoom(room);
+      setCurrentRoomUsers([]);
 
       await fetchRoomMessages(room.id);
       await enterRoom(room.id);
       await getRoomUsers(room.id);
+
+      setCurrentRoom(room);
     } catch (err) {
       console.error("onSelectRoom failed:", err);
     }
@@ -94,6 +99,7 @@ export function useChatRooms(userId?: number) {
         throw new Error(err.error || "Join/Leave failed");
       }
 
+      
       const updatedRooms = await fetchRooms();
 
       if (currentRoom?.id === room.id) {

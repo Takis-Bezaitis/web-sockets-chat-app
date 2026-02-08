@@ -13,6 +13,7 @@ interface SocketState {
   currentRoomId: number | null;
   connect: () => void;
   disconnect: () => void;
+  enterApp: () => void;
   enterRoom: (roomId: number) => Promise<void>;
   exitRoom: (roomId: number) => void;
   sendMessage: (roomId: number, text: string) => void;
@@ -48,6 +49,20 @@ export const useSocketStore = create<SocketState>((set, get) => ({
         usePresenceStore.getState().setOnlineStatus(Number(localUserId), false);
       }
       set({ socket: null });
+    });
+
+    socket.on("onlineUsers:list", (payload: { onlineUsers:string[] }) => {
+      payload.onlineUsers.forEach((userId: string) => {
+        usePresenceStore.getState().setOnlineStatus(Number(userId), true);
+      });
+    });
+
+    socket.on("onlineUser:added", (payload: { userId:string }) => {
+      usePresenceStore.getState().setOnlineStatus(Number(payload.userId), true);
+    });
+
+     socket.on("onlineUser:removed", (payload: { userId:string }) => {
+      usePresenceStore.getState().setOnlineStatus(Number(payload.userId), false);
     });
 
     socket.on("room:created", ({ room }) => {
@@ -86,7 +101,7 @@ export const useSocketStore = create<SocketState>((set, get) => ({
     // New messages broadcasted by server
     socket.on("message:new", (msg: Message) => {
       console.log("📩 message:new", msg);
-      useMessageStore.getState().appendMessage(Number(msg.roomId), msg);
+      useMessageStore.getState().appendMessage(Number(msg.roomId), msg, { notifyNew: true });
     });
 
     socket.on("message:edited", (msg: Message) => {
@@ -103,14 +118,14 @@ export const useSocketStore = create<SocketState>((set, get) => ({
       console.log("presence:entered", payload);
       if (!payload.user?.id) return;
       // Mark any other user that has just entered the room (not the local user aka 'me') as online
-      usePresenceStore.getState().setOnlineStatus(Number(payload.user.id), true);
+      usePresenceStore.getState().setUserInRoom(Number(payload.roomId), Number(user.id), true);
     });
 
     socket.on("presence:left", (payload: { user: { id: string; email?: string } | null; roomId: string }) => {
       console.log("presence:left", payload);
       if (!payload.user?.id) return;
       // Mark any other user that has just left the room (not the local user aka 'me') as offine
-      usePresenceStore.getState().setOnlineStatus(Number(payload.user.id), false);
+      usePresenceStore.getState().setUserInRoom(Number(payload.roomId), Number(user.id), false);
     });
 
     socket.on("message:reaction:new", ({ messageId, reaction }) => {
@@ -120,10 +135,10 @@ export const useSocketStore = create<SocketState>((set, get) => ({
 
     socket.on("presence:list", ({ roomId, users }) => {
       console.log("presence:list roomId:", roomId);
-      //console.log("presence:list users:", users);
+      console.log("presence:list users:", users);
 
       users.forEach((userId: string) => {
-        usePresenceStore.getState().setOnlineStatus(Number(userId), true);
+        usePresenceStore.getState().setUserInRoom(Number(roomId), Number(userId), true);
       });
     });
    
@@ -143,22 +158,24 @@ export const useSocketStore = create<SocketState>((set, get) => ({
     console.log("🧹 socket disconnected & listeners removed");
   },
 
+  enterApp: async () => {
+    
+  },
+
   // Enter a room: subscribe socket, fetch messages (cache-backed), set currentRoom
   enterRoom: async (roomId: number) => {
     const { socket } = get();
     if (!socket) {
       console.warn("Socket not connected; connecting now.");
       get().connect();
-      // Wait a small amount: in your app you can also await a 'connect' event if needed.
     }
 
-    // join socket.io room (UI-level)
     socket?.emit("enterRoom", roomId.toString());
 
     // Mark local user online
     const localUserId = useAuthStore.getState().user?.id;
     if (localUserId) {
-      usePresenceStore.getState().setOnlineStatus(Number(localUserId), true);
+      usePresenceStore.getState().setUserInRoom(roomId, Number(localUserId), true);
     }
 
     // If we already have cached messages in the store, skip fetch
@@ -177,7 +194,7 @@ export const useSocketStore = create<SocketState>((set, get) => ({
     // Mark local user offline
     const localUserId = useAuthStore.getState().user?.id;
     if (localUserId) {
-      usePresenceStore.getState().setOnlineStatus(Number(localUserId), false);
+      usePresenceStore.getState().setUserInRoom(roomId, Number(localUserId), false);
     }
     set({ currentRoomId: null });
   },

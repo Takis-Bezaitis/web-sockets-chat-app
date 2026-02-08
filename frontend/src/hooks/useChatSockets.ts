@@ -58,9 +58,7 @@ export const useChatSockets = (currentRoomId?: number) => {
     };
   }, [socket]);
 
-  /* =============================
-     3. PRESENCE HEARTBEAT
-     ============================= */
+  /* PRESENCE HEARTBEAT */
   useEffect(() => {
     if (!socket || !socket.connected || !currentRoomId) return;
 

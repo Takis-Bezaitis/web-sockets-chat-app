@@ -1,4 +1,6 @@
+import { memo, useMemo } from "react";
 import type {  User, RoomWithMembershipDTO } from "../../types/custom";
+import RoomActions from "./RoomActions";
 
 interface ChatSidebarProps {
   user: User;
@@ -19,17 +21,14 @@ const ChatSidebar = ({
   onCreateRoom,
   onInviteMembers,
 }: ChatSidebarProps) => {
-  const filteredRooms = rooms.filter((r) => !r.isPrivate || r.isMember);
+  const filteredRooms = useMemo(
+  () => rooms.filter((r) => !r.isPrivate || r.isMember),
+  [rooms]
+);
+
 
   return (
-    <div className="flex flex-col h-full bg-component-background border-r border-border-line">
-      <div className="bg-component-background text-foreground h-14 flex items-center border-b border-border-line">
-        <div className="flex ml-4 gap-2 place-items-center">
-          <div className="text-3xl">👤</div>
-          <div className="text-xl">{user.username}</div>
-        </div>
-      </div>
-
+    <div className="flex flex-col h-full bg-component-background">
       <div className="flex items-center justify-between pt-4 pb-2">
         <header className="text-foreground ml-5 text-lg">Channels ({filteredRooms.length})</header>
         <div className="cursor-pointer mr-5" onClick={onCreateRoom}>➕</div>
@@ -41,53 +40,37 @@ const ChatSidebar = ({
           <div
             key={room.id}
             onClick={() => onSelectRoom(room)}
-            className={`flex gap-3 flex-wrap justify-between mx-5 my-2 rounded-md p-2 
+            className={`mx-5 my-2 rounded-md p-2
               ${room.name === currentRoom?.name
                 ? "bg-surface-selected cursor-default"
                 : "bg-surface cursor-pointer"
             }`}
           >
-            <div
-              className={`text-lg ${
-                room.name === currentRoom?.name
-                  ? "italic font-bold text-surface-selected"
-                  : "text-foreground"
-              }`}
-            >
-              # {room.name} 
-            </div>
-            
-            {(room.name !== "general" && (room.creatorId === user.id && room.isPrivate)) && (
-              <button className="cursor-pointer" onClick={() => onInviteMembers(room.id, room.name)}>👤+</button>
-            )}
 
-            {(room.name !== "general" && room.creatorId !== user.id) && (
-              <div className="flex gap-2">
-                <button
-                  className={`bg-button-main text-white px-4 rounded hover:bg-button-hover disabled:bg-button-disabled
-                    ${room.isMember ? 'cursor-default' : 'cursor-pointer'} `}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleJoinLeaveRoom(room, "join");
-                  }}
-                  disabled={room.isMember}
-                >
-                  JOIN
-                </button>
-
-                <button
-                  className={`bg-button-main text-white px-4 rounded hover:bg-button-hover disabled:bg-button-disabled
-                    ${room.isMember ? 'cursor-pointer' : 'cursor-default'} `}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleJoinLeaveRoom(room, "leave");
-                  }}
-                  disabled={!room.isMember}
-                >
-                  LEAVE
-                </button>
+            <div className="flex justify-between items-center">
+              <div
+                className={`text-lg overflow-hidden ${
+                  room.name === currentRoom?.name
+                    ? "italic font-bold text-surface-selected"
+                    : "text-foreground"
+                }`}
+              >
+                <h3 className="truncate">{room.isPrivate ? <span className="not-italic">🔒</span> : '#'} {room.name}</h3>
               </div>
-            )}
+
+              {(room.name !== "general" && room.creatorId != user.id) && (
+                <RoomActions
+                  room={room}
+                  handleJoinLeaveRoom={handleJoinLeaveRoom}
+                />
+              )}
+
+              <div className="min-w-fit">
+                {(room.name !== "general" && (room.creatorId === user.id && room.isPrivate)) && (
+                  <button className="cursor-pointer" onClick={() => onInviteMembers(room.id, room.name)}>📩</button>
+                )}
+              </div>
+            </div>
           </div>
         );
       })}
@@ -97,4 +80,4 @@ const ChatSidebar = ({
   );
 };
 
-export default ChatSidebar;
+export default memo(ChatSidebar);
