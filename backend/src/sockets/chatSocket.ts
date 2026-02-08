@@ -7,24 +7,40 @@ import {
   removeUserFromRoomPresence,
   getRoomPresence,
   refreshRoomPresence,
+  removeUserFromOnlineUsers,
   removeUserFromAllRooms,
+  addUserToOnlineUsers,
+  getOnlineUsers,
 } from "../utils/presence.js";
 
 export interface CustomSocket extends Socket {
   user?: UserPayload;
 }
 
+export async function syncOnlineUsers(customSocket: CustomSocket) {
+  const userId = customSocket.user?.id;
+  if (!userId) return;
+
+  const wasAdded = await addUserToOnlineUsers(userId, customSocket.id);
+
+  const onlineUsers = await getOnlineUsers();
+  customSocket.emit("onlineUsers:list", { onlineUsers });
+
+  if (wasAdded) {
+    customSocket.broadcast.emit("onlineUser:added", { userId });
+  }
+}
+
 export default function chatSocket(io: Server) {
 
   io.on("connection", (socket: Socket) => {
     const customSocket = socket as CustomSocket;
+    if (!customSocket.user) return;
     console.log(`User connected: ${socket.id}`);
 
-    // IMPORTANT — add the socket to a user-specific room
     customSocket.join(`user:${customSocket.user?.id}`);
-    
-    // --- ROOM SUBSCRIPTION (UI-level) ---
-    // User opened a room in the UI and wants real-time updates for that room.
+    syncOnlineUsers(customSocket);
+
     customSocket.on("enterRoom", async (roomId: string) => {
       if (!roomId || !customSocket.user) return;
 
@@ -34,13 +50,11 @@ export default function chatSocket(io: Server) {
 
       await addUserToRoomPresence(customSocket.user.id, roomId);
 
-      // Notify only others in the room (not the joiner)
       customSocket.to(roomChannel).emit("presence:entered", {
         user: customSocket.user,
         roomId,
       });
 
-      // Send presence list to the joiner 
       const users = await getRoomPresence(roomId);
       customSocket.emit("presence:list", {
         roomId,
@@ -48,8 +62,6 @@ export default function chatSocket(io: Server) {
       });
     });
 
-
-    // User closed/switched away from the room UI
     customSocket.on("exitRoom", async (roomId: string) => {
       if (!roomId || !customSocket.user) return;
       const roomChannel = `room:${roomId}`;
@@ -68,20 +80,21 @@ export default function chatSocket(io: Server) {
       if (!roomId || !customSocket.user) return;
       await refreshRoomPresence(customSocket.user.id, roomId);
     });
-
-    // --- ROOM MEMBERSHIP (application-level) ---
-    // These are semantic membership actions.
-    // You might call these after a successful REST POST /rooms/:id/join
-    // or you may call your membership service here to persist membership.
+    
     customSocket.on("joinRoom", (roomId: string) => {
-      // NOTE: Keep membership persistence in your REST endpoint or implement here.
       console.log(
         `membership join request by ${customSocket.user?.email ?? socket.id} for room ${roomId}`
       );
       // Notify room members 
+      const numericRoomId = Number(roomId);
       customSocket.join(`room:${roomId}`);
+
+      customSocket.emit("membership:joined", {
+        roomId: numericRoomId,
+      });
+
       customSocket.to(`room:${roomId}`).emit("membership:joined", {
-        roomId,
+        roomId: numericRoomId,
       });
     });
 
@@ -90,9 +103,10 @@ export default function chatSocket(io: Server) {
         `membership leave request by ${customSocket.user?.email ?? socket.id} for room ${roomId}`
       );
       // Notify room members
+      const numericRoomId = Number(roomId);
       customSocket.leave(`room:${roomId}`);
       customSocket.to(`room:${roomId}`).emit("membership:left", {
-        roomId,
+        roomId: numericRoomId,
       });
     });
 
@@ -198,7 +212,6 @@ export default function chatSocket(io: Server) {
     });
 
     customSocket.on("video:webrtc-offer", (data) => {
-      //console.log("video:webrtc-offer:", data)
       io.to(`user:${data.calleeId}`).emit("video:webrtc-offer", data);
     });
 
@@ -207,7 +220,6 @@ export default function chatSocket(io: Server) {
     });
 
     customSocket.on("video:webrtc-ice-candidate", (data) => {
-      console.log("video:webrtc-ice-candidate:",data)
       io.to(`user:${data.targetUserId}`).emit("video:webrtc-ice-candidate", data);
     });
 
@@ -236,7 +248,12 @@ export default function chatSocket(io: Server) {
           roomId,
         });
       });
-    });
 
+      const wasRemoved = await removeUserFromOnlineUsers(userId, customSocket.id);
+
+      if (wasRemoved) {
+        customSocket.broadcast.emit("onlineUser:removed", { userId });
+      }
+    });
   });
 }

@@ -4,8 +4,8 @@ import { type MessageDTO } from "../types/custom.js";
 const CACHE_VERSION = 1;     // increment to invalidate old caches
 const MESSAGES_TTL_SECONDS = 30;      // seconds
 
-export const getCachedRoomMessages = async (roomId: number): Promise<MessageDTO[] | null> => {
-  const key = `v${CACHE_VERSION}:room:${roomId}:messages`;
+export const getCachedRoomMessages = async (cacheKey: string): Promise<MessageDTO[] | null> => {
+  const key = `v${CACHE_VERSION}:room:${cacheKey}`;
   const cached = await redis.get(key);
 
   if (!cached) return null;
@@ -17,12 +17,13 @@ export const getCachedRoomMessages = async (roomId: number): Promise<MessageDTO[
   }
 };
 
-export const setCachedRoomMessages = async (roomId: number, messages: MessageDTO[]) => {
-  const key = `v${CACHE_VERSION}:room:${roomId}:messages`;
+export const setCachedRoomMessages = async (cacheKey: string, messages: MessageDTO[]) => {
+  const key = `v${CACHE_VERSION}:room:${cacheKey}`;
   await redis.set(key, JSON.stringify(messages), "EX", MESSAGES_TTL_SECONDS);
 };
 
 export const invalidateRoomMessagesCache = async (roomId: number) => {
-  const key = `v${CACHE_VERSION}:room:${roomId}:messages`;
-  await redis.del(key);
+  const pattern = `v${CACHE_VERSION}:room:${roomId}:*`;
+  const keys = await redis.keys(pattern);
+  if (keys.length) await redis.del(keys);
 };

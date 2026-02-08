@@ -11,29 +11,15 @@ export type ApiResponse<T> =
 export type RoomDTO = {
   id: number;
   name: string;
+  isPrivate?: boolean;
+  creatorId: number;
+  hasUserMessages: boolean;
 };
 
 export type RoomUsers = {
     id: number;
     username: string;
     email: string;
-};
-
-// For ChatSidebar
-export interface ChatSidebarProps {
-  user: User;
-  rooms: RoomWithMembershipDTO[];
-  currentRoom?: RoomWithMembershipDTO;
-  onSelectRoom: (room: RoomWithMembershipDTO) => void;
-  handleJoinLeaveRoom: (room: RoomWithMembershipDTO, action: string) => void;
-};
-
-// For UsersInRoom
-export interface UsersInRoomProps {
-  currentRoomUsers: RoomUsers[];
-  user: User | null;
-  currentRoom: RoomWithMembershipDTO | undefined;
-  onStartVideoCall?: () => void;
 };
 
 export interface MessageReaction {
@@ -62,4 +48,28 @@ export type RoomWithMembershipDTO = {
   id: number;
   name: string;
   isMember: boolean;
+  isPrivate: boolean;
+  creatorId: number;
+  hasUserMessages: boolean;
 };
+
+type InvitationStatus = "PENDING" | "ACCEPTED" | "DECLINED"
+
+export type InvitationDTO = {
+  id: number;
+  status: InvitationStatus;
+  createdAt: string;
+  acceptedAt: string | null;
+  inviteeId: number;
+
+  inviter: {
+    id: number;
+    username: string;
+  };
+
+  room: {
+    id: number;
+    name: string;
+  };
+};
+

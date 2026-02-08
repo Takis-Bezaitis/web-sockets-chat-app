@@ -4,9 +4,45 @@ import { getCachedRoomUsers, setCachedRoomUsers, invalidateRoomUsersCache } from
 
 export const getAllRooms = async (): Promise<RoomDTO[]> => {
     return prisma.room.findMany({
-        select: { id: true, name: true },
+        select: { id: true, name: true, creatorId: true, hasUserMessages: true },
+    });
+}; 
+
+export const createNewRoom = async (userId: number, name: string, isPrivate: boolean): Promise<RoomDTO> => {
+    const existing = await prisma.room.findUnique({
+        where: { name },
+    });
+
+    if (existing) {
+        throw new Error('Room already exists.');
+    }
+
+    return prisma.room.create({
+        data: { creatorId: userId, name, isPrivate }
     });
 };
+
+export const deleteRoom = async (userId: number, roomId: number) => {
+    const room = await prisma.room.findFirst({
+        where: {
+        id: roomId,
+        creatorId: userId,
+        },
+    });
+
+    if (!room) {
+        throw new Error("ROOM_NOT_FOUND_OR_FORBIDDEN");
+    }
+
+    await prisma.userRoom.deleteMany({
+        where: { roomId },
+    });
+
+    await prisma.room.delete({
+        where: { id: roomId },
+    });
+};
+
 
 export const joinTheRoom = async (userId: number, roomId: number): Promise<UserRoomDTO> => {
     // Check if already joined
@@ -63,14 +99,21 @@ export const leaveTheRoom = async (userId: number, roomId: number): Promise<User
             room: { select: { id: true, name: true}},
             joinedAt: true
         },
-    })
+    });
+
+    await prisma.roomInvitation.deleteMany({
+        where: {
+            roomId,
+            inviteeId: userId,
+        },
+    });
 
     await invalidateRoomUsersCache(roomId);
     
     return {
         user: deleted.user,
         room: deleted.room,
-        joinedAt: deleted.joinedAt?.toISOString(), // convert Date -> string
+        joinedAt: deleted.joinedAt?.toISOString(),
     };
 };
 
@@ -99,7 +142,15 @@ export const getAllRoomUsers = async (roomId: number): Promise<RoomUsers[]> => {
 };
 
 export const getTheUserRoomsWithMembership = async (userId: number) => {
-    const rooms = await prisma.room.findMany();
+    const rooms = await prisma.room.findMany({
+        select: {
+        id: true,
+        name: true,
+        isPrivate: true,
+        creatorId: true,
+        hasUserMessages: true,
+        },
+    });
 
     // Get all rooms the user is a member of
     const userRooms  = await prisma.userRoom.findMany({
@@ -113,5 +164,8 @@ export const getTheUserRoomsWithMembership = async (userId: number) => {
         id: room.id,
         name: room.name,
         isMember: joinedRoomIds.has(room.id),
+        isPrivate: room.isPrivate,
+        creatorId: room.creatorId,
+        hasUserMessages: room.hasUserMessages,
     }));
 };

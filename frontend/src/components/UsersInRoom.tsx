@@ -1,19 +1,38 @@
-import { type UsersInRoomProps } from "../types/custom";
+import { memo } from "react";
 import { usePresenceStore } from "../store/presenceStore";
 import { useWebRTCStore } from "../store/webrtcStore";
+import type { RoomUsers, RoomWithMembershipDTO, User } from "../types/custom";
 import VideoCallButton from "./video/VideoCallButton";
 
-const UsersInRoom = ({ user, currentRoomUsers, currentRoom, onStartVideoCall }: UsersInRoomProps) => {
+interface UsersInRoomProps {
+  currentRoomUsers: RoomUsers[];
+  user: User | null;
+  currentRoom: RoomWithMembershipDTO | undefined;
+  mobileView?: string;
+  videoOverlay?: string;
+  setShowMembers?: (m: boolean) => void;
+  onStartVideoCall?: () => void;
+};
+
+const UsersInRoom = ({ user, currentRoomUsers, currentRoom, mobileView, videoOverlay, setShowMembers, onStartVideoCall }: UsersInRoomProps) => {
   const onlineUsers = usePresenceStore((state) => state.onlineUsers);
   const callState = useWebRTCStore((state) => state.callState);
   const isCaller = useWebRTCStore((state) => state.isCaller);
 
   return (
-    <div className="flex flex-col h-full bg-component-background border-l border-border-line">
-      <header className="text-foreground p-3 text-lg h-14 border-b border-border-line">
-        Members
-      </header>
-      <div className="p-4 overflow-y-auto no-scrollbar">
+    <div className="flex flex-col h-full bg-component-background">
+      {(mobileView !== "members" && videoOverlay !== "members") && (
+        <div className="flex justify-end pt-2 pr-4">
+          <span className="cursor-pointer text-xl hover:opacity-70" onClick={() => setShowMembers?.(false)}>✖</span>
+      </div>
+      )}
+      
+      <div className="p-2 overflow-y-auto no-scrollbar">
+        {(currentRoomUsers.length === 1 && currentRoom?.creatorId === user?.id ) && (
+          <p className="text-foreground">{!currentRoom?.isPrivate ? 'No members yet — you are the only one here.' : 
+            'No members yet — you are the only one here. Invite others to join!'}</p>
+        )} 
+
         {Array.isArray(currentRoomUsers) && currentRoomUsers.map((roomUser) => {
           if (user?.id === roomUser.id) return null;
 
@@ -22,7 +41,7 @@ const UsersInRoom = ({ user, currentRoomUsers, currentRoom, onStartVideoCall }: 
           return (
             <div 
               key={roomUser.id} 
-              className="group flex bg-surface m-2 rounded-md p-2 md:ml-16 md:mr-16 lg:m-2 text-foreground items-center gap-3 relative "
+              className="group flex bg-surface m-2 rounded-md p-2 md:m-2 text-foreground items-center gap-3"
             >
               <div className="relative text-3xl leading-none">
                 <span>👤</span>
@@ -34,11 +53,11 @@ const UsersInRoom = ({ user, currentRoomUsers, currentRoom, onStartVideoCall }: 
                 />
               </div>
 
-              <div className="flex flex-col text-lg">
-                <p className="font-medium">{roomUser.username}</p>
+              <div className="flex flex-col text-lg overflow-hidden">
+                <p className="text-lg truncate">{roomUser.username}</p>
               </div>
 
-              <div className={`absolute right-2 
+              <div className={`min-w-fit ml-auto 
                 ${((isCaller && callState!=="idle") || (!isCaller && callState!=="idle")) ? 'pointer-events-none' : ''}`}>
                 <VideoCallButton
                   calleeId={roomUser.id}
@@ -58,4 +77,4 @@ const UsersInRoom = ({ user, currentRoomUsers, currentRoom, onStartVideoCall }: 
   );
 };
 
-export default UsersInRoom;
+export default memo(UsersInRoom);

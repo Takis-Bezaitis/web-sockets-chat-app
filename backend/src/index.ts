@@ -1,10 +1,10 @@
+import dotenv from 'dotenv';
+dotenv.config();
 import http from 'http';
 import { Server } from 'socket.io';
 import app from './app.js';
 import chatSocket from './sockets/chatSocket.js';
 import { socketAuthMiddleware } from "./sockets/socketAuth.js";
-import dotenv from 'dotenv';
-dotenv.config();
 
 const PORT = process.env.PORT || 5000;
 

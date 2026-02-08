@@ -7,7 +7,7 @@ interface SaveMessageInput {
   userId: number;
   roomId: number;
 }
-
+ 
 export const getAllTheMessages = async (): Promise<MessageDTO[]> => {
   const messages = await prisma.message.findMany({
     include: {
@@ -35,6 +35,11 @@ export const saveTheRoomMessage = async (
   const message = await prisma.message.create({
     data: { text, userId, roomId },
     include: { user: { select: { email: true, username: true } } } // fetch email from User
+  });
+
+  await prisma.room.update({
+    where: { id: roomId },
+    data: { hasUserMessages: true },
   });
 
    // Invalidate Redis cache for this room
@@ -88,38 +93,48 @@ export const deleteMessage = async (id: number): Promise<void> => {
     throw new Error("Message not found");
   }
 
-  // 1️⃣ Delete all reactions for this message
   await prisma.messageReaction.deleteMany({
     where: { messageId: id },
   });
 
-  // 2️⃣ Delete the message itself
   await prisma.message.delete({
     where: { id }
     }
   );
 };
 
-export const getTheRoomMessages = async (roomId: number): Promise<MessageDTO[]> => {
-  // 1️⃣ Try Redis cache first
-  const cached = await getCachedRoomMessages(roomId);
+export const getTheRoomMessages = async (
+  roomId: number,
+  limit: number,
+  before?: number
+): Promise<MessageDTO[]> => {
+  const cacheKey = `room:${roomId}:messages${before ? `:before:${before}` : ""}:limit:${limit}`;
+
+  // Try Redis cache first
+  const cached = await getCachedRoomMessages(cacheKey);
   if (cached) return cached;
 
-  // 2️⃣ Fallback to Prisma if not cached
+  // Fetch from Prisma if not cached
   const messages = await prisma.message.findMany({
-    where: { roomId },
+    where: {
+      roomId,
+      ...(before ? { id: { lt: before } } : {}),
+    },
     include: {
       user: { select: { email: true, username: true } },
       reactions: {
         include: {
-          user: { select: { id: true, username: true } } // include user info for reactions
-        }
-      }
+          user: { select: { id: true, username: true } },
+        },
+      },
     },
-    orderBy: { createdAt: "asc" },
+    orderBy: { id: "desc" }, 
+    take: limit,
   });
 
-  const dto = messages.map((m) => ({
+  const ordered = messages.reverse();
+
+  const dto = ordered.map((m) => ({
     id: m.id,
     text: m.text,
     createdAt: m.createdAt.toISOString(),
@@ -130,15 +145,16 @@ export const getTheRoomMessages = async (roomId: number): Promise<MessageDTO[]> 
     reactions: m.reactions.map((r) => ({
       userId: r.userId,
       username: r.user.username,
-      emoji: r.emoji
-    }))
+      emoji: r.emoji,
+    })),
   }));
 
-  // 3️⃣ Store in Redis cache
-  await setCachedRoomMessages(roomId, dto);
+  // Cache result in Redis
+  await setCachedRoomMessages(cacheKey, dto);
 
   return dto;
 };
+
 
 interface AddMessageReactionInput  {
   messageId: number;

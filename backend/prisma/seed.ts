@@ -1,33 +1,48 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from "@prisma/client";
+import bcrypt from "bcryptjs";
+
 const prisma = new PrismaClient();
 
 async function main() {
-  // Check if "general" room exists
-  let generalRoom = await prisma.room.findUnique({
-    where: { name: 'general' }
+  const hashedPassword = await bcrypt.hash("MySecret123!", 10);
+
+  const alice = await prisma.user.upsert({
+    where: { username: "Alice" },
+    update: {},
+    create: {
+      username: "Alice",
+      email: "alice@example.com",
+      password: hashedPassword,
+    },
   });
-  console.log("test 1")
-  if (!generalRoom) {
-    console.log("test 2")
-    generalRoom = await prisma.room.create({
-      data: {
-        name: 'general',
+
+  const generalRoom = await prisma.room.upsert({
+    where: { name: "general" },
+    update: {},
+    create: {
+      name: "general",
+      isPrivate: false,
+      creatorId: alice.id,
+    },
+  });
+
+  await prisma.userRoom.upsert({
+    where: {
+      userId_roomId: {
+        userId: alice.id,
+        roomId: generalRoom.id,
       },
-    });
-    console.log('Created default room: general');
-  } else {
-    console.log('Room "general" already exists');
-  }
+    },
+    update: {},
+    create: {
+      userId: alice.id,
+      roomId: generalRoom.id,
+    },
+  });
+
+  console.log("Seed completed: Alice created and added to #general");
 }
 
 main()
-  .catch((e) => {
-    console.error(e);
-    process.exit(1);
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });
-
-// npx prisma db seed    it doesn't work
-//npx tsx ./prisma/seed.ts  it created the Room
+  .catch((e) => console.error("Seed failed:", e))
+  .finally(async () => await prisma.$disconnect());

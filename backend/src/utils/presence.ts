@@ -1,6 +1,52 @@
 import redis from "./redisClient.js";
 
-const PRESENCE_TTL_SECONDS = 60; // seconds
+const ONLINE_USERS_KEY = "online:users";
+const USER_SOCKET_SET_KEY = (userId: string) => `online:user:socketSet:${userId}`;
+
+/* ---------------- ONLINE USERS ---------------- */
+
+export const addUserToOnlineUsers = async (userId: string, socketId: string) => {
+  const key = USER_SOCKET_SET_KEY(userId);
+
+  await redis.sadd(key, socketId); // use set, no conflict with old string
+  const count = await redis.scard(key);
+
+  if (count === 1) {
+    await redis.sadd(ONLINE_USERS_KEY, userId);
+    return true; // user just became online
+  }
+
+  return false;
+};
+ 
+
+export const removeUserFromOnlineUsers = async (userId: string, socketId: string) => {
+  const key = USER_SOCKET_SET_KEY(userId);
+
+  await redis.srem(key, socketId);
+  const count = await redis.scard(key);
+
+  if (count === 0) {
+    await redis.del(key);
+    await redis.srem(ONLINE_USERS_KEY, userId);
+    return true; // user just went offline
+  }
+
+  return false;
+};
+
+
+export const getOnlineUsers = async (): Promise<string[]> => {
+  return redis.smembers(ONLINE_USERS_KEY);
+};
+
+
+
+
+
+/* ---------------- ROOM PRESENCE (your existing logic is fine) ---------------- */
+
+const PRESENCE_TTL_SECONDS = 60;
 
 export const addUserToRoomPresence = async (userId: string, roomId: string) => {
   await redis.multi()

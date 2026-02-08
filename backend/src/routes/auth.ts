@@ -41,7 +41,11 @@ router.post('/register', async (req, res) => {
     const generalRoom = await prisma.room.upsert({
       where: { name: "general" },
       update: {},
-      create: { name: "general" }
+      create: {
+        name: "general",
+        isPrivate: false,
+        creatorId: 1, 
+      },
     });
 
     // Add user to general room
@@ -115,6 +119,16 @@ router.get("/me", authMiddleware, async (req: AuthRequest, res: Response) => {
   }
 });
 
+router.post("/logout", (_req, res) => {
+  res.clearCookie("token", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+    path: "/",
+  });
+
+  res.json({ message: "Logged out" });
+});
 
 
 export default router;

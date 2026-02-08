@@ -2,7 +2,7 @@ const EndCallIcon = () => {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 24 24"
+      viewBox="2 1 24 24"
       width="60"
       height="60"
       className="cursor-pointer text-red-600 hover:text-red-700 dark:text-red-500 dark:hover:text-red-400"
