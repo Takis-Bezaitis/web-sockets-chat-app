@@ -8,7 +8,7 @@ interface SaveMessageInput {
   roomId: number;
 }
  
-export const getAllTheMessages = async (): Promise<MessageDTO[]> => {
+export const getAllMessages = async (): Promise<MessageDTO[]> => {
   const messages = await prisma.message.findMany({
     include: {
       user: { select: { email: true, username: true } },
@@ -28,7 +28,7 @@ export const getAllTheMessages = async (): Promise<MessageDTO[]> => {
   }));
 };
 
-export const saveTheRoomMessage = async (
+export const createMessage = async (
   { text, userId, roomId }: SaveMessageInput
 ): Promise<MessageDTO> => {
   // Create the message
@@ -103,7 +103,7 @@ export const deleteMessage = async (id: number): Promise<void> => {
   );
 };
 
-export const getTheRoomMessages = async (
+export const getMessagesByRoom = async (
   roomId: number,
   limit: number,
   before?: number
@@ -162,7 +162,7 @@ interface AddMessageReactionInput  {
   userId: number;
 };
 
-export const addMessageReaction = async({ messageId, emoji, userId }: AddMessageReactionInput 
+export const addReactionToMessage = async({ messageId, emoji, userId }: AddMessageReactionInput 
   ): Promise<MessageReaction> => {
   
   // 1️⃣ Check if reaction already exists

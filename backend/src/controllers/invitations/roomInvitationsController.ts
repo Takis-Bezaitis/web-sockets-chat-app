@@ -1,6 +1,7 @@
 import { type Request, type Response } from "express";
 import type { AuthRequest, ApiResponse, InvitationDTO } from "../../types/custom.js";
-import { createInvitation, findMyInvitations, acceptInvitation, declineInvitation } from "../../services/invitations/roomInvitationsService.js";
+import * as invitationService from "../../services/invitations/roomInvitationsService.js";
+
 import { io } from "../../index.js";
 
 export const inviteToRoom = async (
@@ -24,7 +25,7 @@ export const inviteToRoom = async (
       return;
     }
 
-    const invitations = await createInvitation({
+    const invitations = await invitationService.inviteToRoom({
       inviterId: Number(userId),
       roomId: Number(roomId),
       inviteeIds,
@@ -53,7 +54,7 @@ export const getMyInvitations = async (req: Request & AuthRequest, res: Response
             return;
         }
         
-        const invitations = await findMyInvitations(Number(userId));
+        const invitations = await invitationService.getMyInvitations(Number(userId));
 
         res.status(200).json({ data: invitations });
     } catch (error) {
@@ -76,7 +77,7 @@ export const acceptRoomInvitation = async (req: Request<{ invitationId: string }
             return;
         }
 
-        const invitation = await acceptInvitation(Number(invitationId), Number(userId));
+        const invitation = await invitationService.acceptRoomInvitation(Number(invitationId), Number(userId));
 
         if (!invitation) {
             res.status(404).json({ error: "Invitation not found or already handled." });
@@ -102,7 +103,7 @@ export const declineRoomInvitation = async (req: Request<{ invitationId: string 
                 return;
             }
 
-            const invitation = await declineInvitation(Number(invitationId), Number(userId));
+            const invitation = await invitationService.declineRoomInvitation(Number(invitationId), Number(userId));
 
             if (!invitation) {
                 res.status(404).json({ error: "Invitation not found or already handled." });

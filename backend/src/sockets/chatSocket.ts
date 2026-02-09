@@ -1,6 +1,6 @@
 import { Server, Socket } from "socket.io";
 import { type UserPayload } from "../types/custom.js";
-import { saveTheRoomMessage, addMessageReaction, editMessage, deleteMessage } from "../services/messages/messageService.js";
+import { createMessage, addReactionToMessage, editMessage, deleteMessage } from "../services/messages/messageService.js";
 import prisma from "../prismaClient.js";
 import {
   addUserToRoomPresence,
@@ -121,7 +121,7 @@ export default function chatSocket(io: Server) {
           if (!roomId || !text) return;
 
           // Persist message (this also invalidates Redis cache in your service).
-          const saved = await saveTheRoomMessage({
+          const saved = await createMessage({
             text,
             userId: Number(customSocket.user.id),
             roomId: Number(roomId),
@@ -166,7 +166,7 @@ export default function chatSocket(io: Server) {
         const { emoji, userId, messageId } = data;
 
         // 1️⃣ Save reaction in DB
-        const reaction = await addMessageReaction({ emoji, userId, messageId });
+        const reaction = await addReactionToMessage({ emoji, userId, messageId });
 
         // 2️⃣ Find the room of the message
         const message = await prisma.message.findUnique({

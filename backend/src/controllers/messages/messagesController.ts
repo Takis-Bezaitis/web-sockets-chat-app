@@ -1,11 +1,11 @@
 import { type Request, type Response } from "express";
 import { type AuthRequest, type ApiResponse, type MessageDTO, type MessageReaction } from "../../types/custom.js";
-import { getAllTheMessages, saveTheRoomMessage, getTheRoomMessages, addMessageReaction } from "../../services/messages/messageService.js";
+import * as messageService from "../../services/messages/messageService.js";
 import prisma from "../../prismaClient.js";
 
 export const getAllMessages = async (_: Request, res: Response<ApiResponse<MessageDTO[]>>): Promise<void> => {
   try {
-    const allMessages = await getAllTheMessages();
+    const allMessages = await messageService.getAllMessages();
     res.status(200).json({ data: allMessages });
   } catch (error) {
     console.error("Error fetching the messages.", error);
@@ -28,7 +28,7 @@ export const getRoomMessages = async (
       return;
     }
 
-    const messages = await getTheRoomMessages(
+    const messages = await messageService.getMessagesByRoom(
       Number(roomId),
       limit,
       before
@@ -62,7 +62,7 @@ export const saveRoomMessage = async (
     }
 
     // Save message to DB
-    const message = await saveTheRoomMessage({
+    const message = await messageService.createMessage({
       text,
       userId: Number(userId),
       roomId: Number(roomId),
@@ -110,7 +110,7 @@ export const reactToMessage = async(req: Request<{ messageId: string }> & AuthRe
       return;
     }
 
-    const reaction = await addMessageReaction({ messageId: Number(messageId), emoji, userId });
+    const reaction = await messageService.addReactionToMessage({ messageId: Number(messageId), emoji, userId });
     res.status(201).json({ data: reaction });
   } catch (error) {
     console.error(error);

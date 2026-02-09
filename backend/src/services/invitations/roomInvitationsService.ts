@@ -1,17 +1,17 @@
 import prisma from "../../prismaClient.js";
 import type { InvitationDTO } from "../../types/custom.js";
 
-type CreateInvitationProps = {
+type inviteToRoomProps = {
   inviterId: number;
   roomId: number;
   inviteeIds: number[];
 };
 
-export const createInvitation = async ({
+export const inviteToRoom = async ({
   inviterId,
   roomId,
   inviteeIds,
-}: CreateInvitationProps): Promise<InvitationDTO[]> => {
+}: inviteToRoomProps): Promise<InvitationDTO[]> => {
   if (inviteeIds.length === 0) return [];
 
   const validUsers = await prisma.user.findMany({
@@ -134,7 +134,7 @@ export const createInvitation = async ({
 
 
 
-export const findMyInvitations = async (
+export const getMyInvitations = async (
   userId: number
 ): Promise<InvitationDTO[]> => {
   const invitations = await prisma.roomInvitation.findMany({
@@ -175,7 +175,7 @@ export const findMyInvitations = async (
 };
 
 
-export const acceptInvitation = async (
+export const acceptRoomInvitation = async (
   invitationId: number,
   userId: number
 ): Promise<InvitationDTO | null> => {
@@ -218,7 +218,7 @@ export const acceptInvitation = async (
 };
 
 
-export const declineInvitation = async (invitationId: number, userId: number): Promise<InvitationDTO | null> => {
+export const declineRoomInvitation = async (invitationId: number, userId: number): Promise<InvitationDTO | null> => {
   const invitation = await prisma.roomInvitation.findFirst({
     where: {
       id: invitationId,
