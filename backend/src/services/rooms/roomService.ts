@@ -2,13 +2,13 @@ import prisma from "../../prismaClient.js";
 import { type RoomDTO, type UserRoomDTO, type RoomUsers } from "../../types/custom.js";
 import { getCachedRoomUsers, setCachedRoomUsers, invalidateRoomUsersCache } from "../../utils/cacheRoomUsers.js";
 
-export const getAllRooms = async (): Promise<RoomDTO[]> => {
+export const getRooms = async (): Promise<RoomDTO[]> => {
     return prisma.room.findMany({
         select: { id: true, name: true, creatorId: true, hasUserMessages: true },
     });
 }; 
 
-export const createNewRoom = async (userId: number, name: string, isPrivate: boolean): Promise<RoomDTO> => {
+export const createRoom = async (userId: number, name: string, isPrivate: boolean): Promise<RoomDTO> => {
     const existing = await prisma.room.findUnique({
         where: { name },
     });
@@ -44,7 +44,7 @@ export const deleteRoom = async (userId: number, roomId: number) => {
 };
 
 
-export const joinTheRoom = async (userId: number, roomId: number): Promise<UserRoomDTO> => {
+export const joinRoom = async (userId: number, roomId: number): Promise<UserRoomDTO> => {
     // Check if already joined
     const existing = await prisma.userRoom.findUnique({
         where: {
@@ -74,7 +74,7 @@ export const joinTheRoom = async (userId: number, roomId: number): Promise<UserR
     };
 };
 
-export const leaveTheRoom = async (userId: number, roomId: number): Promise<UserRoomDTO> => {
+export const leaveRoom = async (userId: number, roomId: number): Promise<UserRoomDTO> => {
     const existing = await prisma.userRoom.findUnique({
         where: {
             userId_roomId: { userId, roomId },
@@ -117,12 +117,12 @@ export const leaveTheRoom = async (userId: number, roomId: number): Promise<User
     };
 };
 
-export const getAllRoomUsers = async (roomId: number): Promise<RoomUsers[]> => {
-    // 1️⃣ Try Redis cache first
+export const getRoomUsers = async (roomId: number): Promise<RoomUsers[]> => {
+    // Try Redis cache first
     const cached = await getCachedRoomUsers(roomId);
     if (cached) return cached;
 
-    // 2️⃣ Fallback to Prisma if not cached
+    // Prisma if not cached
     const roomUsers = await prisma.userRoom.findMany({
     where: { roomId },
     select: {
@@ -132,16 +132,15 @@ export const getAllRoomUsers = async (roomId: number): Promise<RoomUsers[]> => {
     }
   });
 
-  // Flatten the data
   const users = roomUsers.map(u => u.user);
 
-  // 3️⃣ Store in Redis cache
+  // Store in Redis cache
   await setCachedRoomUsers(roomId, users);
    
   return users;
 };
 
-export const getTheUserRoomsWithMembership = async (userId: number) => {
+export const getUserRoomsWithMembership = async (userId: number) => {
     const rooms = await prisma.room.findMany({
         select: {
         id: true,

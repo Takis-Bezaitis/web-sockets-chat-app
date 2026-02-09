@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router";
 import { useAuthStore } from "../store/authStore";
+import { toast } from "react-hot-toast";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -23,7 +24,11 @@ const Login = () => {
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.error || "Login failed");
+        if (data.errors) {
+          data.errors.forEach((err: { message: string }) => toast.error(err.message));
+        } else if (data.error) {
+          toast.error(data.error);
+        }
         return;
       }
 

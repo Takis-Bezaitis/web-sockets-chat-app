@@ -1,11 +1,11 @@
 import { type Request, type Response } from "express";
-import { getAllRooms, createNewRoom, deleteRoom as deleteRoomService, joinTheRoom, leaveTheRoom, getAllRoomUsers, getTheUserRoomsWithMembership } from "../../services/rooms/roomService.js";
+import * as roomService from "../../services/rooms/roomService.js";
 import { type AuthRequest, type RoomDTO, type ApiResponse, type UserRoomDTO, type RoomUsers, type RoomWithMembershipDTO } from "../../types/custom.js";
 import { io } from "../../index.js";
 
 export const getRooms = async (_req: Request, res: Response<ApiResponse<RoomDTO[]>>): Promise<void> => {
     try {
-        const rooms = await getAllRooms();
+        const rooms = await roomService.getRooms();
         res.json({ data: rooms });
     } catch (error) {
         res.status(500).json({ error: 'Failed to fetch rooms.'});
@@ -22,8 +22,8 @@ export const createRoom = async(req: Request, res:Response<ApiResponse<RoomDTO>>
             return;
         }
 
-        const newRoom = await createNewRoom(Number(userId), name, isPrivate);
-        await joinTheRoom(Number(userId), newRoom.id);
+        const newRoom = await roomService.createRoom(Number(userId), name, isPrivate);
+        await roomService.joinRoom(Number(userId), newRoom.id);
 
         io.emit("room:created", {
         room: {
@@ -56,7 +56,7 @@ export const deleteRoom = async (req: Request<{ roomId: string }>,
             return;
         }
 
-        await deleteRoomService(Number(userId), Number(roomId));
+        await roomService.deleteRoom(Number(userId), Number(roomId));
 
         io.emit("room:deleted", {
             roomId: Number(roomId),
@@ -83,7 +83,7 @@ export const joinRoom = async (req: Request<{ roomId: string }>, res:Response<Ap
             return;
         }
 
-        const joined = await joinTheRoom(Number(userId), Number(roomId));
+        const joined = await roomService.joinRoom(Number(userId), Number(roomId));
 
         // Emit event to clients in that room
         io.to(roomId.toString()).emit("roomMembershipUpdated", { roomId });
@@ -115,7 +115,7 @@ export const leaveRoom = async (req: Request<{ roomId: string }>, res: Response<
             return;
         }
 
-        const left = await leaveTheRoom(Number(userId), Number(roomId));
+        const left = await roomService.leaveRoom(Number(userId), Number(roomId));
 
         // Emit event to clients in that room
         io.to(roomId.toString()).emit("roomMembershipUpdated", { roomId });
@@ -139,7 +139,7 @@ export const leaveRoom = async (req: Request<{ roomId: string }>, res: Response<
 export const getRoomUsers = async (req: Request<{ roomId: string }>, res: Response<ApiResponse<RoomUsers[]>>): Promise<void> => {
     try {
         const { roomId } = req.params;
-        const roomUsers = await getAllRoomUsers(Number(roomId));
+        const roomUsers = await roomService.getRoomUsers(Number(roomId));
         
         res.json({ data: roomUsers });
     } catch (error) {
@@ -150,7 +150,7 @@ export const getRoomUsers = async (req: Request<{ roomId: string }>, res: Respon
 export const getUserRoomsWithMembership = async (req: Request<{ userId: string}>, res: Response<ApiResponse<RoomWithMembershipDTO[]>>): Promise<void> => {
     try {
         const { userId } = req.params;
-        const rooms = await getTheUserRoomsWithMembership(Number(userId));
+        const rooms = await roomService.getUserRoomsWithMembership(Number(userId));
         res.json({ data: rooms });
     } catch (error) {
         res.status(500).json({ error: "Failed to fetch user's rooms." })
