@@ -20,7 +20,7 @@ export function socketAuthMiddleware(socket: Socket, next: (err?: Error) => void
       return next(new Error("Not authenticated: no cookies"));
     }
     const parsed = cookie.parse(cookies);
-    const token = parsed.token; // same name we used in res.cookie()
+    const token = parsed.token; // same name I used in res.cookie()
 
     if (!token) {
       return next(new Error("Not authenticated: no token"));

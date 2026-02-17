@@ -18,17 +18,18 @@ html, body, * {
      Light mode (default)
      ----------------------- */
   /* Backgrounds */
-  .bg-background { background-color: #f3f4f6; }          /* page background: very light gray */
+  .bg-background { background-color: #f2f3f5; }          /* page background: very light gray */
   .bg-component-background { background-color: #ffffff; } /* component background: white */
   .bg-card { background-color: #ffffff; }                /* cards, modals: white */
   .bg-input { background-color: #f9fafb; }               /* inputs: slightly off-white */
-  .bg-surface-selected { background-color: #fbbf24; }    /* selected: yellow */
+  .bg-surface-selected { background-color: #087ea4; }    /* selected: yellow */
   .bg-surface { background-color: #e5e7eb; }             /* generic panel/card surface: light gray */
   .bg-message-user { background-color: #87a6d7; }        /* user message: blue */
   .bg-message-other-user { background-color: #c8ccd4; }  /* other user message: light gray */
-  .bg-video-chat-window { background-color: black;}
-  .bg-video-chat-callee { background-color: black; }
+  .bg-video-chat-window { background-color: #87a6d7;}
+  .bg-video-chat-callee { background-color: #c8ccd4; }
   .bg-member-invite { background-color: #0e7bb7; }
+  .mobile-navbar-bg { background-color: #e5e7eb; }
 
   /* buttons */
   .bg-button-main { background-color: #0e7bb7; }         /* primary button: blue */
@@ -38,8 +39,8 @@ html, body, * {
   .hover\:bg-button-secondary-hover:hover { background-color: #a2b0c4; }
   
   /* icons */
-  .icon-color { fill: #c8ccd4; }
-  .icon-color-selected { fill: #111827;}
+  .icon-color { fill: #6b7280; }
+  .icon-color-selected { fill: #0e7bb7; }
 
   /* create room */
   .bg-create-room { background-color: #e5e7eb; }
@@ -54,7 +55,7 @@ html, body, * {
   .text-heading { color: #111827; }              /* headings */
   .text-primary { color: #1d4ed8; }
   .text-secondary { color: #9333ea; }
-  .text-surface-selected { color: #111827}
+  .text-surface-selected { color: #ffffff;}
   .text-button { color: #ffffff; }
 
   /* Status */
@@ -69,17 +70,18 @@ html, body, * {
    ======================= */
 .dark {
   /* Backgrounds */
-  .bg-background { background-color: #1a1a1e; }  /* page background */
+  .bg-background { background-color: #080808; }  /* page background */
   .bg-component-background { background-color: #121214;}  /* component background */
   .bg-card { background-color: #1f2937; }        /* cards, modals */
   .bg-input { background-color: #1f2937; }       /* inputs */
-  .bg-surface-selected { background-color: #fbbf24; }
+  .bg-surface-selected { background-color: #a23e81; }
   .bg-surface { background-color: #1d3448; }
   .bg-message-user { background-color: #0093b1; }
   .bg-message-other-user { background-color: #465e81; }
-  .bg-video-chat-window { background-color: black;}
-  .bg-video-chat-callee { background-color: black; }
+  .bg-video-chat-window { background-color: #0093b1;}
+  .bg-video-chat-callee { background-color: #465e81; }
   .bg-member-invite { background-color: #196679; }
+  .mobile-navbar-bg { background-color: #1d3448; }
 
   /* buttons */
   .bg-button-main { background-color: #196679; }      /* primary button */
@@ -89,8 +91,8 @@ html, body, * {
   .hover\:bg-button-secondary-hover:hover { background-color: #38383b; }
 
   /* icons */
-  .icon-color { fill: black; }
-  .icon-color-selected { fill: #f3f4f6;}
+  .icon-color { fill: #9ca3af; }
+  .icon-color-selected { fill: #38bdf8;}
 
   /* create room */
   .bg-create-room { background-color: #1d3448; }
@@ -105,7 +107,7 @@ html, body, * {
   .text-heading { color: #f3f4f6; }              /* headings */
   .text-primary { color: #2563eb; }
   .text-secondary { color: #7e22ce; }
-  .text-surface-selected { color: #111827}
+  .text-surface-selected { color: #041335;}
   .text-button { color: #ffffff; }
 
   /* Status */
@@ -114,3 +116,17 @@ html, body, * {
   .text-warning { color: #fbbf24; }
   .text-info { color: #3b82f6; }
 }
+
+/* react-input-emoji container background color */
+
+.react-input-emoji--container {
+  background-color: #f2f3f5; 
+  color: #111827;
+  border-radius: 10px!important;
+}
+
+.dark .react-input-emoji--container {
+  background-color: #080808; 
+  color: #f3f4f6;
+}
+

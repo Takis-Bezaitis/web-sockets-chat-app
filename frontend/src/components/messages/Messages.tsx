@@ -173,7 +173,7 @@ const Messages = ({ user, messages, currentRoom, loading }: UserProps) => {
       {messages.map((msg) => (
         <div
           key={msg.id}
-          className={`relative flex gap-2 max-w-fit text-left mt-6 mb-11 p-3 rounded cursor-pointer ${
+          className={`relative flex gap-2 max-w-fit text-left mt-6 mb-11 px-3 py-2 rounded cursor-pointer ${
             msg.userId === user?.id
               ? "bg-message-user"
               : "bg-message-other-user"

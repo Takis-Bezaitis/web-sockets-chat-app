@@ -63,15 +63,13 @@ const MessageBox = ({handleSend, input, setInput, currentRoom, handleJoinLeaveRo
           <>
           <div className="relative flex-1">
           {input.length === 0 && (
-              <span className="absolute left-[22px] top-3 pointer-events-none z-1 text-black">
+              <span className="absolute left-[24px] top-3 pointer-events-none z-1 text-foreground">
                 Message #{currentRoom?.name}
               </span>
             )}
             <InputEmoji 
               ref={inputRef}
               key={roomId}
-              color="black"
-              background="#f7e967"
               value={input}
               onChange={handleInputChange}
               maxLength={150}

@@ -2,13 +2,15 @@ import redis from "./redisClient.js";
 
 const ONLINE_USERS_KEY = "online:users";
 const USER_SOCKET_SET_KEY = (userId: string) => `online:user:socketSet:${userId}`;
+const PRESENCE_TTL_SECONDS = 60;
 
 /* ---------------- ONLINE USERS ---------------- */
 
 export const addUserToOnlineUsers = async (userId: string, socketId: string) => {
   const key = USER_SOCKET_SET_KEY(userId);
 
-  await redis.sadd(key, socketId); // use set, no conflict with old string
+  await redis.sadd(key, socketId);
+  await redis.expire(key, PRESENCE_TTL_SECONDS);
   const count = await redis.scard(key);
 
   if (count === 1) {
@@ -41,12 +43,7 @@ export const getOnlineUsers = async (): Promise<string[]> => {
 };
 
 
-
-
-
-/* ---------------- ROOM PRESENCE (your existing logic is fine) ---------------- */
-
-const PRESENCE_TTL_SECONDS = 60;
+/* ---------------- ROOM PRESENCE ---------------- */
 
 export const addUserToRoomPresence = async (userId: string, roomId: string) => {
   await redis.multi()

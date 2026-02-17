@@ -184,12 +184,14 @@ const Chat = () => {
         
         {videoOverlay === "chat" && ((callState!="idle" && isCaller) || (inCall && !isCaller)) && (
           <div
-            className="lg:hidden fixed bottom-0 left-0 right-0 h-[50%] bg-background rounded-t-2xl shadow-xl flex flex-col"
+            className="lg:hidden fixed bottom-0 left-0 right-0 h-[43%] 
+              rounded-t-2xl shadow-xl flex flex-col"
           >
             <ChatContent currentRoom={currentRoom} 
               user={user} roomMessages={roomMessages} loading={loading}
               typingUserByRoom={typingUserByRoom}
               handleSend={handleSend} input={input} setInput={setInput} handleJoinLeaveRoom={handleJoinLeaveRoom}
+              videoAndChat={true}
             />
           </div>
         )}
@@ -208,8 +210,9 @@ const Chat = () => {
         
         {videoOverlay === "members" && ((callState!="idle" && isCaller) || (inCall && !isCaller)) && (
           <div
-            className="lg:hidden fixed bottom-0 left-0 right-0 h-[50%] bg-background rounded-t-2xl shadow-xl flex flex-col"
-          >
+            className="lg:hidden fixed bottom-0 left-0 right-0 h-[38%] mb-10
+              bg-background rounded-t-2xl shadow-xl flex flex-col"
+            >
             <UsersInRoom 
               user={user} 
               currentRoomUsers={currentRoomUsers} 
@@ -242,9 +245,6 @@ const Chat = () => {
         </div>
       )}
       </div>
-
-      
-     
     </div>
   );
 };

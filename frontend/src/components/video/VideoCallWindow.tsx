@@ -30,7 +30,7 @@ const VideoCallWindow = ({caller, callee }: VideoCallWindowProps) => {
   const getOnlineStatus = usePresenceStore((s) => s.onlineUsers)
 
   const isCalleeOnline = !!(callee.id && getOnlineStatus[callee.id]);
-console.log("getOnlineStatus:",getOnlineStatus)
+
   // Attach video streams
   useEffect(() => {
     if (localVideoRef.current && localStream) {
@@ -59,11 +59,12 @@ console.log("getOnlineStatus:",getOnlineStatus)
   };
 
   return (
-    <div className="h-full flex flex-col items-center place-content-center p-4 bg-background border-r border-border-line">
+    <div className="h-full flex flex-col items-center 
+      place-content-center sm:place-content-start md:place-content-center p-4 bg-background border-r border-border-line">
 
-      <div className="grid grid-cols-1 gap-1 w-full max-w-lg">
+      <div className="grid grid-cols-1 gap-1 w-full max-w-xl">
         {/* Local video */}
-        <p className="text-foreground">{user?.username}</p>
+        <p className="text-foreground text-lg">{user?.username}</p>
         <div className="relative content-center bg-video-chat-window w-full aspect-video rounded-xl overflow-hidden mb-1">
           <video
             ref={localVideoRef}
@@ -76,7 +77,7 @@ console.log("getOnlineStatus:",getOnlineStatus)
           {isCameraOff && (
             <div className="flex flex-col items-center justify-center align-middle text-6xl text-gray-300">
               <span>👤</span>
-              <span className="text-sm mt-2 text-gray-400">Camera off</span>
+              <span className="text-lg mt-2 text-foreground">Camera off</span>
             </div>
           )}
         </div>
@@ -86,7 +87,7 @@ console.log("getOnlineStatus:",getOnlineStatus)
         </div>
 
         {/* Remote video */}
-        <p className="text-foreground">{`${caller===user?.username ? callee.name : caller}`}</p>
+        <p className="text-foreground text-lg">{`${caller===user?.username ? callee.name : caller}`}</p>
         <div className="relative content-center bg-video-chat-callee w-full aspect-video rounded-xl overflow-hidden">
           <video
             ref={remoteVideoRef}
@@ -98,21 +99,21 @@ console.log("getOnlineStatus:",getOnlineStatus)
           {isRemoteCameraOff && (
             <div className="flex flex-col items-center justify-center align-middle text-6xl text-gray-300">
               <span>👤</span>
-              <span className="text-sm mt-2 text-gray-400">Camera off</span>
+              <span className="text-lg mt-2 text-foreground">Camera off</span>
             </div>
           )}
 
           {!isCalleeOnline && (
             <div className="flex flex-col items-center justify-center align-middle text-6xl text-gray-300">
               <span>👤</span>
-              <span className="text-sm mt-2 text-gray-400">{callee.name} is currently offline.</span>
+              <span className="text-lg mt-2 text-foreground">{callee.name} is currently offline.</span>
             </div>
           )}
 
           {isCalleeOnline && callState !== "inCall" && (
             <div className="flex flex-col items-center justify-center align-middle text-6xl text-gray-300">
               <span>👤</span>
-              <span className="text-sm mt-2 text-gray-400">Waiting for {callee.name} to join…</span>
+              <span className="text-lg mt-2 text-foreground">Waiting for {callee.name} to join…</span>
             </div>
           )}
 

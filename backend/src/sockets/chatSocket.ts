@@ -36,9 +36,10 @@ export default function chatSocket(io: Server) {
   io.on("connection", (socket: Socket) => {
     const customSocket = socket as CustomSocket;
     if (!customSocket.user) return;
+    customSocket.data.userId = customSocket.user.id;
     console.log(`User connected: ${socket.id}`);
 
-    customSocket.join(`user:${customSocket.user?.id}`);
+    customSocket.join(`user:${customSocket.user.id}`);
     syncOnlineUsers(customSocket);
 
     customSocket.on("enterRoom", async (roomId: string) => {
@@ -237,7 +238,8 @@ export default function chatSocket(io: Server) {
     customSocket.on("disconnect", async (reason) => {
       console.log(`User disconnected: ${socket.id} (${reason})`);
 
-      const userId = customSocket.user?.id;
+      const userId = customSocket.data.userId;
+
       if (!userId) return;
 
       const rooms = await removeUserFromAllRooms(userId);

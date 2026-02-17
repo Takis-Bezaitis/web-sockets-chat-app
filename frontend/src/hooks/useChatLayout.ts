@@ -25,7 +25,8 @@ export const useChatLayout = () => {
     setMobileView("chat");
   }, [callState, isCaller]);
 
-  // reset members panel when call ends
+  // reset members panel when call ends - I think I should remove this useEffect...
+  /*
   useEffect(() => {
     if (callState === "idle") {
       setShowMembers(false);
@@ -35,6 +36,7 @@ export const useChatLayout = () => {
       setShowMembers(false);
     }
   }, [callState]);
+  */
 
   return {
     mobileView,
