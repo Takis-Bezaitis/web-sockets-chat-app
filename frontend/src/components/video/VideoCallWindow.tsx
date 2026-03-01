@@ -10,9 +10,10 @@ import CameraOffIcon from "./icons/CameraOffIcon";
 type VideoCallWindowProps = {
   caller: string | undefined;
   callee: { id: number | undefined, name: string | undefined};
+  videoOverlay: "hidden" | "chat" | "members";
 }
 
-const VideoCallWindow = ({caller, callee }: VideoCallWindowProps) => {
+const VideoCallWindow = ({caller, callee, videoOverlay }: VideoCallWindowProps) => {
   const { user } = useAuthStore();
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
@@ -59,8 +60,12 @@ const VideoCallWindow = ({caller, callee }: VideoCallWindowProps) => {
   };
 
   return (
-    <div className="h-full flex flex-col items-center 
-      place-content-center sm:place-content-start md:place-content-center p-4 bg-background border-r border-border-line">
+    <div className={`h-full flex flex-col items-center 
+      place-content-center sm:place-content-start md:place-content-center 
+      p-4 bg-background border-r border-border-line
+      ${videoOverlay === "hidden" ? "-mt-10 sm:mt-0" : "place-content-start"}
+    `}
+    >
 
       <div className="grid grid-cols-1 gap-1 w-full max-w-xl">
         {/* Local video */}

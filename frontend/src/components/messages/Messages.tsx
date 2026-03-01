@@ -13,9 +13,10 @@ type UserProps = {
   messages: Message[];
   currentRoom: RoomDTO | undefined;
   loading: boolean;
+  onRegisterScroll: (fn: (id: number) => void) => void;
 };
 
-const Messages = ({ user, messages, currentRoom, loading }: UserProps) => {
+const Messages = ({ user, messages, currentRoom, loading, onRegisterScroll }: UserProps) => {
   const [hoveredMessageId, setHoveredMessageId] = useState<number | null>(null);
   const [editingMessageId, setEditingMessageId] = useState<number | null>(null);
   const [editingText, setEditingText] = useState("");
@@ -30,7 +31,19 @@ const Messages = ({ user, messages, currentRoom, loading }: UserProps) => {
     (s) => (currentRoom ? s.hasMoreByRoom[currentRoom.id] : false)
   );
   
-  // real new message --> scroll at the bottom
+  // search feature --> scroll to a certain message
+  const scrollToMessage = (id: number) => {
+    const el = document.getElementById(`message-${id}`);
+
+    if (!el) return;
+
+    el.scrollIntoView({ behavior: "smooth", block: "center" });
+
+    el.classList.add("ring-2", "ring-yellow-400");
+    setTimeout(() => el.classList.remove("ring-2", "ring-yellow-400"), 1500);
+  };
+
+  // new message --> scroll at the bottom
   useEffect(() => {
     if (!currentRoom) return;
 
@@ -67,6 +80,11 @@ const Messages = ({ user, messages, currentRoom, loading }: UserProps) => {
     el.addEventListener("scroll", onScroll);
     return () => el.removeEventListener("scroll", onScroll);
   }, []);
+
+  useEffect(() => {
+    onRegisterScroll(scrollToMessage);
+  }, [onRegisterScroll]);
+
 
   /* ----------------------------------
      Intersection Observer (TOP)
@@ -136,6 +154,8 @@ const Messages = ({ user, messages, currentRoom, loading }: UserProps) => {
     setEditingText("");
   };
 
+  
+
   /* ----------------------------------
      Loading state
      ---------------------------------- */
@@ -172,6 +192,7 @@ const Messages = ({ user, messages, currentRoom, loading }: UserProps) => {
 
       {messages.map((msg) => (
         <div
+          id={`message-${msg.id}`}
           key={msg.id}
           className={`relative flex gap-2 max-w-fit text-left mt-6 mb-11 px-3 py-2 rounded cursor-pointer ${
             msg.userId === user?.id

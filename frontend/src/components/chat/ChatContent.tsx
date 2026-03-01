@@ -17,20 +17,23 @@ type ChatContentProps = {
   setInput: React.Dispatch<React.SetStateAction<string>>;
   handleJoinLeaveRoom: (room: RoomWithMembershipDTO, action: "join" | "leave") => void;
 
+  onRegisterScroll: (fn: (id: number) => void) => void;
+
   videoAndChat?: boolean;
 };
 
 const ChatContent = ({currentRoom, 
     user, roomMessages, loading,
     typingUserByRoom, 
-    handleSend, input, setInput, handleJoinLeaveRoom, videoAndChat}: ChatContentProps) => {
+    handleSend, input, setInput, handleJoinLeaveRoom, onRegisterScroll, videoAndChat}: ChatContentProps) => {
   
   return (
     <>
       <div id="messages-area" className={`flex flex-col flex-1 min-h-0 
       ${videoAndChat ? 'bg-component-background' : 'bg-background'} overflow-hidden px-2 pb-10 md:pb-0`}>
         <div className="flex-1 overflow-y-auto no-scrollbar flex flex-col">
-            <Messages user={user} messages={roomMessages} currentRoom={currentRoom} loading={loading} />
+            <Messages user={user} messages={roomMessages} currentRoom={currentRoom} 
+            loading={loading} onRegisterScroll={onRegisterScroll} />
         </div>
         {currentRoom && typingUserByRoom[currentRoom.id] && (
             <div className="text-sm text-gray-500 italic mb-1 px-4 flex items-center gap-2">

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Moon, Sun } from 'lucide-react';
 
 const ThemeToggle = () => {
   const [theme, setTheme] = useState<"light" | "dark">(() => {
@@ -23,9 +24,9 @@ const ThemeToggle = () => {
   return (
     <div
       onClick={() => setTheme(theme === "light" ? "dark" : "light")}
-      className="mt-0.5 cursor-pointer"
+      className="content-center cursor-pointer"
     >
-      {theme === "light" ? "🌙" : "☀️"}
+      {theme === "light" ? <Moon /> : <Sun />}
     </div>
   );
 };
