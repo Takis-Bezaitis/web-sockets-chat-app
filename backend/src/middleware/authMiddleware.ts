@@ -21,7 +21,10 @@ export function authMiddleware(req: AuthRequest, res: Response, next: NextFuncti
     }
 
     // Verify token
-    const decoded = jwt.verify(token, JWT_SECRET) as { id: string; email: string; username: string };
+    const decoded = jwt.verify(token, JWT_SECRET, { 
+      issuer: "chat-app", 
+      audience: "chat-app-users",
+    }) as { id: string; email: string; username: string };
 
     req.user = decoded; // attach user info to request
 
