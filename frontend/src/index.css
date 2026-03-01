@@ -120,13 +120,13 @@ html, body, * {
 /* react-input-emoji container background color */
 
 .react-input-emoji--container {
-  background-color: #f2f3f5; 
+  background-color: #ffffff; 
   color: #111827;
   border-radius: 10px!important;
 }
 
 .dark .react-input-emoji--container {
-  background-color: #080808; 
+  background-color: #121214; 
   color: #f3f4f6;
 }
 

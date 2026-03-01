@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useAuthStore } from "../store/authStore";
 import { useSocketStore } from "../store/socketStore";
 import { useMessageStore } from "../store/messageStore";
@@ -21,6 +21,7 @@ import { useUsersStore } from "../store/usersStore";
 import CreateNewRoom from "../components/chat/CreateNewRoom";
 import RoomMembersInvite from "../components/invitations/RoomMembersInvite";
 import ChatHeader from "../components/chat/ChatHeader";
+import { useMediaQuery } from "../hooks/useMediaQuery";
 
 const Chat = () => {
   const { user } = useAuthStore();
@@ -59,6 +60,18 @@ const Chat = () => {
   const roomMessages = safeRoomMessages ?? [];
   const loading = safeLoading ?? false;
 
+  // search feature - scroll to a specific message
+  const scrollToMessageRef = useRef<(id: number) => void>(null);
+
+  const onRegisterScroll = (fn: (id: number) => void) => {
+    scrollToMessageRef.current = fn;
+  };
+
+  const scrollToMessage = (id: number) => {
+    scrollToMessageRef.current?.(id);
+  };
+
+
   // send message
   const sendMessage = useSocketStore((s) => s.sendMessage);
 
@@ -84,6 +97,8 @@ const Chat = () => {
     hidden md:flex flex-col min-w-0
     ${(callState === "idle" || (callState === "ringing" && !isCaller)) ? "flex-1" : "md:w-1/3 md:min-w-xs xl:w-1/4 xl:min-w-md"}`;
 
+  const isDesktop = useMediaQuery("(min-width: 768px)"); 
+
   useEffect(() => {
     if (users.length === 0) {
       fetchUsers();
@@ -95,9 +110,12 @@ const Chat = () => {
       {currentRoom && (
         <ChatHeader 
           user={user} 
-          currentRoom={currentRoom} 
+          currentRoom={currentRoom}
+          roomMessages={roomMessages}
+          loading={loading}
           showMembers={showMembers} 
           setShowMembers={setShowMembers}
+          onScrollToMessage={scrollToMessage}
         />)}
 
       {/* ------- MOBILE NAV BAR (bottom) ------- */}
@@ -152,45 +170,50 @@ const Chat = () => {
             <VideoCallWindow 
               caller={incomingCaller?.username} 
               callee={{id: outcomingCallee?.id, name: outcomingCallee?.username}} 
+              videoOverlay={videoOverlay}
             />
           </div>
         )}
 
-        <div className={chatLayoutClasses}>
-          <ChatContent
-            currentRoom={currentRoom}
-            user={user}
-            roomMessages={roomMessages}
-            loading={loading}
-            typingUserByRoom={typingUserByRoom}
-            handleSend={handleSend}
-            input={input}
-            setInput={setInput}
-            handleJoinLeaveRoom={handleJoinLeaveRoom}
-          />
-        </div>
-
+        {isDesktop && (
+          <div className={chatLayoutClasses}>
+            <ChatContent
+              currentRoom={currentRoom}
+              user={user}
+              roomMessages={roomMessages}
+              loading={loading}
+              typingUserByRoom={typingUserByRoom}
+              handleSend={handleSend}
+              input={input}
+              setInput={setInput}
+              handleJoinLeaveRoom={handleJoinLeaveRoom}
+              onRegisterScroll={onRegisterScroll}
+            />
+          </div>
+        )}
 
         {/* mobile */}
 
-        {mobileView === "chat" && ((!inCall && callState!=="ringing" && isCaller) || (!inCall && !isCaller)) && (
+        {!isDesktop && mobileView === "chat" && ((!inCall && callState!=="ringing" && isCaller) || (!inCall && !isCaller)) && (
           <div className="md:hidden flex flex-1 flex-col">
             <ChatContent currentRoom={currentRoom} 
               user={user} roomMessages={roomMessages} loading={loading} 
               typingUserByRoom={typingUserByRoom}
-              handleSend={handleSend} input={input} setInput={setInput} handleJoinLeaveRoom={handleJoinLeaveRoom}/>
+              handleSend={handleSend} input={input} setInput={setInput} handleJoinLeaveRoom={handleJoinLeaveRoom}
+              onRegisterScroll={onRegisterScroll}/>
           </div>
         )}
         
-        {videoOverlay === "chat" && ((callState!="idle" && isCaller) || (inCall && !isCaller)) && (
+        {!isDesktop && videoOverlay === "chat" && ((callState!="idle" && isCaller) || (inCall && !isCaller)) && (
           <div
-            className="lg:hidden fixed bottom-0 left-0 right-0 h-[43%] 
+            className="md:hidden fixed bottom-0 left-0 right-0 h-[54%] 
               rounded-t-2xl shadow-xl flex flex-col"
           >
             <ChatContent currentRoom={currentRoom} 
               user={user} roomMessages={roomMessages} loading={loading}
               typingUserByRoom={typingUserByRoom}
               handleSend={handleSend} input={input} setInput={setInput} handleJoinLeaveRoom={handleJoinLeaveRoom}
+              onRegisterScroll={onRegisterScroll}
               videoAndChat={true}
             />
           </div>
@@ -210,7 +233,7 @@ const Chat = () => {
         
         {videoOverlay === "members" && ((callState!="idle" && isCaller) || (inCall && !isCaller)) && (
           <div
-            className="lg:hidden fixed bottom-0 left-0 right-0 h-[38%] mb-10
+            className="lg:hidden fixed bottom-0 left-0 right-0 h-[50%] mb-10
               bg-background rounded-t-2xl shadow-xl flex flex-col"
             >
             <UsersInRoom 
@@ -228,22 +251,22 @@ const Chat = () => {
             callee={outcomingCallee || undefined}
         />
         {showMembers && (
-        <div
-          className="
-            hidden md:flex top-14 right-0 bottom-0 z-40
-            md:w-fit lg:w-80 flex-col
-            bg-component-background
-            shadow-xl
-          "
-        >
-          <UsersInRoom
-            user={user}
-            currentRoomUsers={currentRoomUsers}
-            currentRoom={currentRoom}
-            setShowMembers={setShowMembers}
-          />
-        </div>
-      )}
+          <div
+            className="
+              hidden md:flex top-14 right-0 bottom-0 z-40
+              md:w-fit lg:w-80 flex-col
+              bg-component-background
+              shadow-xl
+            "
+          >
+            <UsersInRoom
+              user={user}
+              currentRoomUsers={currentRoomUsers}
+              currentRoom={currentRoom}
+              setShowMembers={setShowMembers}
+            />
+          </div>
+        )}
       </div>
     </div>
   );
