@@ -44,7 +44,11 @@ export const loginUser = async (email: string, password: string) => {
   const token = jwt.sign(
     { id: user.id, email: user.email, username: user.username },
     JWT_SECRET,
-    { expiresIn: JWT_EXPIRES_IN } as SignOptions 
+    { 
+      expiresIn: JWT_EXPIRES_IN, 
+      issuer: "chat-app", 
+      audience: "chat-app-users", 
+    } as SignOptions 
   );
 
   return { user: { id: user.id, username: user.username, email: user.email }, token };

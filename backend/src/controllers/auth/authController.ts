@@ -1,8 +1,16 @@
 import { type Request, type Response } from "express";
+import ms, { type StringValue } from "ms";
+
 import { registerUser, loginUser } from "../../services/auth/authService.js";
 import { type AuthRequest } from "../../types/custom.js";
 import { registerSchema, loginSchema } from "../../validation/authValidation.js";
 import { z, ZodError } from "zod";
+
+const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN as string;
+
+if (!JWT_EXPIRES_IN) {
+  throw new Error("Missing JWT_EXPIRES_IN");
+}
 
 export const register = async (req: Request, res: Response) => {
   try {
@@ -31,7 +39,7 @@ export const login = async (req: Request, res: Response) => {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-      maxAge: 1000 * 60 * 60 * 5, // 5 hours
+      maxAge: ms(JWT_EXPIRES_IN as StringValue), 
       path: "/",
     });
 
