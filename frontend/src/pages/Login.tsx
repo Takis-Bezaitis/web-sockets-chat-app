@@ -18,21 +18,24 @@ const Login = () => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
-        credentials: "include", // send/receive cookies
+        credentials: "include", 
       });
 
       const data = await res.json();
 
       if (!res.ok) {
         if (data.errors) {
-          data.errors.forEach((err: { message: string }) => toast.error(err.message));
-        } else if (data.error) {
-          toast.error(data.error);
+          data.errors.forEach((err: { message: string }) =>
+            toast.error(err.message)
+          );
+        } else if (data.error || data.message) {
+          toast.error(data.error || data.message);
+        } else {
+          toast.error("Something went wrong");
         }
         return;
       }
 
-      // Backend already sets cookie with JWT
       setUser({ id: data.id, email: data.email, username: data.username });
       navigate("/chat");
     } catch (err) {
