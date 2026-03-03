@@ -111,7 +111,7 @@ const CreateNewRoom = ({ onClose }: CreateNewRoomProps) => {
               setName(e.target.value);
               setError("");
             }}
-            placeholder="Room name"
+            placeholder="Channel name"
             className="w-full border rounded px-3 py-2"
           />
           <p>{maxChannelName - name.length}</p>
@@ -119,7 +119,7 @@ const CreateNewRoom = ({ onClose }: CreateNewRoomProps) => {
         {/* Private toggle */}
         <label className="flex justify-between items-center gap-3 mb-3 cursor-pointer">
           <span className="text-sm flex items-center gap-1">
-            🔒 Private room
+            🔒 Private Channel
           </span>
           <input
             type="checkbox"
