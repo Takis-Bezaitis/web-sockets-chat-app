@@ -60,7 +60,6 @@ jobs:
       FRONTEND_URL: ${{ secrets.FRONTEND_URL }}
       JWT_SECRET: ${{ secrets.JWT_SECRET }}
       JWT_EXPIRES_IN: ${{ secrets.JWT_EXPIRES_IN }}
-      NODE_ENV: ${{ secrets.NODE_ENV }}
       REDIS_URL: ${{ secrets.REDIS_URL }}
 
       # Frontend secrets
