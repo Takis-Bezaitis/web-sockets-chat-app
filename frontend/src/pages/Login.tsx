@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router";
 import { useAuthStore } from "../store/authStore";
 import { toast } from "react-hot-toast";
+import Button from "../components/ui/Button";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -9,19 +10,45 @@ const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [demoLoading, setDemoLoading] = useState<string | null>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  // Demo accounts for recruiters
+  const DEMO_PASSWORD = "MySecret123!";
+
+  const demoUsers = [
+    { username: "Alice", email: "alice@example.com" },
+    { username: "Markos", email: "markos@example.com" },
+    { username: "Simon", email: "simon@example.com" },
+    { username: "Bob", email: "bob@example.com" },
+    { username: "Mary", email: "mary@example.com" },
+    { username: "Manos", email: "manos@example.com" },
+    { username: "Effie", email: "effie@example.com" },
+    { username: "John", email: "john@example.com" }
+  ];
+
+  const loginAsDemoUser = async (email: string) => {
+    setDemoLoading(email);
+    await handleSubmit(undefined, email, DEMO_PASSWORD);
+    setDemoLoading(null);
+  };
+
+  const handleSubmit = async (e?: React.FormEvent, demoEmail?: string, demoPassword?: string) => {
+    e?.preventDefault();
+
+    const loginEmail = demoEmail ?? email;
+    const loginPassword = demoPassword ?? password;
 
     try {
+      console.log(email, password)
       const res = await fetch(`${import.meta.env.VITE_BACKEND_AUTH_LOGIN_URL}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email: loginEmail, password: loginPassword, }),
         credentials: "include", 
       });
 
       const data = await res.json();
+      console.log(data)
 
       if (!res.ok) {
         if (data.errors) {
@@ -45,10 +72,11 @@ const Login = () => {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-50">
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50">
       <form
         onSubmit={handleSubmit}
-        className="bg-white p-8 rounded shadow-md w-full max-w-sm"
+        autoComplete="off"
+        className="bg-white p-8 rounded-xl shadow-lg w-full max-w-sm"
       >
         <h1 className="text-2xl mb-6 text-center">Login</h1>
 
@@ -58,9 +86,10 @@ const Login = () => {
           Email
           <input
             type="email"
+            autoComplete="off"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full p-2 border rounded mt-1"
+            className="w-full p-2 border rounded mt-1 focus:outline-none focus:ring-2 focus:ring-blue-400"
             required
           />
         </label>
@@ -69,20 +98,36 @@ const Login = () => {
           Password
           <input
             type="password"
+            autoComplete="new-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full p-2 border rounded mt-1"
+            className="w-full p-2 border rounded mt-1 focus:outline-none focus:ring-2 focus:ring-blue-400"
             required
           />
         </label>
 
-        <button
-          type="submit"
-          className="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600 transition cursor-pointer"
-        >
+        <Button type="submit" fullWidth>
           Login
-        </button>
+        </Button>
       </form>
+
+      <p className="text-center text-lg mt-8 mb-3">
+        Demo accounts
+      </p>
+
+      <div className="grid grid-cols-2 gap-3 mt-2">
+        {demoUsers.map((user) => (
+          <Button 
+            key={user.email}
+            onClick={() => loginAsDemoUser(user.email)}
+            disabled={demoLoading !== null}
+          >
+            {demoLoading === user.email
+            ? "Logging in..."
+            : `Login as ${user.username}`}
+          </Button>
+        ))}
+      </div>
     </div>
   );
 };

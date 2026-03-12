@@ -6,8 +6,8 @@ import { useTypingStore } from "../store/typingStore";
 import { useWebRTCStore } from "../store/webrtcStore";
 
 import ChatSidebar from "../components/chat/ChatSidebar";
-import UsersInRoom from "../components/UsersInRoom";
-import MobileNavBar from "../components/MobileNavBar";
+import UsersInRoom from "../components/chat/UsersInRoom";
+import MobileNavBar from "../components/layout/MobileNavBar";
 import VideoCallWindow from "../components/video/VideoCallWindow";
 import ChatContent from "../components/chat/ChatContent";
 import IncomingCallModal from "../components/video/IncomingCallModal";

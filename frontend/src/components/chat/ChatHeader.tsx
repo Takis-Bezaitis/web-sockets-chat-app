@@ -1,4 +1,4 @@
-import ThemeToggle from "../ThemeToggle";
+import ThemeToggle from "../common/ThemeToggle";
 import { type RoomWithMembershipDTO, type User, type Message } from "../../types/custom";
 import MessageSearch from "../messages/MessageSearch";
 import { useMediaQuery } from "../../hooks/useMediaQuery";

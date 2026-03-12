@@ -1,7 +1,7 @@
 import { Outlet, Navigate } from "react-router";
-import { useAuthStore } from "../store/authStore";
-import { useInvitationStore } from "../store/invitationStore";
-import InvitationModal from "./invitations/InvitationModal";
+import { useAuthStore } from "../../store/authStore";
+import { useInvitationStore } from "../../store/invitationStore";
+import InvitationModal from "../invitations/InvitationModal";
 
 const ProtectedLayout = () => {
   const { user } = useAuthStore();

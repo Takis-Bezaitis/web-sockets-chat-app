@@ -1,4 +1,4 @@
-import { useWebRTCStore } from "../store/webrtcStore";
+import { useWebRTCStore } from "../../store/webrtcStore";
 
 interface MobileNavBarProps {
   mobileView: "chat" | "rooms" | "members" | "video";

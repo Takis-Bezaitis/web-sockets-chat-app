@@ -1,9 +1,9 @@
 import { lazy } from "react";
 import { createBrowserRouter } from "react-router";
 
-import Layout from "../components/Layout";
-import AuthLayout from "../components/AuthLayout";
-import ProtectedLayout from "../components/ProtectedLayout";
+import Layout from "../components/layout/Layout";
+import AuthLayout from "../components/layout/AuthLayout";
+import ProtectedLayout from "../components/layout/ProtectedLayout";
 
 const IndexRedirect = lazy(() => import('../pages/IndexRedirect'));
 const Login = lazy(() => import('../pages/Login'));

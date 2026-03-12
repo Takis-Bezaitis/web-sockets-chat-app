@@ -1,5 +1,5 @@
 import { Outlet, Navigate } from "react-router";
-import { useAuthStore } from "../store/authStore";
+import { useAuthStore } from "../../store/authStore";
 
 const AuthLayout = () => {
   const { user } = useAuthStore();

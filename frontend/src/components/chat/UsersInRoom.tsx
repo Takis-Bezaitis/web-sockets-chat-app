@@ -1,8 +1,8 @@
 import { memo } from "react";
-import { usePresenceStore } from "../store/presenceStore";
-import { useWebRTCStore } from "../store/webrtcStore";
-import type { RoomUsers, RoomWithMembershipDTO, User } from "../types/custom";
-import VideoCallButton from "./video/VideoCallButton";
+import { usePresenceStore } from "../../store/presenceStore";
+import { useWebRTCStore } from "../../store/webrtcStore";
+import type { RoomUsers, RoomWithMembershipDTO, User } from "../../types/custom";
+import VideoCallButton from "../video/VideoCallButton";
 
 interface UsersInRoomProps {
   currentRoomUsers: RoomUsers[];

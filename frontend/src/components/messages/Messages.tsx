@@ -5,7 +5,7 @@ import { type User, type Message, type RoomDTO } from "../../types/custom";
 import { formatDate } from "../../utils/formatDate";
 import MessageActions from "./MessageActions";
 import MessageReactions from "./MessageReactions";
-import Spinner from "../Spinner";
+import Spinner from "../ui/Spinner";
 import { onNewMessage } from "../../store/messageStore";
 
 type UserProps = {
