@@ -43,6 +43,10 @@ app.use('/api/messages', messageRoutes);
 app.use('/api/invitations', invitationRoutes);
 app.use('/api/users', usersRoutes);
 
+app.get("/api/health", (_req, res) => {
+  res.status(200).send("OK");
+});
+
 // Global error handler
 app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   console.error(err);
