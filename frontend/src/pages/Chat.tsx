@@ -75,10 +75,14 @@ const Chat = () => {
   // send message
   const sendMessage = useSocketStore((s) => s.sendMessage);
 
+  // reply to a message
+  const replyingTo = useMessageStore(s => currentRoom ? s.replyingToByRoom[currentRoom.id] : null);
+
   const handleSend = () => {
     if (!input.trim() || !user || !currentRoom) return;
-    sendMessage(currentRoom.id, input.trim());
+    sendMessage(currentRoom.id, input.trim(), replyingTo?.id ?? null);
     setInput("");
+    useMessageStore.getState().setReplyingTo(currentRoom.id, null);
   };
 
   const handleInviteMembers = (roomId: number, roomName: string) => {

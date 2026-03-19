@@ -18,14 +18,14 @@ app.use(helmet());
 app.disable("x-powered-by");
 
 // rate limiter
-app.use(
+/*app.use(
   rateLimit({
     windowMs: 15 * 60 * 1000, 
     max: 200,
     standardHeaders: true,
     legacyHeaders: false,
   })
-);
+);*/
 
 app.use(cors({
   origin: process.env.FRONTEND_URL, 

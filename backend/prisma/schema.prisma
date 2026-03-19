@@ -46,11 +46,18 @@ model Message {
   createdAt DateTime          @default(now())
   editedAt  DateTime?
   deletedAt DateTime?
+
   user      User              @relation(fields: [userId], references: [id])
   userId    Int
+
   room      Room              @relation(fields: [roomId], references: [id])
   roomId    Int
+
   reactions MessageReaction[]
+
+  replyToId Int?
+  replyTo   Message?          @relation("MessageReplies", fields: [replyToId], references: [id], onDelete: Cascade)
+  replies   Message[]         @relation("MessageReplies")
 }
 
 model UserRoom {

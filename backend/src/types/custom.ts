@@ -51,6 +51,12 @@ export interface Message {
   reactions?: MessageReaction[];
 };
 
+export type MessagePreview = {
+  id: number;
+  text: string;
+  username: string;
+};
+
 export type MessageDTO = {
   id: number;
   userId: number;
@@ -60,6 +66,9 @@ export type MessageDTO = {
   roomId: number;
   username: string;
   reactions?: MessageReaction[];
+  replyToId?: number | null;
+  replyTo?: MessagePreview | null;
+  replies?: Message[];
 };
 
 export type RoomWithMembershipDTO = {

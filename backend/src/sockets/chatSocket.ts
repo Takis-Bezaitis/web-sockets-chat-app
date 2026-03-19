@@ -115,10 +115,10 @@ export default function chatSocket(io: Server) {
     // Client -> server: create a message
     customSocket.on(
       "message:create",
-      async (data: { roomId: string; text: string }) => {
+      async (data: { roomId: string; text: string; replyToId?: number }) => {
         try {
           if (!customSocket.user) return;
-          const { roomId, text } = data;
+          const { roomId, text, replyToId } = data;
           if (!roomId || !text) return;
 
           // Persist message (this also invalidates Redis cache in your service).
@@ -126,6 +126,7 @@ export default function chatSocket(io: Server) {
             text,
             userId: Number(customSocket.user.id),
             roomId: Number(roomId),
+            replyToId: replyToId ?? null
           });
 
           // Broadcast the new message to everyone subscribed to that room channel.
