@@ -33,6 +33,13 @@ export interface MessageReactionEvent {
   reaction: MessageReaction;
 }
 
+export interface MessagePreview {
+  id: number;
+  text: string;
+  userId: number;
+  username: string;
+}
+
 export interface Message {
   id: number;       
   userId: number;   
@@ -42,6 +49,9 @@ export interface Message {
   roomId: number;
   username: string;
   reactions: MessageReaction[];
+  replyToId?: number | null;
+  replyTo?: MessagePreview | null;
+  replies?: Message[];
 }
 
 export type RoomWithMembershipDTO = {

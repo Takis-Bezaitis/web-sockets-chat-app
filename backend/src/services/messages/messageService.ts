@@ -6,8 +6,9 @@ interface SaveMessageInput {
   text: string;
   userId: number;
   roomId: number;
+  replyToId?: number | null;
 }
- 
+
 export const getAllMessages = async (): Promise<MessageDTO[]> => {
   const messages = await prisma.message.findMany({
     include: {
@@ -16,11 +17,10 @@ export const getAllMessages = async (): Promise<MessageDTO[]> => {
     orderBy: { createdAt: "asc" },
   });
 
-  // Map to DTO
   return messages.map((msg) => ({
     id: msg.id,
     userId: msg.userId,
-    email: msg.user.email,  // flatten user.email
+    email: msg.user.email,
     text: msg.text,
     createdAt: msg.createdAt.toISOString(),
     roomId: msg.roomId,
@@ -29,12 +29,21 @@ export const getAllMessages = async (): Promise<MessageDTO[]> => {
 };
 
 export const createMessage = async (
-  { text, userId, roomId }: SaveMessageInput
+  { text, userId, roomId, replyToId }: SaveMessageInput
 ): Promise<MessageDTO> => {
   // Create the message
   const message = await prisma.message.create({
-    data: { text, userId, roomId },
-    include: { user: { select: { email: true, username: true } } } // fetch email from User
+    data: { text, userId, roomId, replyToId: replyToId ?? null },
+    include: { 
+      user: { select: { email: true, username: true } },
+      replyTo: {
+        select: {
+          id: true,
+          text: true,
+          user: { select: { username: true } }
+        }
+      }
+    } 
   });
 
   await prisma.room.update({
@@ -54,7 +63,15 @@ export const createMessage = async (
     email: message.user.email,
     roomId: message.roomId,
     username: message.user.username,
-    reactions: []
+    reactions: [],
+    replyToId: message.replyToId,
+    replyTo: message.replyTo
+      ? {
+          id: message.replyTo.id,
+          text: message.replyTo.text,
+          username: message.replyTo.user.username
+        }
+      : null
   };
 };
 
@@ -127,27 +144,62 @@ export const getMessagesByRoom = async (
           user: { select: { id: true, username: true } },
         },
       },
+      replyTo: {
+        select: {
+          id: true,
+          text: true,
+          user: { select: { username: true } },
+        },
+      },
+      replies: {
+        include: {
+          user: { select: { email: true, username: true } },
+          reactions: { include: { user: { select: { id: true, username: true } } } },
+          replyTo: { select: { id: true, text: true, user: { select: { username: true } } } },
+          replies: {
+            include: {
+              user: { select: { email: true, username: true } },
+              reactions: { include: { user: { select: { id: true, username: true } } } },
+              replyTo: { select: { id: true, text: true, user: { select: { username: true } } } },
+              replies: true, 
+            },
+          },
+        },
+      },
     },
-    orderBy: { id: "desc" }, 
+    orderBy: { id: "desc" },
     take: limit,
   });
 
   const ordered = messages.reverse();
 
-  const dto = ordered.map((m) => ({
+  // Recursive mapping function
+  type PrismaMessage = typeof messages[number];
+  const mapMessage = (m: any): MessageDTO => ({
     id: m.id,
     text: m.text,
     createdAt: m.createdAt.toISOString(),
     userId: m.userId,
-    email: m.user.email,
-    username: m.user.username,
+    email: m.user?.email ?? "",          
+    username: m.user?.username ?? "Unknown",
     roomId: m.roomId,
-    reactions: m.reactions.map((r) => ({
+    reactions: m.reactions?.map((r: any) => ({
       userId: r.userId,
-      username: r.user.username,
+      username: r.user?.username ?? "Unknown",
       emoji: r.emoji,
-    })),
-  }));
+    })) ?? [],
+    replyToId: m.replyToId,
+    replyTo: m.replyTo
+      ? {
+          id: m.replyTo.id,
+          text: m.replyTo.text,
+          username: m.replyTo.user?.username ?? "Unknown",
+        }
+      : null,
+    replies: m.replies?.map(mapMessage) ?? [],
+  });
+
+  const dto = ordered.map(mapMessage);
 
   // Cache result in Redis
   await setCachedRoomMessages(cacheKey, dto);

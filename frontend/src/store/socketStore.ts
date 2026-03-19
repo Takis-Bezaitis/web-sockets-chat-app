@@ -16,7 +16,7 @@ interface SocketState {
   enterApp: () => void;
   enterRoom: (roomId: number) => Promise<void>;
   exitRoom: (roomId: number) => void;
-  sendMessage: (roomId: number, text: string) => void;
+  sendMessage: (roomId: number, text: string, replyToId: number | null) => void;
  }
 
 export const useSocketStore = create<SocketState>((set, get) => ({
@@ -199,14 +199,14 @@ export const useSocketStore = create<SocketState>((set, get) => ({
     set({ currentRoomId: null });
   },
 
-  sendMessage: (roomId: number, text: string) => {
+  sendMessage: (roomId: number, text: string, replyToId: number | null = null) => {
     const { socket } = get();
     const { user } = useAuthStore.getState();
     if (!socket || !user) {
       console.warn("No socket or user to send message");
       return;
     }
-    socket.emit("message:create", { roomId: roomId.toString(), text });
+    socket.emit("message:create", { roomId: roomId.toString(), text, replyToId });
   },
   
 }));
