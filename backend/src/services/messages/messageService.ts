@@ -175,12 +175,12 @@ export const getMessagesByRoom = async (
 
   // Recursive mapping function
   type PrismaMessage = typeof messages[number];
-  const mapMessage = (m: PrismaMessage): MessageDTO => ({
+  const mapMessage = (m: any): MessageDTO => ({
     id: m.id,
     text: m.text,
     createdAt: m.createdAt.toISOString(),
     userId: m.userId,
-    email: m.user?.email ?? "",          // <-- safe fallback
+    email: m.user?.email ?? "",          
     username: m.user?.username ?? "Unknown",
     roomId: m.roomId,
     reactions: m.reactions?.map((r: any) => ({
