@@ -1,5 +1,6 @@
 import { useWebRTCStore } from "../../store/webrtcStore";
 import { useSocketStore } from "../../store/socketStore";
+import { getLocalMedia } from "../../utils/getLocalMedia";
 
 interface IncomingCallModalProps {
   visible: boolean;
@@ -26,11 +27,10 @@ export default function IncomingCallModal({ visible, caller, callee }: IncomingC
     // 1️⃣ Get local media (video + audio)
     let localStream: MediaStream;
     try {
-      localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+      localStream = await getLocalMedia({ video: true, audio: true });
       setLocalStream(localStream);
     } catch (err) {
-      console.error("Failed to get local media:", err);
-      return;
+      return; 
     }
 
     // 2️⃣ Create PeerConnection
@@ -56,7 +56,7 @@ export default function IncomingCallModal({ visible, caller, callee }: IncomingC
       if (event.candidate && socket && caller) {
         socket.emit("video:webrtc-ice-candidate", {
           candidate: event.candidate,
-          targetUserId: caller.id, // Send to Alice (caller)
+          targetUserId: caller.id, // Send to caller
         });
       }
     };
@@ -67,8 +67,8 @@ export default function IncomingCallModal({ visible, caller, callee }: IncomingC
     // 7️⃣ Notify caller that call is accepted
     socket.emit("video:call-response", {
       accepted: true,
-      callerId: caller?.id, // Alice's ID
-      calleeId: callee?.id, // Simon's ID
+      callerId: caller?.id, 
+      calleeId: callee?.id, 
     });
 
     // 8️⃣ Update call state to inCall
