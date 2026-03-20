@@ -1,7 +1,13 @@
 import { create } from "zustand";
 import { useSocketStore } from "./socketStore";
+import { stopLocalMedia as stopCachedMedia } from "../utils/getLocalMedia";
 
 export type CallState = "idle" | "ringing" | "inCall";
+
+const stopLocalMedia = (stream: MediaStream | null) => {
+  if (!stream) return;
+  stream.getTracks().forEach(track => track.stop());
+};
 
 interface WebRTCStore {
   localStream: MediaStream | null;
@@ -134,8 +140,10 @@ export const useWebRTCStore = create<WebRTCStore>((set, get) => ({
     const { peerConnection, localStream, remoteStream } = get();
 
     peerConnection?.close();
-    localStream?.getTracks().forEach((t) => t.stop());
-    remoteStream?.getTracks().forEach((t) => t.stop());
+    stopLocalMedia(localStream);
+    stopLocalMedia(remoteStream);
+
+    stopCachedMedia();
 
     set({
       localStream: null,

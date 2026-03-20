@@ -1,6 +1,8 @@
 import { useSocketStore } from "../../store/socketStore";
 import { useWebRTCStore } from "../../store/webrtcStore";
 import { type User } from "../../types/custom";
+import { toast } from "react-hot-toast";
+import { getLocalMedia } from "../../utils/getLocalMedia";
 
 interface VideoCallButtonProps {
   calleeId: number;
@@ -28,10 +30,7 @@ const VideoCallButton = ({ calleeId, calleeName, roomId, callerId, user, onCallS
 
     try {
       // Caller gets media BEFORE sending request
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: true,
-        audio: true,
-      });
+      const stream = await getLocalMedia({ video: true, audio: true });
 
       // Store stream in global state
       setLocalStream(stream);
@@ -56,6 +55,7 @@ const VideoCallButton = ({ calleeId, calleeName, roomId, callerId, user, onCallS
      
     } catch (err) {
       console.error("Failed to access media devices", err);
+      toast.error("Cannot access camera/microphone. Please check your device.");
     }
   };
 
