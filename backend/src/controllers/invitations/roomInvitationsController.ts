@@ -1,6 +1,7 @@
 import { type Request, type Response } from "express";
 import type { AuthRequest, ApiResponse, InvitationDTO } from "../../types/custom.js";
 import * as invitationService from "../../services/invitations/roomInvitationsService.js";
+import { AppError } from "../../utils/AppError.js";
 
 import { io } from "../../index.js";
 
@@ -8,7 +9,6 @@ export const inviteToRoom = async (
   req: Request & AuthRequest,
   res: Response<ApiResponse<InvitationDTO[]>>
 ): Promise<void> => {
-  try {
     const userId = req.user?.id;
     const { roomId, inviteeIds } = req.body as {
       roomId: number;
@@ -16,13 +16,11 @@ export const inviteToRoom = async (
     };
 
     if (!userId) {
-      res.status(401).json({ error: "Unauthorized" });
-      return;
+      throw new AppError("Unauthorized", 401);
     }
 
     if (!roomId || !Array.isArray(inviteeIds)) {
-      res.status(400).json({ error: "Missing or invalid roomId or inviteeIds." });
-      return;
+      throw new AppError("Missing or invalid roomId or inviteeIds.", 400);
     }
 
     const invitations = await invitationService.inviteToRoom({
@@ -38,29 +36,18 @@ export const inviteToRoom = async (
     });
 
     res.status(201).json({ data: invitations });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Failed to send invitation." });
-  }
 };
 
 
 export const getMyInvitations = async (req: Request & AuthRequest, res: Response<ApiResponse<InvitationDTO[]>>): Promise<void> => {
-    try {
-        const userId = req.user?.id;
+    const userId = req.user?.id;
 
-        if (!userId) {
-            res.status(401).json({ error: "Unauthorized" });
-            return;
-        }
-        
-        const invitations = await invitationService.getMyInvitations(Number(userId));
-
-        res.status(200).json({ data: invitations });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: "Failed to get the invitations." });
+    if (!userId) {
+        throw new AppError("Unauthorized", 401);
     }
+    
+    const invitations = await invitationService.getMyInvitations(Number(userId));
+    res.status(200).json({ data: invitations });
 };
 
 export const getRoomInvitations = async () => {
@@ -68,52 +55,27 @@ export const getRoomInvitations = async () => {
 
 export const acceptRoomInvitation = async (req: Request<{ invitationId: string }> & AuthRequest, 
     res: Response<ApiResponse<InvitationDTO | null>>): Promise<void> => {
-    try {
-        const userId = req.user?.id;
-        const { invitationId } = req.params;
+      const userId = req.user?.id;
+      const { invitationId } = req.params;
 
-        if (!userId) {
-            res.status(401).json({ error: "Unauthorized" });
-            return;
-        }
+      if (!userId) {
+          throw new AppError("Unauthorized", 401);
+      }
 
-        const invitation = await invitationService.acceptRoomInvitation(Number(invitationId), Number(userId));
+      const invitation = await invitationService.acceptRoomInvitation(Number(invitationId), Number(userId));
 
-        if (!invitation) {
-            res.status(404).json({ error: "Invitation not found or already handled." });
-            return;
-        }
-        
-        res.status(200).json({ data: invitation || null });
-        
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: "Failed to accept the invitation." });
-    }
+      res.status(200).json({ data: invitation || null });
 };
 
 export const declineRoomInvitation = async (req: Request<{ invitationId: string }> & AuthRequest,
     res: Response<ApiResponse<InvitationDTO | null>>): Promise<void> => {
-        try {
-            const userId = req.user?.id;
-            const { invitationId } = req.params;
+      const userId = req.user?.id;
+      const { invitationId } = req.params;
 
-            if (!userId) {
-                res.status(401).json({ error: "Unauthorized" });
-                return;
-            }
+      if (!userId) {
+          throw new AppError("Unauthorized", 401);
+      }
 
-            const invitation = await invitationService.declineRoomInvitation(Number(invitationId), Number(userId));
-
-            if (!invitation) {
-                res.status(404).json({ error: "Invitation not found or already handled." });
-                return;
-            }
-
-            res.status(200).json({ data: invitation || null });
-
-        } catch (error) {
-            console.error(error);
-            res.status(500).json({ error: "Failed to decline the invitation." });
-        }
+      const invitation = await invitationService.declineRoomInvitation(Number(invitationId), Number(userId));
+      res.status(200).json({ data: invitation || null });
 };

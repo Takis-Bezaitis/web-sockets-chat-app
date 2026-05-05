@@ -6,6 +6,7 @@ import VideoControls from "./VideoControls";
 import { useAuthStore } from "../../store/authStore";
 import MicMutedIcon from "./icons/MicMutedIcon";
 import CameraOffIcon from "./icons/CameraOffIcon";
+import { useMediaQuery } from "../../hooks/useMediaQuery";
 
 type VideoCallWindowProps = {
   caller: string | undefined;
@@ -31,6 +32,8 @@ const VideoCallWindow = ({caller, callee, videoOverlay }: VideoCallWindowProps) 
   const getOnlineStatus = usePresenceStore((s) => s.onlineUsers)
 
   const isCalleeOnline = !!(callee.id && getOnlineStatus[callee.id]);
+  
+  const isSmall = useMediaQuery("(max-width: 768px)");
 
   // Attach video streams
   useEffect(() => {
@@ -60,40 +63,21 @@ const VideoCallWindow = ({caller, callee, videoOverlay }: VideoCallWindowProps) 
   };
 
   return (
-    <div className={`h-full flex flex-col items-center 
-      place-content-center sm:place-content-start md:place-content-center 
-      p-4 bg-background border-r border-border-line
-      ${videoOverlay === "hidden" ? "-mt-10 sm:mt-0" : "place-content-start"}
-    `}
+    <div
+      className={`
+        ${isSmall ? 'min-h-full' : 'h-full'}
+        flex flex-col items-center
+        ${videoOverlay === "hidden" ? "justify-center" : "justify-start pt-16"}
+        p-4 bg-background border-r border-border-line
+      `}
     >
 
-      <div className="grid grid-cols-1 gap-1 w-full max-w-xl">
-        {/* Local video */}
-        <p className="text-foreground text-lg">{user?.username}</p>
-        <div className="relative content-center bg-video-chat-window w-full aspect-video rounded-xl overflow-hidden mb-1">
-          <video
-            ref={localVideoRef}
-            autoPlay
-            playsInline
-            muted
-            className={`transition-all duration-200 absolute inset-0 w-full h-full object-cover bg-video-chat-window
-              ${isCameraOff ? 'opacity-0' : 'opacity-100'}`}
-          />
-          {isCameraOff && (
-            <div className="flex flex-col items-center justify-center align-middle text-6xl text-gray-300">
-              <span>👤</span>
-              <span className="text-lg mt-2 text-foreground">Camera off</span>
-            </div>
-          )}
-        </div>
-
-        <div className="flex items-center justify-center gap-6">
-          <VideoControls onEndCall={endCall} />
-        </div>
+      <div className={`grid grid-cols-1 ${isSmall ? 'w-3/4 -mt-10' : 'w-full max-w-xl'}`}>
 
         {/* Remote video */}
         <p className="text-foreground text-lg">{`${caller===user?.username ? callee.name : caller}`}</p>
-        <div className="relative content-center bg-video-chat-callee w-full aspect-video rounded-xl overflow-hidden">
+        <div className="relative content-center bg-video-chat-callee w-full aspect-video 
+          rounded-xl overflow-hidden mb-10">
           <video
             ref={remoteVideoRef}
             autoPlay
@@ -132,6 +116,29 @@ const VideoCallWindow = ({caller, callee, videoOverlay }: VideoCallWindowProps) 
               </div>
             )}
           </div>
+        </div>
+
+        {/* Local video */}
+        <p className="text-foreground text-lg">{user?.username}</p>
+        <div className="relative content-center bg-video-chat-window w-full aspect-video rounded-xl overflow-hidden mb-3">
+          <video
+            ref={localVideoRef}
+            autoPlay
+            playsInline
+            muted
+            className={`transition-all duration-200 absolute inset-0 w-full h-full object-cover bg-video-chat-window
+              ${isCameraOff ? 'opacity-0' : 'opacity-100'}`}
+          />
+          {isCameraOff && (
+            <div className="flex flex-col items-center justify-center align-middle text-6xl text-gray-300">
+              <span>👤</span>
+              <span className="text-lg mt-2 text-foreground">Camera off</span>
+            </div>
+          )}
+        </div>
+
+        <div className="flex items-center justify-center gap-6">
+          <VideoControls onEndCall={endCall} />
         </div>
         
       </div>

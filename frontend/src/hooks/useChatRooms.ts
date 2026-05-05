@@ -1,14 +1,17 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import toast from "react-hot-toast";
 import type { RoomWithMembershipDTO, RoomUsers } from "../types/custom";
 import { useSocketStore } from "../store/socketStore";
-import { useMessageStore } from "../store/messageStore";
 import { useRoomStore } from "../store/roomStore";
+import { useAuthStore } from "../store/authStore";
+import { API } from "../api/api";
 
-const ROOMS_BASE_URL = import.meta.env.VITE_BACKEND_ROOMS_BASE_URL;
 
 export function useChatRooms(userId?: number) {
-  const { enterRoom, exitRoom } = useSocketStore();
-  const { fetchRoomMessages, clearRoomMessages } = useMessageStore();
+  const { user } = useAuthStore();
+
+  const enterRoom = useSocketStore(s => s.enterRoom);
+  const exitRoom = useSocketStore(s => s.exitRoom);
 
   const [currentRoom, setCurrentRoom] = useState<RoomWithMembershipDTO>();
   const [currentRoomUsers, setCurrentRoomUsers] = useState<RoomUsers[]>([]);
@@ -19,11 +22,11 @@ export function useChatRooms(userId?: number) {
     [roomsById]
   );
 
-  const fetchRooms = async (): Promise<RoomWithMembershipDTO[]> => {
+  const fetchRooms = useCallback(async (): Promise<RoomWithMembershipDTO[]> => {
     if (!userId) return [];
 
     try {
-      const res = await fetch(`${ROOMS_BASE_URL}/${userId}/rooms`, {
+      const res = await fetch(`${API.rooms}/${userId}/rooms`, {
         credentials: "include",
       });
 
@@ -42,11 +45,11 @@ export function useChatRooms(userId?: number) {
       console.error("fetchRooms failed:", err);
       return [];
     }
-  };
+  }, [userId]);
 
-  const getRoomUsers = async (roomId: number) => {
+  const getRoomUsers = useCallback(async (roomId: number) => {
     try {
-      const res = await fetch(`${ROOMS_BASE_URL}/${roomId}/room-users`, {
+      const res = await fetch(`${API.rooms}/${roomId}/room-users`, {
         credentials: "include",
       });
 
@@ -61,20 +64,18 @@ export function useChatRooms(userId?: number) {
       console.error("getRoomUsers failed:", err);
       setCurrentRoomUsers([]);
     }
-  };
+  }, []);
 
-  const onSelectRoom = async (room: RoomWithMembershipDTO) => {
+  const onSelectRoom = useCallback(async (room: RoomWithMembershipDTO) => {
     if (room.id === currentRoom?.id) return;
     
     try {
       if (currentRoom) {
         exitRoom(currentRoom.id);
-        clearRoomMessages(currentRoom.id);
       }
 
       setCurrentRoomUsers([]);
 
-      await fetchRoomMessages(room.id);
       await enterRoom(room.id);
       await getRoomUsers(room.id);
 
@@ -82,14 +83,15 @@ export function useChatRooms(userId?: number) {
     } catch (err) {
       console.error("onSelectRoom failed:", err);
     }
-  };
+  }, [currentRoom?.id, exitRoom, enterRoom, getRoomUsers, setCurrentRoom, setCurrentRoomUsers]);
 
-  const handleJoinLeaveRoom = async (
+  
+  const handleJoinLeaveRoom = useCallback(async (
     room: RoomWithMembershipDTO,
     action: "join" | "leave"
   ) => {
     try {
-      const res = await fetch(`${ROOMS_BASE_URL}/${room.id}/${action}`, {
+      const res = await fetch(`${API.rooms}/${room.id}/${action}`, {
         method: "POST",
         credentials: "include",
       });
@@ -117,12 +119,12 @@ export function useChatRooms(userId?: number) {
 
       const socket = useSocketStore.getState().socket;
       if (socket) {
-        socket.emit(action === "join" ? "joinRoom" : "leaveRoom", room.id.toString());
+        socket.emit(action === "join" ? "joinRoom" : "leaveRoom", room.id);
       }
     } catch (err) {
       console.error("handleJoinLeaveRoom failed:", err);
     }
-  };
+  }, [fetchRooms, currentRoom?.id, getRoomUsers, setCurrentRoom]);
 
   useEffect(() => {
     if (!userId) return;
@@ -130,31 +132,58 @@ export function useChatRooms(userId?: number) {
   }, [userId]);
 
   useEffect(() => {
-    if (rooms.length === 0 || currentRoom) return;
+    if (!rooms.length || currentRoom) return;
+
     const general = rooms.find((r) => r.name === "general");
     if (!general) return;
 
-    setCurrentRoom(general);
-    void fetchRoomMessages(general.id);
-    void enterRoom(general.id);
-    void getRoomUsers(general.id);
-  }, [rooms, currentRoom, enterRoom, fetchRoomMessages]);
+    onSelectRoom(general);
+ 
+  }, [rooms, currentRoom, onSelectRoom]);
 
   /* =========================
     Membership socket listeners
     ========================= */
+
   useEffect(() => {
     const socket = useSocketStore.getState().socket;
     if (!socket || !currentRoom?.id) return;
 
-    const handleMembershipJoined = ({ roomId }: { roomId: number }) => {
+    const handleMembershipJoined = ({ roomId, userLeft, }: { 
+      roomId: number;
+      userLeft: { id: number; username: string };
+    }) => {
       if (roomId !== currentRoom.id) return;
+
+     
+      toast(`${userLeft.username} joined #${currentRoom.name}`);
       getRoomUsers(currentRoom.id);
     };
 
-    const handleMembershipLeft = ({ roomId }: { roomId: number }) => {
+    const handleMembershipLeft = async ({ roomId, userLeft, }: { 
+      roomId: number;
+      userLeft: { id: number; username: string };
+    }) => {
       if (roomId !== currentRoom.id) return;
-      getRoomUsers(currentRoom.id);
+
+      if (user?.id !== userLeft.id) {
+        toast(`${userLeft.username} left #${currentRoom.name}`);
+      }
+        
+      const updatedRooms = await fetchRooms();
+      const stillInRoom = updatedRooms.find(r => r.id === roomId);
+
+      if (stillInRoom?.isPrivate && userId !== stillInRoom.creatorId) {
+        const fallbackRoom =
+          updatedRooms.find(r => r.name === "general");
+
+        if (fallbackRoom) {
+          onSelectRoom(fallbackRoom);
+        }
+      } else {
+        getRoomUsers(roomId);
+      }
+      
     };
 
     socket.on("membership:joined", handleMembershipJoined);

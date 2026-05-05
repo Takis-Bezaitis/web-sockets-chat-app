@@ -9,7 +9,7 @@ interface ChatSidebarProps {
   onSelectRoom: (room: RoomWithMembershipDTO) => void;
   handleJoinLeaveRoom: (room: RoomWithMembershipDTO, action: "join" | "leave") => void;
   onCreateRoom: () => void;
-  onInviteMembers: (roomId: number, roomName: string) => void;
+  onInviteMembers: (roomId: number, roomName: string, room: RoomWithMembershipDTO) => void;
 };
 
 const ChatSidebar = ({
@@ -67,7 +67,7 @@ const ChatSidebar = ({
 
               <div className="min-w-fit">
                 {(room.name !== "general" && (room.creatorId === user.id && room.isPrivate)) && (
-                  <button className="cursor-pointer" onClick={() => onInviteMembers(room.id, room.name)}>📩</button>
+                  <button className="cursor-pointer" onClick={() => onInviteMembers(room.id, room.name, room)}>📩</button>
                 )}
               </div>
             </div>

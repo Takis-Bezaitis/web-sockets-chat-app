@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { type User } from "../types/custom";
+import { API } from "../api/api";
 
 interface AuthState {
     user: User | null;
@@ -23,7 +24,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     
     checkAuth: async () => {
         try {
-            const res = await fetch(import.meta.env.VITE_BACKEND_AUTH_ME_URL, {
+            const res = await fetch(API.auth.me, {
                 method: "GET",
                 credentials: "include",
             });

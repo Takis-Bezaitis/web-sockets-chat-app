@@ -1,12 +1,37 @@
 import { useWebRTCStore } from "../../store/webrtcStore";
 import { useSocketStore } from "../../store/socketStore";
 
+type CallRequestData = {
+  callerId: number;
+  callerName: string;
+  calleeId: number;
+  calleeName: string;
+};
+
+type CallResponseData = {
+  accepted: boolean;
+  callerId: number;
+  calleeId: number;
+};
+
+type OfferData = {
+  offer: RTCSessionDescriptionInit;
+  callerId: number;
+  calleeId: number;
+};
+
+type AnswerData = {
+  answer: RTCSessionDescriptionInit;
+};
+
+type IceCandidateData = {
+  candidate: RTCIceCandidateInit;
+};
+
 // =============================
 // 1. INCOMING CALL (callee)
 // =============================
-export const handleCallRequest = (data: any) => {
-  console.log("Incoming call:", data);
-
+export const handleCallRequest = (data: CallRequestData) => {
   const {
     setCallState,
     setIsCaller,
@@ -30,19 +55,14 @@ export const handleCallRequest = (data: any) => {
 // =============================
 // 2. CALL ACCEPTED BY CALLEE (caller side)
 // =============================
-export const handleCallResponse = async (data: any) => {
+export const handleCallResponse = async (data: CallResponseData) => {
   if (!data.accepted) {
-    console.log("Call declined.");
     const cleanupCall = useWebRTCStore.getState().cleanupCall;
     cleanupCall();
     return;
   }
 
   const socket = useSocketStore.getState().socket;
-
-  console.log("Call accepted — creating offer...");
-  console.log("handleCallResponse:", data);
-
   const { localStream, setPeerConnection, setRemoteStream, setCallState } = useWebRTCStore.getState();
 
   if (!localStream) {
@@ -56,8 +76,7 @@ export const handleCallResponse = async (data: any) => {
   });
 
   // 2️⃣ Attach ontrack immediately
-  pc.ontrack = (event) => {
-    console.log("Caller ontrack event:", event);
+  pc.ontrack = (event: RTCTrackEvent) => {
     const stream =
       event.streams && event.streams[0]
         ? event.streams[0]
@@ -72,7 +91,7 @@ export const handleCallResponse = async (data: any) => {
   });
 
   // 4️⃣ ICE candidates
-  pc.onicecandidate = (event) => {
+  pc.onicecandidate = (event: RTCPeerConnectionIceEvent) => {
     if (event.candidate && socket) {
       socket.emit("video:webrtc-ice-candidate", {
         candidate: event.candidate,
@@ -99,12 +118,10 @@ export const handleCallResponse = async (data: any) => {
 
 
 
-export const handleOffer = async (data: any) => {
+export const handleOffer = async (data: OfferData) => {
   const socket = useSocketStore.getState().socket;
   const { peerConnection, setPeerConnection, localStream, setRemoteStream, setCallState } =
     useWebRTCStore.getState();
-
-  console.log("handleOffer:", data);
 
   // 1️⃣ Create PeerConnection if it doesn't exist
   const pc = peerConnection || new RTCPeerConnection({
@@ -113,7 +130,6 @@ export const handleOffer = async (data: any) => {
 
   // 2️⃣ Attach remote track listener
   pc.ontrack = (event) => {
-    console.log("Callee ontrack event:", event);
     const stream = event.streams && event.streams[0] ? event.streams[0] : new MediaStream([event.track]);
     setRemoteStream(stream);
   };
@@ -139,7 +155,7 @@ export const handleOffer = async (data: any) => {
   setPeerConnection(pc);
 
   // 5️⃣ Set remote description
-  await pc.setRemoteDescription(new RTCSessionDescription(data.offer));
+  await pc.setRemoteDescription(data.offer);
 
   // 6️⃣ Create answer and send back to caller
   const answer = await pc.createAnswer();
@@ -159,32 +175,25 @@ export const handleOffer = async (data: any) => {
 
 
 
-export const handleAnswer = async (data: any) => {
+export const handleAnswer = async (data: AnswerData) => {
   const { peerConnection } = useWebRTCStore.getState();
   if (!peerConnection) return;
 
-  // 1️⃣ Set remote description so caller can receive callee's tracks
-  await peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer));
-
-  console.log("Caller: remote description set, remote tracks should flow now.");
+  await peerConnection.setRemoteDescription(data.answer);
 };
 
-export const handleIceCandidate = async (data: any) => {
+export const handleIceCandidate = async (data: IceCandidateData) => {
   const pc = useWebRTCStore.getState().peerConnection;
   if (!pc) return;
 
   try {
-    await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
+    await pc.addIceCandidate(data.candidate);
   } catch (e) {
     console.error("Error adding ICE candidate", e);
   }
 };
 
-
-
 export const onCallEnded = () => {
   const cleanupCall = useWebRTCStore.getState().cleanupCall;
-
-  console.log("Remote user ended the call");
   cleanupCall();
 };

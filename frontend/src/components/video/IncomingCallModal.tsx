@@ -40,7 +40,6 @@ export default function IncomingCallModal({ visible, caller, callee }: IncomingC
 
     // 3️⃣ Attach ontrack immediately
     pc.ontrack = (event) => {
-      console.log("Callee ontrack event:", event);
       const stream = event.streams && event.streams[0] ? event.streams[0] : new MediaStream([event.track]);
       setRemoteStream(stream);
     };

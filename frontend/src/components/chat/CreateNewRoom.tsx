@@ -1,6 +1,8 @@
 import { useState } from "react";
+import toast from "react-hot-toast";
 import RoomMembersInvite from "../invitations/RoomMembersInvite";
-import type { RoomDTO } from "../../types/custom";
+import type { RoomWithMembershipDTO } from "../../types/custom";
+import { API } from "../../api/api";
 
 type CreateNewRoomProps = {
   onClose: () => void;
@@ -8,13 +10,12 @@ type CreateNewRoomProps = {
 
 const CreateNewRoom = ({ onClose }: CreateNewRoomProps) => {
   const [name, setName] = useState<string>("");
-  const [newRoom, setNewRoom] = useState<RoomDTO>();
+  const [newRoom, setNewRoom] = useState<RoomWithMembershipDTO>();
   const [isPrivate, setIsPrivate] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [inviteMembersVisible, setInviteMembersVisible] = useState<boolean>(false);
   const [error, setError] = useState("");
   const maxChannelName: number = 40;
-  const ROOMS_BASE_URL = import.meta.env.VITE_BACKEND_ROOMS_BASE_URL;
 
   const handleSubmit = async () => {
     if (!name.trim() || isSubmitting) return;
@@ -22,7 +23,7 @@ const CreateNewRoom = ({ onClose }: CreateNewRoomProps) => {
     setError("");
 
     try {
-      const res = await fetch(`${ROOMS_BASE_URL}/create-room`, {
+      const res = await fetch(`${API.rooms}/create-room`, {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
@@ -32,27 +33,26 @@ const CreateNewRoom = ({ onClose }: CreateNewRoomProps) => {
         }),
       });
 
-      const newCreatedRoom = await res.json();
-      setNewRoom(newCreatedRoom.data)
+      const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(newCreatedRoom.error || "Failed to create room.");
+        throw new Error(data.error || "Failed to create room.");
+      }
+
+      setNewRoom(data.data);
+
+      if (isPrivate) {
+        setInviteMembersVisible(true);
+      } else {
+        onClose();
       }
 
     } catch (err) {
       if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        console.error("Failed to create room:", err);
-      }
+        toast.error(err.message);
+      } 
     } finally {
       setIsSubmitting(false);
-    }
-
-    if (isPrivate) {
-      setInviteMembersVisible(true);
-    } else {
-      onClose();
     }
 
   };
@@ -63,7 +63,7 @@ const CreateNewRoom = ({ onClose }: CreateNewRoomProps) => {
     setError("");
 
     try {
-      const res = await fetch(`${ROOMS_BASE_URL}/${newRoom?.id}`, {
+      const res = await fetch(`${API.rooms}/${newRoom?.id}`, {
         method: "DELETE",
         credentials: "include",
       });

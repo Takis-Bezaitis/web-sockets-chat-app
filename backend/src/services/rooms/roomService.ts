@@ -1,5 +1,6 @@
 import prisma from "../../prismaClient.js";
 import { type RoomDTO, type UserRoomDTO, type RoomUsers } from "../../types/custom.js";
+import { AppError } from "../../utils/AppError.js";
 import { getCachedRoomUsers, setCachedRoomUsers, invalidateRoomUsersCache } from "../../utils/cacheRoomUsers.js";
 
 export const getRooms = async (): Promise<RoomDTO[]> => {
@@ -14,7 +15,7 @@ export const createRoom = async (userId: number, name: string, isPrivate: boolea
     });
 
     if (existing) {
-        throw new Error('Room already exists.');
+        throw new AppError(`Room "${name}" already exists.`, 409);
     }
 
     return prisma.room.create({
@@ -31,7 +32,7 @@ export const deleteRoom = async (userId: number, roomId: number) => {
     });
 
     if (!room) {
-        throw new Error("ROOM_NOT_FOUND_OR_FORBIDDEN");
+        throw new AppError("Room not found or access denied.", 404);
     }
 
     await prisma.userRoom.deleteMany({
@@ -49,12 +50,11 @@ export const joinRoom = async (userId: number, roomId: number): Promise<UserRoom
     const existing = await prisma.userRoom.findUnique({
         where: {
             userId_roomId: { userId, roomId },
-            //Prisma automatically creates a userId_roomId compound key because of @@id([userId, roomId])
         },
     });
 
     if (existing) {
-        throw new Error('User already joined this room');
+        throw new AppError('User already joined this room', 400);
     };
 
     const record = await prisma.userRoom.create({
@@ -70,7 +70,7 @@ export const joinRoom = async (userId: number, roomId: number): Promise<UserRoom
 
     return {
         ...record,
-        joinedAt: record.joinedAt.toISOString(), // <-- convert Date → string here
+        joinedAt: record.joinedAt.toISOString(), 
     };
 };
 
@@ -87,7 +87,7 @@ export const leaveRoom = async (userId: number, roomId: number): Promise<UserRoo
     })
 
     if (!existing) {
-        throw new Error("User is not a member of this room");
+        throw new AppError("User is not a member of this room", 400);
     }
 
     const deleted  = await prisma.userRoom.delete({
@@ -143,11 +143,11 @@ export const getRoomUsers = async (roomId: number): Promise<RoomUsers[]> => {
 export const getUserRoomsWithMembership = async (userId: number) => {
     const rooms = await prisma.room.findMany({
         select: {
-        id: true,
-        name: true,
-        isPrivate: true,
-        creatorId: true,
-        hasUserMessages: true,
+            id: true,
+            name: true,
+            isPrivate: true,
+            creatorId: true,
+            hasUserMessages: true,
         },
     });
 

@@ -12,6 +12,7 @@ import {
   addUserToOnlineUsers,
   getOnlineUsers,
 } from "../utils/presence.js";
+import { MESSAGE_MAX_LENGTH } from "../constants/message.js";
 
 export interface CustomSocket extends Socket {
   user?: UserPayload;
@@ -46,7 +47,6 @@ export default function chatSocket(io: Server) {
       if (!roomId || !customSocket.user) return;
 
       const roomChannel = `room:${roomId}`;
-      console.log(`socket ${socket.id} enters ${roomChannel}`);
       customSocket.join(roomChannel);
 
       await addUserToRoomPresence(customSocket.user.id, roomId);
@@ -66,7 +66,6 @@ export default function chatSocket(io: Server) {
     customSocket.on("exitRoom", async (roomId: string) => {
       if (!roomId || !customSocket.user) return;
       const roomChannel = `room:${roomId}`;
-      console.log(`socket ${socket.id} exits ${roomChannel}`);
       customSocket.leave(roomChannel);
 
       await removeUserFromRoomPresence(customSocket.user.id, roomId);
@@ -82,34 +81,31 @@ export default function chatSocket(io: Server) {
       await refreshRoomPresence(customSocket.user.id, roomId);
     });
     
-    customSocket.on("joinRoom", (roomId: string) => {
-      console.log(
-        `membership join request by ${customSocket.user?.email ?? socket.id} for room ${roomId}`
-      );
+    customSocket.on("joinRoom", (roomId: number) => {
       // Notify room members 
-      const numericRoomId = Number(roomId);
       customSocket.join(`room:${roomId}`);
-
-      customSocket.emit("membership:joined", {
-        roomId: numericRoomId,
-      });
-
+      
       customSocket.to(`room:${roomId}`).emit("membership:joined", {
-        roomId: numericRoomId,
+        roomId,
+        userLeft: {
+          id: Number(customSocket.user!.id),
+          username: customSocket.user!.username,
+        },
       });
     });
 
-    customSocket.on("leaveRoom", (roomId: string) => {
-      console.log(
-        `membership leave request by ${customSocket.user?.email ?? socket.id} for room ${roomId}`
-      );
+    customSocket.on("leaveRoom", (roomId: number) => {
       // Notify room members
-      const numericRoomId = Number(roomId);
-      customSocket.leave(`room:${roomId}`);
-      customSocket.to(`room:${roomId}`).emit("membership:left", {
-        roomId: numericRoomId,
+      io.to(`room:${roomId}`).emit("membership:left", { 
+        roomId,
+        userLeft: {
+          id: Number(customSocket.user!.id),
+          username: customSocket.user!.username,
+        },
       });
-    });
+
+      customSocket.leave(`room:${roomId}`);
+     });
 
     // --- MESSAGES ---
     // Client -> server: create a message
@@ -119,9 +115,11 @@ export default function chatSocket(io: Server) {
         try {
           if (!customSocket.user) return;
           const { roomId, text, replyToId } = data;
-          if (!roomId || !text) return;
+          
+          if (!roomId || typeof text !== "string" || text.trim().length === 0 || text.length > MESSAGE_MAX_LENGTH) {
+            return;
+          }
 
-          // Persist message (this also invalidates Redis cache in your service).
           const saved = await createMessage({
             text,
             userId: Number(customSocket.user.id),
@@ -130,7 +128,6 @@ export default function chatSocket(io: Server) {
           });
 
           // Broadcast the new message to everyone subscribed to that room channel.
-          // Using room channel naming 'room:{id}' so it's consistent across code.
           const channel = `room:${roomId}`;
           io.to(channel).emit("message:new", saved);
         } catch (err) {
@@ -204,12 +201,10 @@ export default function chatSocket(io: Server) {
     /* Video listeners */
 
     customSocket.on("video:call-request", (data) => {
-      console.log("video:call-request data:",data)
       io.to(`user:${data.calleeId}`).emit("video:call-request", data);
     });
 
     customSocket.on("video:call-response", (data) => {
-      console.log("video:call-response!!", data);
       io.to(`user:${data.callerId}`).emit("video:call-response", data);
     });
 

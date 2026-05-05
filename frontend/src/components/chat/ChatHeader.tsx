@@ -3,6 +3,7 @@ import { type RoomWithMembershipDTO, type User, type Message } from "../../types
 import MessageSearch from "../messages/MessageSearch";
 import { useMediaQuery } from "../../hooks/useMediaQuery";
 import { LogOut } from 'lucide-react';
+import { API } from "../../api/api";
 
 type ChatHeaderProps = {
   user: User | null;
@@ -18,7 +19,7 @@ const ChatHeader = ({user, currentRoom, roomMessages, loading, showMembers, setS
   const isSmall = useMediaQuery("(max-width: 768px)");
 
   const handleLogout = async () => {
-    await fetch(`${import.meta.env.VITE_BACKEND_AUTH_BASE_URL}/logout`, {
+    await fetch(API.auth.logout, {
       method: "POST",
       credentials: "include",
     });

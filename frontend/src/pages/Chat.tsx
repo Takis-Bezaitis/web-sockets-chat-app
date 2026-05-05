@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useAuthStore } from "../store/authStore";
 import { useSocketStore } from "../store/socketStore";
 import { useMessageStore } from "../store/messageStore";
@@ -63,9 +63,9 @@ const Chat = () => {
   // search feature - scroll to a specific message
   const scrollToMessageRef = useRef<(id: number) => void>(null);
 
-  const onRegisterScroll = (fn: (id: number) => void) => {
+  const onRegisterScroll = useCallback((fn: (id: number) => void) => {
     scrollToMessageRef.current = fn;
-  };
+  }, []);
 
   const scrollToMessage = (id: number) => {
     scrollToMessageRef.current?.(id);
@@ -85,17 +85,21 @@ const Chat = () => {
     useMessageStore.getState().setReplyingTo(currentRoom.id, null);
   };
 
-  const handleInviteMembers = (roomId: number, roomName: string) => {
+  const handleInviteMembers = useCallback((roomId: number, roomName: string) => {
     setInviteRoomId(roomId);
     setInviteRoomName(roomName);
     setInviteMembersVisible(true);
-  };
+  }, []);
 
   const closeInviteMembers = () => {
     setInviteRoomId(null);
     setInviteRoomName("");
     setInviteMembersVisible(false);
   };
+
+  const handleCreateRoom = useCallback(() => {
+    setShowCreateRoom(true);
+  }, []);
 
   const chatLayoutClasses = `
     hidden md:flex flex-col min-w-0
@@ -135,7 +139,13 @@ const Chat = () => {
 
       {inviteMembersVisible && inviteRoomId !== null && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <RoomMembersInvite inviteRoomId={inviteRoomId} roomName={inviteRoomName} mode='manage' onCloseInviteMembers={closeInviteMembers} />
+          <RoomMembersInvite
+            inviteRoomId={inviteRoomId}
+            roomName={inviteRoomName}
+            mode="manage"
+            currentRoomUsers={currentRoomUsers}
+            onCloseInviteMembers={closeInviteMembers}
+          />
         </div>
       )}
 
@@ -150,7 +160,7 @@ const Chat = () => {
               currentRoom={currentRoom}
               onSelectRoom={onSelectRoom}
               handleJoinLeaveRoom={handleJoinLeaveRoom}
-              onCreateRoom={() => setShowCreateRoom(true)}
+              onCreateRoom={handleCreateRoom}
               onInviteMembers={handleInviteMembers}
             />
           </div>
@@ -163,8 +173,8 @@ const Chat = () => {
               currentRoom={currentRoom}
               onSelectRoom={onSelectRoom}
               handleJoinLeaveRoom={handleJoinLeaveRoom}
-              onCreateRoom={() => setShowCreateRoom(true)}
-              onInviteMembers={() => setInviteMembersVisible(true)}
+              onCreateRoom={handleCreateRoom}
+              onInviteMembers={handleInviteMembers}
             />
           </div>
         )}
@@ -210,7 +220,7 @@ const Chat = () => {
         
         {!isDesktop && videoOverlay === "chat" && ((callState!="idle" && isCaller) || (inCall && !isCaller)) && (
           <div
-            className="md:hidden fixed bottom-0 left-0 right-0 h-[54%] 
+            className="md:hidden fixed bottom-0 left-0 right-0 h-[63%] 
               rounded-t-2xl shadow-xl flex flex-col"
           >
             <ChatContent currentRoom={currentRoom} 
@@ -237,7 +247,7 @@ const Chat = () => {
         
         {videoOverlay === "members" && ((callState!="idle" && isCaller) || (inCall && !isCaller)) && (
           <div
-            className="lg:hidden fixed bottom-0 left-0 right-0 h-[50%] mb-10
+            className="md:hidden fixed bottom-0 left-0 right-0 h-[59%] mb-10
               bg-background rounded-t-2xl shadow-xl flex flex-col"
             >
             <UsersInRoom 

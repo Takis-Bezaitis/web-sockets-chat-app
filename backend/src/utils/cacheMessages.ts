@@ -1,11 +1,9 @@
 import redis from "./redisClient.js";
 import { type MessageDTO } from "../types/custom.js";
-
-const CACHE_VERSION = 1;     // increment to invalidate old caches
-const MESSAGES_TTL_SECONDS = 30;      // seconds
+import { CACHE_CONFIG } from "../constants/cache.js";
 
 export const getCachedRoomMessages = async (cacheKey: string): Promise<MessageDTO[] | null> => {
-  const key = `v${CACHE_VERSION}:room:${cacheKey}`;
+  const key = `v${CACHE_CONFIG.VERSION}:room:${cacheKey}`;
   const cached = await redis.get(key);
 
   if (!cached) return null;
@@ -18,12 +16,20 @@ export const getCachedRoomMessages = async (cacheKey: string): Promise<MessageDT
 };
 
 export const setCachedRoomMessages = async (cacheKey: string, messages: MessageDTO[]) => {
-  const key = `v${CACHE_VERSION}:room:${cacheKey}`;
-  await redis.set(key, JSON.stringify(messages), "EX", MESSAGES_TTL_SECONDS);
+  const key = `v${CACHE_CONFIG.VERSION}:room:${cacheKey}`;
+  await redis.set(key, JSON.stringify(messages), "EX", CACHE_CONFIG.MESSAGES.TTL_SECONDS);
 };
 
 export const invalidateRoomMessagesCache = async (roomId: number) => {
-  const pattern = `v${CACHE_VERSION}:room:${roomId}:*`;
-  const keys = await redis.keys(pattern);
-  if (keys.length) await redis.del(keys);
+  const pattern = `v${CACHE_CONFIG.VERSION}:room:${roomId}:*`;
+
+  let cursor = "0";
+  do {
+    const [nextCursor, keys] = await redis.scan(cursor, "MATCH", pattern, "COUNT", CACHE_CONFIG.REDIS.SCAN_COUNT);
+    cursor = nextCursor;
+
+    if (keys.length > 0) {
+      await redis.del(keys);
+    }
+  } while (cursor !== "0");
 };

@@ -3,6 +3,7 @@ import { useNavigate } from "react-router";
 import { useAuthStore } from "../store/authStore";
 import { toast } from "react-hot-toast";
 import Button from "../components/ui/Button";
+import { API } from "../api/api";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -39,8 +40,7 @@ const Login = () => {
     const loginPassword = demoPassword ?? password;
 
     try {
-      console.log(email, password)
-      const res = await fetch(`${import.meta.env.VITE_BACKEND_AUTH_LOGIN_URL}`, {
+      const res = await fetch(API.auth.login, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: loginEmail, password: loginPassword, }),
@@ -48,7 +48,6 @@ const Login = () => {
       });
 
       const data = await res.json();
-      console.log(data)
 
       if (!res.ok) {
         if (data.errors) {
@@ -106,7 +105,10 @@ const Login = () => {
           />
         </label>
 
-        <Button type="submit" fullWidth>
+        <Button 
+          type="submit" 
+          fullWidth 
+          disabled={demoLoading !== null}>
           Login
         </Button>
       </form>

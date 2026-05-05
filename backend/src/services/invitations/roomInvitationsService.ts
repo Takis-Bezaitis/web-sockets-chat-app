@@ -1,5 +1,6 @@
 import prisma from "../../prismaClient.js";
 import type { InvitationDTO } from "../../types/custom.js";
+import { AppError } from "../../utils/AppError.js";
 
 type inviteToRoomProps = {
   inviterId: number;
@@ -12,7 +13,9 @@ export const inviteToRoom = async ({
   roomId,
   inviteeIds,
 }: inviteToRoomProps): Promise<InvitationDTO[]> => {
-  if (inviteeIds.length === 0) return [];
+  if (inviteeIds.length === 0) {
+    throw new AppError("No users selected for invitation", 400);
+  };
 
   const validUsers = await prisma.user.findMany({
     where: { id: { in: inviteeIds } },
@@ -20,7 +23,9 @@ export const inviteToRoom = async ({
   });
 
   const validInviteeIds = validUsers.map((u) => u.id);
-  if (validInviteeIds.length === 0) return [];
+  if (validInviteeIds.length === 0) {
+    throw new AppError("No valid users found", 404);
+  };
 
   const existingInvitations = await prisma.roomInvitation.findMany({
     where: {
@@ -187,8 +192,16 @@ export const acceptRoomInvitation = async (
     },
   });
 
-  if (!invitation || invitation.inviteeId !== userId || invitation.status !== "PENDING") {
-    return null;
+  if (!invitation) {
+    throw new AppError("Invitation not found", 404);
+  }
+
+  if (invitation.inviteeId !== userId) {
+    throw new AppError("Forbidden", 403);
+  }
+
+  if (invitation.status !== "PENDING") {
+    throw new AppError("Invitation already handled", 400);
   }
 
   const updatedInvitation = await prisma.roomInvitation.update({
@@ -231,8 +244,16 @@ export const declineRoomInvitation = async (invitationId: number, userId: number
     },
   });
 
-  if (!invitation || invitation.inviteeId !== userId || invitation.status !== "PENDING") {
-    return null;
+  if (!invitation) {
+    throw new AppError("Invitation not found", 404);
+  }
+
+  if (invitation.inviteeId !== userId) {
+    throw new AppError("Forbidden", 403);
+  }
+
+  if (invitation.status !== "PENDING") {
+    throw new AppError("Invitation already handled", 400);
   }
 
   const updatedInvitation = await prisma.roomInvitation.update({
