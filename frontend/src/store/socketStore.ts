@@ -28,9 +28,10 @@ export const useSocketStore = create<SocketState>((set, get) => ({
     if (!user) return;
     if (get().socket) return; 
 
-    const socket = io(`${import.meta.env.VITE_BACKEND_URL}`, {
-      withCredentials: true,
-    });
+    const socket = io(
+      import.meta.env.VITE_BACKEND_URL || window.location.origin,
+      { withCredentials: true }
+    );
 
     socket.on("connect", () => {
       console.log("✅ socket connected", socket.id);
@@ -93,14 +94,12 @@ export const useSocketStore = create<SocketState>((set, get) => ({
     });
 
     socket.on("room:invited", ({ invitation }) => {
-      console.log("💌 New room invitation received:", invitation);
       useInvitationStore.getState().addInvitation(invitation);
     });
 
     // Central socket listeners
     // New messages broadcasted by server
     socket.on("message:new", (msg: Message) => {
-      console.log("📩 message:new", msg);
       useMessageStore.getState().appendMessage(Number(msg.roomId), msg, { notifyNew: true });
     });
 
@@ -115,28 +114,22 @@ export const useSocketStore = create<SocketState>((set, get) => ({
 
     // Presence events (UI-level)
     socket.on("presence:entered", (payload: { user: { id: string; email?: string } | null; roomId: string }) => {
-      console.log("presence:entered", payload);
       if (!payload.user?.id) return;
       // Mark any other user that has just entered the room (not the local user aka 'me') as online
-      usePresenceStore.getState().setUserInRoom(Number(payload.roomId), Number(user.id), true);
+      usePresenceStore.getState().setUserInRoom(Number(payload.roomId), Number(payload.user.id), true);
     });
 
     socket.on("presence:left", (payload: { user: { id: string; email?: string } | null; roomId: string }) => {
-      console.log("presence:left", payload);
       if (!payload.user?.id) return;
       // Mark any other user that has just left the room (not the local user aka 'me') as offine
-      usePresenceStore.getState().setUserInRoom(Number(payload.roomId), Number(user.id), false);
+      usePresenceStore.getState().setUserInRoom(Number(payload.roomId), Number(payload.user.id), false);
     });
 
     socket.on("message:reaction:new", ({ messageId, reaction }) => {
-      console.log("message:reaction:new", messageId, reaction)
       useMessageStore.getState().addReactionToMessage(messageId, reaction);
     });
 
     socket.on("presence:list", ({ roomId, users }) => {
-      console.log("presence:list roomId:", roomId);
-      console.log("presence:list users:", users);
-
       users.forEach((userId: string) => {
         usePresenceStore.getState().setUserInRoom(Number(roomId), Number(userId), true);
       });
@@ -155,7 +148,6 @@ export const useSocketStore = create<SocketState>((set, get) => ({
     socket.removeAllListeners();
     socket.disconnect();
     set({ socket: null, currentRoomId: null });
-    console.log("🧹 socket disconnected & listeners removed");
   },
 
   enterApp: async () => {
@@ -172,13 +164,11 @@ export const useSocketStore = create<SocketState>((set, get) => ({
 
     socket?.emit("enterRoom", roomId.toString());
 
-    // Mark local user online
     const localUserId = useAuthStore.getState().user?.id;
     if (localUserId) {
       usePresenceStore.getState().setUserInRoom(roomId, Number(localUserId), true);
     }
 
-    // If we already have cached messages in the store, skip fetch
     if (useMessageStore.getState().getMessagesForRoom(roomId).length > 0) {
       set({ currentRoomId: roomId });
       return;

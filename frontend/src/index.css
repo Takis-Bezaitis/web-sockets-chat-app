@@ -117,12 +117,14 @@ html, body, * {
   .text-info { color: #3b82f6; }
 }
 
-/* react-input-emoji container background color */
+/* react-input-emoji rules */
 
 .react-input-emoji--container {
   background-color: #ffffff; 
   color: #111827;
   border-radius: 10px!important;
+  width: 100% !important;
+  overflow: hidden !important;
 }
 
 .dark .react-input-emoji--container {
@@ -130,3 +132,24 @@ html, body, * {
   color: #f3f4f6;
 }
 
+.emoji-wrapper.empty .react-input-emoji--placeholder {
+  visibility: visible !important;
+}
+
+.emoji-wrapper.has-text .react-input-emoji--placeholder {
+  visibility: hidden !important;
+}
+
+.react-input-emoji--input {
+  padding-left: 8px !important;
+  white-space: pre-wrap !important;
+  word-break: break-word !important;
+  overflow-wrap: anywhere !important;
+  max-width: 100% !important;
+}
+
+.react-input-emoji--placeholder {
+  left: 8px !important;
+}
+
+/* */

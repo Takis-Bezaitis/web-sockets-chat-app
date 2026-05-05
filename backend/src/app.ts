@@ -2,13 +2,15 @@ import express from 'express';
 import cors from 'cors';
 import cookieParser from "cookie-parser";
 import helmet from "helmet";
-import rateLimit from "express-rate-limit";
+
+//import rateLimit from "express-rate-limit";
 
 import authRoutes from './routes/auth.js';
 import roomRoutes from './routes/rooms.js';
 import messageRoutes from './routes/messages.js';
 import invitationRoutes from './routes/roomInvitations.js';
 import usersRoutes from './routes/users.js';
+import { errorHandler } from './middleware/errorHandler.js';
 
 const app = express();
 app.set("trust proxy", 1);
@@ -17,7 +19,7 @@ app.set("trust proxy", 1);
 app.use(helmet());
 app.disable("x-powered-by");
 
-// rate limiter
+// rate limiter for later use
 /*app.use(
   rateLimit({
     windowMs: 15 * 60 * 1000, 
@@ -28,7 +30,13 @@ app.disable("x-powered-by");
 );*/
 
 app.use(cors({
-  origin: process.env.FRONTEND_URL, 
+  origin: (origin, callback) => {
+    if (!origin || origin === process.env.FRONTEND_URL) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  }, 
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE"],            
 }));
@@ -48,14 +56,6 @@ app.get("/api/health", (_req, res) => {
 });
 
 // Global error handler
-app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
-  console.error(err);
-
-  res.status(500).json({
-    error: process.env.NODE_ENV === "production"
-      ? "Internal server error"
-      : err.message,
-  });
-});
+app.use(errorHandler); 
 
 export default app;

@@ -1,11 +1,9 @@
 import redis from "./redisClient.js";
 import { type RoomUsers } from "../types/custom.js";
-
-const CACHE_VERSION = 1;     // increment to invalidate old caches
-const ROOM_TTL_SECONDS = 30;      // seconds
+import { CACHE_CONFIG } from "../constants/cache.js";
 
 export const getCachedRoomUsers = async (roomId: number): Promise<RoomUsers[] | null> => {
-  const key = `v${CACHE_VERSION}:room:${roomId}:users`;
+  const key = `v${CACHE_CONFIG.VERSION}:room:${roomId}:users`;
   const cached = await redis.get(key);
 
   if (!cached) return null;
@@ -18,11 +16,11 @@ export const getCachedRoomUsers = async (roomId: number): Promise<RoomUsers[] | 
 };
 
 export const setCachedRoomUsers = async (roomId: number, roomUsers: RoomUsers[]) => {
-  const key = `v${CACHE_VERSION}:room:${roomId}:users`;
-  await redis.set(key, JSON.stringify(roomUsers), "EX", ROOM_TTL_SECONDS);
+  const key = `v${CACHE_CONFIG.VERSION}:room:${roomId}:users`;
+  await redis.set(key, JSON.stringify(roomUsers), "EX", CACHE_CONFIG.MESSAGES.TTL_SECONDS);
 };
 
 export const invalidateRoomUsersCache = async (roomId: number) => {
-  const key = `v${CACHE_VERSION}:room:${roomId}:users`;
+  const key = `v${CACHE_CONFIG.VERSION}:room:${roomId}:users`;
   await redis.del(key);
 };

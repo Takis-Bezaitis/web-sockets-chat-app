@@ -16,14 +16,6 @@ const MessageItem = ({ message, user, depth = 0 }: Props) => {
   const [hoveredMessageId, setHoveredMessageId] = useState<number | null>(null);
   const [editingMessageId, setEditingMessageId] = useState<number | null>(null);
   const [editingText, setEditingText] = useState("");
-
-if (message.id === 215) {
-  console.log(" ")
-  console.log("message---",message)
-  if (message?.reactions) console.log(message.reactions)
-  console.log(" ")
-}
-
   const socket = useSocketStore.getState().socket;
   const setReplyingTo = useMessageStore((s) => s.setReplyingTo);
   

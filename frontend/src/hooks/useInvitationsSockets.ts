@@ -1,7 +1,9 @@
 import { useEffect } from "react";
 import { useAuthStore } from "../store/authStore";
+import { useSocketStore } from "../store/socketStore";
 import { useInvitationStore } from "../store/invitationStore";
 import { useChatRooms } from "./useChatRooms";
+import { API } from "../api/api";
 
 export const useInvitations = () => {
   const { user } = useAuthStore();
@@ -9,7 +11,7 @@ export const useInvitations = () => {
   
   const fetchInvitations = async () => {
     try {
-    const res = await fetch(`${import.meta.env.VITE_BACKEND_INVITATIONS_BASE_URL}`, {
+    const res = await fetch(API.invitations, {
         credentials: "include",
     });
     const data = await res.json();
@@ -26,7 +28,7 @@ export const useInvitations = () => {
 
   const acceptInvitation = async (invitationId: number, roomId: number) => {
     try {
-        const res = await fetch(`${import.meta.env.VITE_BACKEND_INVITATIONS_BASE_URL}/${invitationId}/accept`, {
+        const res = await fetch(`${API.invitations}/${invitationId}/accept`, {
           method: "POST",
           credentials: "include",
         });
@@ -34,7 +36,7 @@ export const useInvitations = () => {
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "Failed to accept invitation");
 
-        await fetch(`${import.meta.env.VITE_BACKEND_ROOMS_BASE_URL}/${roomId}/join`, {
+        await fetch(`${API.rooms}/${roomId}/join`, {
           method: "POST",
           credentials: "include",
         });
@@ -43,6 +45,11 @@ export const useInvitations = () => {
 
         useInvitationStore.getState().removeInvitation(invitationId);
 
+        const socket = useSocketStore.getState().socket;
+        if (socket) {
+          socket.emit("joinRoom", roomId);
+        }
+
     } catch (err) {
         console.error(err);
     }
@@ -50,7 +57,7 @@ export const useInvitations = () => {
 
   const declineInvitation = async (invitationId: number) => {
     try {
-        const res = await fetch(`${import.meta.env.VITE_BACKEND_INVITATIONS_BASE_URL}/${invitationId}/decline`, {
+        const res = await fetch(`${API.invitations}/${invitationId}/decline`, {
           method: "POST",
           credentials: "include", 
         });

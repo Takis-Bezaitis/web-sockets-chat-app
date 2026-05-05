@@ -1,16 +1,22 @@
 import { useState } from "react";
+import toast from "react-hot-toast";
 import { useAuthStore } from "../../store/authStore";
 import { useUsersStore } from "../../store/usersStore";
+import type { RoomUsers } from "../../types/custom";
+import { API } from "../../api/api";
 
 type RoomMembersInviteProps = {
     inviteRoomId: number;
     roomName: string;
     mode: 'create' | 'manage';
+    currentRoomUsers?: RoomUsers[];
     onClose?: () => void;
     onCloseInviteMembers: () => void;
 }
 
-const RoomMembersInvite = ({inviteRoomId, roomName, mode, onClose, onCloseInviteMembers}: RoomMembersInviteProps) => {
+const RoomMembersInvite = ({
+        inviteRoomId, roomName, mode, currentRoomUsers, onClose, onCloseInviteMembers}: 
+    RoomMembersInviteProps) => {
     const { user } = useAuthStore();
     const [invites, setInvites] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -18,8 +24,6 @@ const RoomMembersInvite = ({inviteRoomId, roomName, mode, onClose, onCloseInvite
 
     const users = useUsersStore((s) => s.users);
     const hasValidInput = invites.split(/[\s,]+/).some((t) => t.trim().length > 0);
-
-    const INVITATIONS_BASE_URL = import.meta.env.VITE_BACKEND_INVITATIONS_BASE_URL;
 
     if (!inviteRoomId) {
         return (
@@ -41,14 +45,75 @@ const RoomMembersInvite = ({inviteRoomId, roomName, mode, onClose, onCloseInvite
                 const names = invites
                 .split(/[\s,]+/)
                 .map((n) => n.replace("@", "").trim())
-                .filter((n) => n.length > 0);
+                .filter((n) => n.length > 0)
+                .filter((n) => n.toLowerCase() !== user?.username.toLowerCase());
 
-                // Map to user IDs using users from the store
-                inviteeIds = names
-                .map((n) => users.find((u) => u.username.toLowerCase() === n.toLowerCase()))
-                .filter((u): u is { id: number, username: string } => !!u) // filter out undefined
-                .map((u) => u.id);
-                
+                const matchedUsers = names
+                    .map((n) => users.find((u) => u.username.toLowerCase() === n.toLowerCase())
+                );
+
+                const validUsers = matchedUsers.filter(
+                    (u): u is { id: number; username: string } => !!u
+                );
+
+                const alreadyMembers = validUsers.filter((u) =>
+                    currentRoomUsers?.some((member) => member.id === u.id)
+                );
+
+                const usersToInvite = validUsers.filter(
+                    (u) => !currentRoomUsers?.some((member) => member.id === u.id)
+                );
+
+                const invalidNames = names.filter(
+                    (n) => !users.some((u) => u.username.toLowerCase() === n.toLowerCase())
+                );
+
+                const messages: string[] = [];
+
+                // invalid users
+                if (invalidNames.length > 0) {
+                    if (invalidNames.length === 1) {
+                        messages.push(`${invalidNames[0]} is not a member`);
+                    } else {
+                        const preview = invalidNames.slice(0, 2).join(", ");
+                        const remaining = invalidNames.length - 2;
+
+                        if (remaining === 0) {
+                            messages.push(`${preview} are not members`);
+                        } else if (remaining === 1) {
+                            messages.push(`${preview} and 1 other are not members`);
+                        } else {
+                            messages.push(`${preview} and ${remaining} others are not members`);
+                        }
+                    }
+                }
+
+                // already members
+                if (alreadyMembers.length > 0) {
+                    const names = alreadyMembers.map((u) => u.username);
+
+                    if (names.length === 1) {
+                        messages.push(`${names[0]} is already a member`);
+                    } else {
+                        const preview = names.slice(0, 2).join(", ");
+                        const remaining = names.length - 2;
+
+                        if (remaining === 0) {
+                            messages.push(`${preview} are already members`);
+                        } else if (remaining === 1) {
+                            messages.push(`${preview} and 1 other are already members`);
+                        } else {
+                            messages.push(`${preview} and ${remaining} others are already members`);
+                        }
+                    }
+                }
+
+                // show ONE toast
+                if (messages.length > 0) {
+                    toast.error(messages.join(". ") + ".");
+                }
+
+                inviteeIds = usersToInvite.map((u) => u.id);
                 inviteeIds = Array.from(new Set(inviteeIds));
                 inviteeIds = inviteeIds.filter((id) => id !== user?.id);
             }
@@ -56,7 +121,7 @@ const RoomMembersInvite = ({inviteRoomId, roomName, mode, onClose, onCloseInvite
             if (inviteeIds.length > 0) {
                 const newRoomId = inviteRoomId;
 
-                const res = await fetch(`${INVITATIONS_BASE_URL}`, {
+                const res = await fetch(API.invitations, {
                     method: "POST",
                     credentials: "include",
                     headers: { "Content-Type": "application/json" },
@@ -105,6 +170,14 @@ const RoomMembersInvite = ({inviteRoomId, roomName, mode, onClose, onCloseInvite
                     autoFocus
                     value={invites}
                     onChange={(e) => setInvites(e.target.value)}
+                    onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                            e.preventDefault(); 
+                            if (!isSubmitting && hasValidInput) {
+                                handleSubmit();
+                            }
+                        }
+                    }}
                     placeholder="ex. Juliet"
                     className="w-full border rounded px-3 py-2"
                 />

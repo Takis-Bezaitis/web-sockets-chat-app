@@ -1,20 +1,17 @@
 import redis from "./redisClient.js";
-
-const ONLINE_USERS_KEY = "online:users";
-const USER_SOCKET_SET_KEY = (userId: string) => `online:user:socketSet:${userId}`;
-const PRESENCE_TTL_SECONDS = 60;
+import { CACHE_CONFIG } from "../constants/cache.js";
 
 /* ---------------- ONLINE USERS ---------------- */
 
 export const addUserToOnlineUsers = async (userId: string, socketId: string) => {
-  const key = USER_SOCKET_SET_KEY(userId);
+  const key = CACHE_CONFIG.PRESENCE.USER_SOCKET_SET_KEY(userId);
 
   await redis.sadd(key, socketId);
-  await redis.expire(key, PRESENCE_TTL_SECONDS);
+  await redis.expire(key, CACHE_CONFIG.PRESENCE.TTL_SECONDS);
   const count = await redis.scard(key);
 
   if (count === 1) {
-    await redis.sadd(ONLINE_USERS_KEY, userId);
+    await redis.sadd(CACHE_CONFIG.PRESENCE.ONLINE_USERS_KEY, userId);
     return true; // user just became online
   }
 
@@ -23,14 +20,14 @@ export const addUserToOnlineUsers = async (userId: string, socketId: string) => 
  
 
 export const removeUserFromOnlineUsers = async (userId: string, socketId: string) => {
-  const key = USER_SOCKET_SET_KEY(userId);
+  const key = CACHE_CONFIG.PRESENCE.USER_SOCKET_SET_KEY(userId);
 
   await redis.srem(key, socketId);
   const count = await redis.scard(key);
 
   if (count === 0) {
     await redis.del(key);
-    await redis.srem(ONLINE_USERS_KEY, userId);
+    await redis.srem(CACHE_CONFIG.PRESENCE.ONLINE_USERS_KEY, userId);
     return true; // user just went offline
   }
 
@@ -39,8 +36,22 @@ export const removeUserFromOnlineUsers = async (userId: string, socketId: string
 
 
 export const getOnlineUsers = async (): Promise<string[]> => {
-  return redis.smembers(ONLINE_USERS_KEY);
+  const users = await redis.smembers(CACHE_CONFIG.PRESENCE.ONLINE_USERS_KEY);
+
+  const validUsers: string[] = [];
+
+  for (const userId of users) {
+    const exists = await redis.exists(CACHE_CONFIG.PRESENCE.USER_SOCKET_SET_KEY(userId));
+    if (exists) {
+      validUsers.push(userId);
+    } else {
+      await redis.srem(CACHE_CONFIG.PRESENCE.ONLINE_USERS_KEY, userId); 
+    }
+  }
+
+  return validUsers;
 };
+
 
 
 /* ---------------- ROOM PRESENCE ---------------- */
@@ -49,7 +60,7 @@ export const addUserToRoomPresence = async (userId: string, roomId: string) => {
   await redis.multi()
     .sadd(`presence:room:${roomId}`, userId)
     .sadd(`presence:user:${userId}`, roomId)
-    .expire(`presence:room:${roomId}`, PRESENCE_TTL_SECONDS)
+    .expire(`presence:room:${roomId}`, CACHE_CONFIG.PRESENCE.TTL_SECONDS)
     .exec();
 };
 
@@ -65,8 +76,8 @@ export const getRoomPresence = async (roomId: string): Promise<string[]> => {
 };
 
 export const refreshRoomPresence = async (userId: string, roomId: string) => {
-  await redis.expire(`presence:room:${roomId}`, PRESENCE_TTL_SECONDS);
-  await redis.expire(`presence:user:${userId}`, PRESENCE_TTL_SECONDS);
+  await redis.expire(`presence:room:${roomId}`, CACHE_CONFIG.PRESENCE.TTL_SECONDS);
+  await redis.expire(`presence:user:${userId}`, CACHE_CONFIG.PRESENCE.TTL_SECONDS);
 };
 
 export const removeUserFromAllRooms = async (userId: string): Promise<string[]> => {

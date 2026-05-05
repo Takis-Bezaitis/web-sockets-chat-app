@@ -1,5 +1,7 @@
 import { create } from "zustand";
 import type { Message, MessageReaction } from "../types/custom";
+import { MESSAGES_LIMIT } from "../constants/message";
+import { API } from "../api/api";
 
 interface MessageState {
   messagesByRoom: Record<number, Message[]>;
@@ -8,9 +10,10 @@ interface MessageState {
   hasMoreByRoom: Record<number, boolean>;
   draftByRoom: Record<number, string>;
   replyingToByRoom: Record<number, Message | null>;
+  anchorMessageIdByRoom: Record<number, number>;
+  anchorOffsetByRoom: Record<number, number>;
 
   getMessagesForRoom: (roomId: number) => Message[];
-  clearRoomMessages: (roomId: number) => void;
 
   fetchRoomMessages: (roomId: number) => Promise<void>;
   appendMessage: (roomId: number, msg: Message, options?: { notifyNew?: boolean }) => void;
@@ -24,6 +27,12 @@ interface MessageState {
   setDraftForRoom: (roomId: number, draft: string) => void;
 
   setReplyingTo: (roomId: number, msg: Message | null) => void;
+
+  setAnchorMessageId: (roomId: number, messageId: number) => void;
+  getAnchorMessageId: (roomId: number) => number | null;
+
+  setAnchorOffset: (roomId: number, offset: number) => void;
+  getAnchorOffset: (roomId: number) => number;
 
 }
 
@@ -63,6 +72,8 @@ export const useMessageStore = create<MessageState>((set, get) => ({
   hasMoreByRoom: {},
   draftByRoom: {},
   replyingToByRoom: {},
+  anchorMessageIdByRoom: {},
+  anchorOffsetByRoom: {},
 
   getMessagesForRoom: (roomId) => {
     return get().messagesByRoom[roomId] ?? [];
@@ -83,99 +94,103 @@ export const useMessageStore = create<MessageState>((set, get) => ({
     }))
   },
 
-  clearRoomMessages: (roomId) => {
-  set((state) => {
-    const messages = { ...state.messagesByRoom };
-    const cursors = { ...state.cursorByRoom };
-    const hasMore = { ...state.hasMoreByRoom };
-    const loading = { ...state.loadingByRoom };
+ fetchRoomMessages: async (roomId: number) => {
+  const { cursorByRoom, hasMoreByRoom, loadingByRoom, messagesByRoom } = get();
+  
+  const hasMessages = (messagesByRoom[roomId]?.length ?? 0) > 0;
 
-    delete messages[roomId];
-    delete cursors[roomId];
-    delete hasMore[roomId];
-    delete loading[roomId];
+  if (hasMessages && cursorByRoom[roomId] === undefined) return;
+  if (loadingByRoom[roomId]) return;
+  if (hasMoreByRoom[roomId] === false) return;
 
-    return {
-      messagesByRoom: messages,
-      cursorByRoom: cursors,
-      hasMoreByRoom: hasMore,
-      loadingByRoom: loading
-    };
-  });
+  set((state) => ({
+    loadingByRoom: { ...state.loadingByRoom, [roomId]: true }
+  }));
+
+  try {
+    const before = cursorByRoom[roomId];
+    const url = before
+      ? `${API.messages}/${roomId}/room-messages?before=${before}&limit=${MESSAGES_LIMIT}`
+      : `${API.messages}/${roomId}/room-messages?limit=${MESSAGES_LIMIT}`;
+
+    const res = await fetch(url, { credentials: "include" });
+    if (!res.ok) return;
+
+    const data = await res.json();
+    const incomingMessages: Message[] = data.data ?? data;
+
+    set((state) => {
+      const prevMessages = state.messagesByRoom[roomId] ?? [];
+
+      // Deduplicate
+      const existingIds = new Set(prevMessages.map(m => m.id));
+      const newMessages = incomingMessages.filter(
+        (m) => !existingIds.has(m.id)
+      );
+
+      return {
+        messagesByRoom: {
+          ...state.messagesByRoom,
+          // prepend older messages
+          [roomId]: [...newMessages, ...prevMessages]
+        },
+        cursorByRoom: {
+          ...state.cursorByRoom,
+          [roomId]:
+            incomingMessages.length > 0
+              ? incomingMessages[0].id
+              : state.cursorByRoom[roomId] ?? null
+        },
+        hasMoreByRoom: {
+          ...state.hasMoreByRoom,
+          [roomId]: incomingMessages.length === MESSAGES_LIMIT
+        }
+      };
+    });
+  } catch (err) {
+    console.error("fetchRoomMessages failed:", err);
+  } finally {
+    set((state) => ({
+      loadingByRoom: { ...state.loadingByRoom, [roomId]: false }
+    }));
+  }
 },
 
-
- fetchRoomMessages: async (roomId: number) => {
-    const { cursorByRoom, hasMoreByRoom, loadingByRoom } = get();
-    
-    if (loadingByRoom[roomId]) return;
-    if (hasMoreByRoom[roomId] === false) return;
-
-    set((state) => ({
-      loadingByRoom: { ...state.loadingByRoom, [roomId]: true }
-    }));
-
-    try {
-      const before = cursorByRoom[roomId];
-
-      const url = before
-        ? `${import.meta.env.VITE_BACKEND_MESSAGES_BASE_URL}/${roomId}/room-messages?before=${before}&limit=30`
-        : `${import.meta.env.VITE_BACKEND_MESSAGES_BASE_URL}/${roomId}/room-messages?limit=30`;
-
-      const res = await fetch(url, { credentials: "include" });
-      if (!res.ok) return;
-
-      const data = await res.json();
-      const newMessages: Message[] = data.data ?? data;
-
-      set((state) => {
-        const prevMessages = state.messagesByRoom[roomId] ?? [];
-
-        return {
-          messagesByRoom: {
-            ...state.messagesByRoom,
-            // prepend older messages
-            [roomId]: [...newMessages, ...prevMessages]
-          },
-          cursorByRoom: {
-            ...state.cursorByRoom,
-            // cursor = oldest message we just received
-            [roomId]:
-              newMessages.length > 0
-                ? newMessages[0].id
-                : state.cursorByRoom[roomId] ?? null
-          },
-          hasMoreByRoom: {
-            ...state.hasMoreByRoom,
-            // if fewer than limit, backend has no more
-            [roomId]: newMessages.length === 30
-          }
-        };
-      });
-    } catch (err) {
-      console.error("fetchRoomMessages failed:", err);
-    } finally {
-      set((state) => ({
-        loadingByRoom: { ...state.loadingByRoom, [roomId]: false }
-      }));
-    }
-  },
-
-  appendMessage: (roomId, msg, options?: { notifyNew?: boolean }) => {
+appendMessage: (roomId, msg, options?: { notifyNew?: boolean }) => {
   set((state) => {
     const prev = state.messagesByRoom[roomId] ?? [];
 
-    // If the message is a reply, insert it into the parent’s replies
+    // Prevent duplicate top-level messages
+    if (!msg.replyToId && prev.some(m => m.id === msg.id)) {
+      return state;
+    }
+
+    // the message is a reply
     if (msg.replyToId) {
-      const updated = updateMessageInTree(prev, msg.replyToId, (parent) => ({
-        ...parent,
-        replies: [...(parent.replies ?? []), msg],
-      }));
+      const updated = updateMessageInTree(prev, msg.replyToId, (parent) => {
+        const existingReplies = parent.replies ?? [];
+
+        // Prevent duplicate replies
+        if (existingReplies.some(r => r.id === msg.id)) {
+          return parent;
+        }
+
+        return {
+          ...parent,
+          replies: [...existingReplies, msg],
+        };
+      });
+
       return { messagesByRoom: { ...state.messagesByRoom, [roomId]: updated } };
     }
 
-    // Otherwise, it's a top-level message
-    return { messagesByRoom: { ...state.messagesByRoom, [roomId]: [...prev, msg] } };
+    // the message is a top-level message
+    return {
+      messagesByRoom: {
+        ...state.messagesByRoom,
+        [roomId]: [...prev, msg],
+      },
+    };
   });
 
   if (options?.notifyNew && messageStoreCallbacks[roomId]) {
@@ -191,7 +206,7 @@ export const useMessageStore = create<MessageState>((set, get) => ({
         updated[roomId] = updateMessageInTree(updated[roomId], updatedMsg.id, (msg) => ({
           ...msg,
           ...updatedMsg,
-          replies: msg.replies, // preserve existing replies
+          replies: msg.replies, 
         }));
       }
 
@@ -248,6 +263,36 @@ export const useMessageStore = create<MessageState>((set, get) => ({
 
   getLoadingForRoom: (roomId) => {
     return get().loadingByRoom[roomId] ?? false;
+  },
+
+  setAnchorMessageId: (roomId, messageId) => {
+    if (get().anchorMessageIdByRoom[roomId] === messageId) return;
+
+    set((state) => ({
+      anchorMessageIdByRoom: {
+        ...state.anchorMessageIdByRoom,
+        [roomId]: messageId,
+      },
+    }));
+  },
+
+  getAnchorMessageId: (roomId) => {
+    return get().anchorMessageIdByRoom[roomId] ?? null;
+  },
+  
+  setAnchorOffset: (roomId, offset) => {
+    if (get().anchorOffsetByRoom[roomId] === offset) return;
+    
+    set((state) => ({
+      anchorOffsetByRoom: {
+        ...state.anchorOffsetByRoom,
+        [roomId]: offset,
+      },
+    }));
+  },
+
+  getAnchorOffset: (roomId) => {
+    return get().anchorOffsetByRoom[roomId] ?? 0;
   },
 
 }));

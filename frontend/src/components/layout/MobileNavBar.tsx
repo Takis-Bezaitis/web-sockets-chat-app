@@ -41,7 +41,7 @@ const MobileNavBar = ({ mobileView, setMobileView, videoOverlay, setVideoOverlay
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="30" height="30" 
           className={`cursor-pointer ${
           (!inCall && mobileView === "chat") ||
-          (inCall && videoOverlay === "chat")
+          ((inCall || callState==="ringing") && videoOverlay === "chat")
             ? "icon-color-selected"
             : "icon-color"
         }`}

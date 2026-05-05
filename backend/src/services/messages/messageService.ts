@@ -1,6 +1,7 @@
 import prisma from "../../prismaClient.js";
 import { type MessageDTO, type MessageReaction } from "../../types/custom.js";
 import { getCachedRoomMessages, setCachedRoomMessages, invalidateRoomMessagesCache } from "../../utils/cacheMessages.js";
+import { AppError } from "../../utils/AppError.js";
 
 interface SaveMessageInput {
   text: string;
@@ -8,6 +9,38 @@ interface SaveMessageInput {
   roomId: number;
   replyToId?: number | null;
 }
+
+type PrismaMessageWithRelations = {
+  id: number;
+  text: string;
+  createdAt: Date;
+  userId: number;
+  roomId: number;
+  replyToId: number | null;
+
+  user?: {
+    email: string;
+    username: string;
+  };
+
+  reactions?: {
+    userId: number;
+    emoji: string;
+    user?: {
+      username: string;
+    };
+  }[];
+
+  replyTo?: {
+    id: number;
+    text: string;
+    user?: {
+      username: string;
+    };
+  } | null;
+
+  replies?: PrismaMessageWithRelations[];
+};
 
 export const getAllMessages = async (): Promise<MessageDTO[]> => {
   const messages = await prisma.message.findMany({
@@ -107,7 +140,7 @@ export const deleteMessage = async (id: number): Promise<void> => {
   const existing = await prisma.message.findUnique({ where: { id } });
 
   if (!existing) {
-    throw new Error("Message not found");
+    throw new AppError("Message not found", 404);
   }
 
   await prisma.messageReaction.deleteMany({
@@ -118,6 +151,8 @@ export const deleteMessage = async (id: number): Promise<void> => {
     where: { id }
     }
   );
+
+  await invalidateRoomMessagesCache(existing.roomId);
 };
 
 export const getMessagesByRoom = async (
@@ -125,7 +160,7 @@ export const getMessagesByRoom = async (
   limit: number,
   before?: number
 ): Promise<MessageDTO[]> => {
-  const cacheKey = `room:${roomId}:messages${before ? `:before:${before}` : ""}:limit:${limit}`;
+  const cacheKey = `${roomId}:messages${before ? `:before:${before}` : ""}:limit:${limit}`;
 
   // Try Redis cache first
   const cached = await getCachedRoomMessages(cacheKey);
@@ -174,8 +209,7 @@ export const getMessagesByRoom = async (
   const ordered = messages.reverse();
 
   // Recursive mapping function
-  type PrismaMessage = typeof messages[number];
-  const mapMessage = (m: any): MessageDTO => ({
+  const mapMessage = (m: PrismaMessageWithRelations): MessageDTO => ({
     id: m.id,
     text: m.text,
     createdAt: m.createdAt.toISOString(),
@@ -183,7 +217,7 @@ export const getMessagesByRoom = async (
     email: m.user?.email ?? "",          
     username: m.user?.username ?? "Unknown",
     roomId: m.roomId,
-    reactions: m.reactions?.map((r: any) => ({
+    reactions: m.reactions?.map((r) => ({
       userId: r.userId,
       username: r.user?.username ?? "Unknown",
       emoji: r.emoji,
@@ -207,7 +241,6 @@ export const getMessagesByRoom = async (
   return dto;
 };
 
-
 interface AddMessageReactionInput  {
   messageId: number;
   emoji: string;
@@ -217,7 +250,7 @@ interface AddMessageReactionInput  {
 export const addReactionToMessage = async({ messageId, emoji, userId }: AddMessageReactionInput 
   ): Promise<MessageReaction> => {
   
-  // 1️⃣ Check if reaction already exists
+  // Check if reaction already exists
   const existing = await prisma.messageReaction.findUnique({
     where: { messageId_userId_emoji: { messageId, userId, emoji } },
     include: { user: { select: { id: true, username: true } } }
@@ -230,10 +263,10 @@ export const addReactionToMessage = async({ messageId, emoji, userId }: AddMessa
   });
 
   if (!message) {
-    throw new Error("Message not found");
+    throw new AppError("Message not found", 404);
   }
 
-  // 2️⃣ If exists → DELETE reaction (toggle off)
+  // If exists → DELETE reaction (toggle off)
   if (existing) {
     await prisma.messageReaction.delete({
       where: { messageId_userId_emoji: { messageId, userId, emoji } }
@@ -249,7 +282,7 @@ export const addReactionToMessage = async({ messageId, emoji, userId }: AddMessa
     };
   }
   
-  // 3️⃣ If not exists → ADD reaction
+  // If not exists → ADD reaction
   const reaction = await prisma.messageReaction.create({
     data: { messageId, emoji, userId },
     include: { user: { select: { id: true, username: true } } },

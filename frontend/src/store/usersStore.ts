@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { API } from "../api/api";
 
 export type PublicUserDTO = {
   id: number;
@@ -14,8 +15,6 @@ type UsersStore = {
   addUser: (user: PublicUserDTO) => void;
 };
 
-const USERS_BASE_URL = import.meta.env.VITE_BACKEND_USERS_BASE_URL;
-
 export const useUsersStore = create<UsersStore>((set) => ({
   users: [],
   isLoading: false,
@@ -25,7 +24,7 @@ export const useUsersStore = create<UsersStore>((set) => ({
     set({ isLoading: true, error: null });
 
     try {
-      const res = await fetch(`${USERS_BASE_URL}/`, {
+      const res = await fetch(API.users, {
         credentials: "include",
       });
 

@@ -1,13 +1,14 @@
 import { type Response, type NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import { type AuthRequest } from "../types/custom.js";
+import { AppError } from "../utils/AppError.js";
 
 const JWT_SECRET = process.env.JWT_SECRET!;
 if (!JWT_SECRET) {
   throw new Error("Missing JWT_SECRET in environment variables");
 }
 
-export function authMiddleware(req: AuthRequest, res: Response, next: NextFunction) {
+export function authMiddleware(req: AuthRequest, _res: Response, next: NextFunction) {
   try {
     let token = req.cookies.token; // read cookie
 
@@ -17,7 +18,7 @@ export function authMiddleware(req: AuthRequest, res: Response, next: NextFuncti
     }
 
     if (!token) {
-      return res.status(401).json({ error: "Not authenticated" });
+      throw new AppError("Not authenticated", 401);
     }
 
     // Verify token
@@ -30,6 +31,6 @@ export function authMiddleware(req: AuthRequest, res: Response, next: NextFuncti
 
     next(); 
   } catch (error) {
-    return res.status(401).json({ error: "Invalid or expired token" });
+    throw new AppError("Invalid or expired token", 401);
   }
 }

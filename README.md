@@ -1,64 +1,66 @@
-💬 Web Sockets Chat App
+# 💬 Real-Time Chat & Video App
 
-A real-time chat application built with React, Node.js, Socket.IO, and Prisma ORM.
-Supports authentication, chat rooms, typing indicators, and light/dark theme switching.
+A full-stack real-time communication platform built with **React, Node.js, Socket.IO, and WebRTC**.
 
-🚀 Features
+Supports chat rooms, private messaging, live typing indicators, and **peer-to-peer video calls**.
 
-🔐 User authentication (JWT + cookies)
-💬 Real-time messaging with Socket.IO
-🏠 Chat rooms & room membership
-👀 Typing indicator
-🌗 Light / Dark mode
-🎨 Tailwind CSS
-🗄️ Prisma ORM with SQL database
+---
 
-📦 Tech Stack
+## 🚀 Features
 
-Frontend
+* 🔐 **Authentication** (JWT + HTTP-only cookies)
+* 💬 **Real-time messaging** with Socket.IO
+* 📡 **WebRTC video calls** (1-on-1)
+* 🏠 **Public & private chat rooms**
+* 👥 **Room membership & invitations**
+* 👀 **Typing indicators**
+* 🟢 **User presence (online/offline)**
+* ♾️ **Infinite scroll with cursor pagination**
+* ⚡ **Redis caching for performance**
+* 🌗 **Light / Dark mode**
+* 🎨 **Responsive UI (Tailwind CSS)**
 
-React + Vite
-Zustand
-Tailwind CSS
-TypeScript
+---
 
-Backend
+## 📦 Tech Stack
 
-Node.js + Express
-Socket.IO
-Prisma
-TypeScript
+### Frontend
 
-🛠️ Setup
-1️⃣ Clone the repository
+* React + Vite
+* TypeScript
+* Zustand (state management)
+* Tailwind CSS
 
-git clone https://github.com/Takis-Bezaitis/web-sockets-chat-app.git
-cd web-sockets-chat-app
+### Backend
 
-🔧 Backend Setup
-cd backend
-npm install
+* Node.js + Express
+* Socket.IO (real-time communication)
+* WebRTC (video calls)
+* Prisma ORM
+* PostgreSQL (Neon)
+* Redis (caching & presence)
 
-Create .env:
+---
 
-DATABASE_URL="your-database-url"
-JWT_SECRET="your-secret"
-FRONTEND_URL="http://localhost:5173"
+## ⚙️ Architecture Highlights
 
-Run Prisma migrations: npx prisma migrate dev
-Start backend: npm run dev
+* Real-time updates via WebSockets
+* Optimistic UI updates for messages
+* Cursor-based pagination for scalability
+* Redis caching layer with invalidation strategy
+* Room-based state management (Zustand)
+* Separation of concerns between REST and sockets
 
-🎨 Frontend Setup
+---
 
-cd ../frontend
-npm install
+## ⚠️ Notes
 
-Create .env: 
-VITE_BACKEND_URL="http://localhost:5000"
+* The backend is hosted on a free tier and may take a few seconds to wake up after inactivity.
 
-Start frontend: npm run dev
+---
 
-▶️ Running the App
+## 🌐 Live Demo
 
-Frontend: http://localhost:5173
-Backend: http://localhost:5000
+👉 (Add your Render link here)
+
+---
