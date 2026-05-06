@@ -16,10 +16,14 @@ export function socketAuthMiddleware(socket: Socket, next: (err?: Error) => void
   try {
     // Cookies are in socket.handshake.headers.cookie
     const cookies = socket.handshake.headers.cookie;
+    console.log("SOCKET RAW COOKIE HEADER:", socket.handshake.headers.cookie);
+
     if (!cookies) {
       return next(new Error("Not authenticated: no cookies"));
     }
     const parsed = cookie.parse(cookies);
+    console.log("PARSED SOCKET COOKIE:", parsed);
+    
     const token = parsed.token; // same name I used in res.cookie()
 
     if (!token) {

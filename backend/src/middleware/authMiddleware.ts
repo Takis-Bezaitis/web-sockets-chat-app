@@ -9,6 +9,8 @@ if (!JWT_SECRET) {
 }
 
 export function authMiddleware(req: AuthRequest, _res: Response, next: NextFunction) {
+  console.log("REQ COOKIES:", req.cookies);
+  
   try {
     let token = req.cookies.token; // read cookie
 
