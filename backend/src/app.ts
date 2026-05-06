@@ -30,15 +30,9 @@ app.disable("x-powered-by");
 );*/
 
 app.use(cors({
-  origin: (origin, callback) => {
-    if (!origin || origin === process.env.FRONTEND_URL) {
-      callback(null, true);
-    } else {
-      callback(new Error("Not allowed by CORS"));
-    }
-  }, 
+  origin: process.env.FRONTEND_URL,
   credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE"],            
+  methods: ["GET", "POST", "PUT", "DELETE"],
 }));
 
 app.use(express.json());
