@@ -29,6 +29,7 @@ export const useSocketStore = create<SocketState>((set, get) => ({
     if (get().socket) return; 
 
     const token = useAuthStore.getState().token;
+    console.log("SOCKET TOKEN:", token);
 
     const socket = io(
       import.meta.env.VITE_BACKEND_URL || window.location.origin,
