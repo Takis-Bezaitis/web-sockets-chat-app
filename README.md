@@ -55,12 +55,12 @@ Supports chat rooms, private messaging, live typing indicators, and **peer-to-pe
 
 ## ⚠️ Notes
 
-* The backend is hosted on a free tier and may take a few seconds to wake up after inactivity.
+* The backend is hosted on a free tier and may take 10–40 seconds to wake up after inactivity (cold start). If the app takes time to load initially, this is expected behavior.
 
 ---
 
 ## 🌐 Live Demo
 
-👉 (Add your Render link here)
+👉 https://web-sockets-chat-app-1.onrender.com
 
 ---

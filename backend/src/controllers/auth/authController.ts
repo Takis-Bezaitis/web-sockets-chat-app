@@ -1,4 +1,5 @@
 import { type Request, type Response } from "express";
+import jwt, { type SignOptions } from "jsonwebtoken";
 import ms, { type StringValue } from "ms";
 
 import { registerUser, loginUser } from "../../services/auth/authService.js";
@@ -6,6 +7,7 @@ import { type AuthRequest } from "../../types/custom.js";
 import { registerSchema, loginSchema } from "../../validation/authValidation.js";
 import { AppError } from "../../utils/AppError.js";
 
+const JWT_SECRET = process.env.JWT_SECRET!;
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN as string;
 
 if (!JWT_EXPIRES_IN) {
@@ -34,7 +36,10 @@ export const login = async (req: Request, res: Response) => {
       path: "/",
     });
 
-    res.json(user);
+    res.json({
+      ...user,
+      token,
+    });
 };
 
 export const getMe = async (req: AuthRequest, res: Response) => {
@@ -44,7 +49,28 @@ export const getMe = async (req: AuthRequest, res: Response) => {
     throw new AppError("Not authenticated", 401);
   }
 
-  res.json({ user: { id: user.id, email: user.email, username: user.username } });
+  const token = jwt.sign(
+    {
+      id: user.id,
+      email: user.email,
+      username: user.username,
+    },
+    JWT_SECRET,
+    {
+      expiresIn: JWT_EXPIRES_IN,
+      issuer: "chat-app",
+      audience: "chat-app-users",
+    } as SignOptions
+  );
+
+  res.json({
+    user: {
+      id: user.id,
+      email: user.email,
+      username: user.username,
+    },
+    token,
+  });
 };
 
 export const logout = (_req: Request, res: Response) => {

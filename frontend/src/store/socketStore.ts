@@ -28,9 +28,16 @@ export const useSocketStore = create<SocketState>((set, get) => ({
     if (!user) return;
     if (get().socket) return; 
 
+    const token = useAuthStore.getState().token;
+
     const socket = io(
       import.meta.env.VITE_BACKEND_URL || window.location.origin,
-      { withCredentials: true }
+      { 
+        withCredentials: true,
+        auth: {
+          token,
+        },
+      }
     );
 
     socket.on("connect", () => {

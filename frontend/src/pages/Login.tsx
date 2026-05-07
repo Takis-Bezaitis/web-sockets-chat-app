@@ -7,7 +7,7 @@ import { API } from "../api/api";
 
 const Login = () => {
   const navigate = useNavigate();
-  const { setUser } = useAuthStore();
+  const { setUser, setToken } = useAuthStore();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -63,6 +63,7 @@ const Login = () => {
       }
 
       setUser({ id: data.id, email: data.email, username: data.username });
+      setToken(data.token);
       navigate("/chat");
     } catch (err) {
       setError("Server error");
@@ -112,6 +113,10 @@ const Login = () => {
           Login
         </Button>
       </form>
+
+      <p className="text-center text-sm text-gray-500 mt-4">
+        First load may take a moment while the server wakes up.
+      </p>
 
       <p className="text-center text-lg mt-8 mb-3">
         Demo accounts
