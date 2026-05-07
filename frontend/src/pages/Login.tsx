@@ -48,7 +48,7 @@ const Login = () => {
       });
 
       const data = await res.json();
-      console.log("LOGIN RESPONSE:", data);
+
       if (!res.ok) {
         if (data.errors) {
           data.errors.forEach((err: { message: string }) =>
@@ -59,7 +59,6 @@ const Login = () => {
         } else {
           toast.error("Something went wrong");
         }
-        console.log("TOKEN SAVED:", data.token);
         return;
       }
 

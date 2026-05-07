@@ -35,7 +35,8 @@ export const login = async (req: Request, res: Response) => {
       maxAge: ms(JWT_EXPIRES_IN as StringValue), 
       path: "/",
     });
-
+console.log("LOGIN RESPONSE USER:", user);
+console.log("LOGIN TOKEN:", token);
     res.json({
       ...user,
       token,

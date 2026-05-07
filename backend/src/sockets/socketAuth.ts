@@ -22,6 +22,8 @@ export function socketAuthMiddleware(socket: Socket, next: (err?: Error) => void
     const decoded = jwt.verify(token, JWT_SECRET) as UserPayload;
 
     (socket as CustomSocket).user = decoded;
+    console.log("SOCKET AUTH COOKIE HEADER:", socket.handshake.headers.cookie);
+    console.log("SOCKET AUTH TOKEN:", token);
 
     next();
   } catch (err) {
