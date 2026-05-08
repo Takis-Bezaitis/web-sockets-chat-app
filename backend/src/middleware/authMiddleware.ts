@@ -30,7 +30,6 @@ export function authMiddleware(req: AuthRequest, _res: Response, next: NextFunct
 
     req.user = decoded; 
     console.log("REQ COOKIES:", req.cookies);
-    console.log("AUTH HEADER:", req.headers.authorization);
     next(); 
   } catch (error) {
     throw new AppError("Invalid or expired token", 401);
