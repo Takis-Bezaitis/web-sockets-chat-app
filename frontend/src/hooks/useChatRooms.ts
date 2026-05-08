@@ -24,14 +24,10 @@ export function useChatRooms(userId?: number) {
 
   const fetchRooms = useCallback(async (): Promise<RoomWithMembershipDTO[]> => {
     if (!userId) return [];
-    const token = useAuthStore.getState().token;
-    
+
     try {
       const res = await fetch(`${API.rooms}/${userId}/rooms`, {
-        headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
+        credentials: "include",
       });
 
       if (!res.ok) {
