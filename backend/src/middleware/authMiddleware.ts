@@ -9,7 +9,16 @@ if (!JWT_SECRET) {
 }
 
 export function authMiddleware(req: AuthRequest, _res: Response, next: NextFunction) {
-  
+  console.log(" ");
+  console.log(" ");
+  console.log(" ");
+  console.log("--- AUTH MIDDLEWARE HIT ---");
+  console.log("REQ COOKIES:", req.cookies);
+  console.log("REQ HEADERS COOKIE:", req.headers.cookie);
+  console.log("AUTH HEADER:", req.headers.authorization);
+  console.log(" ");
+  console.log(" ");
+  console.log(" ");
   try {
     let token = req.cookies.token; // read cookie
 
@@ -19,8 +28,11 @@ export function authMiddleware(req: AuthRequest, _res: Response, next: NextFunct
     }
 
     if (!token) {
+      console.log("AUTH FAILED - NO TOKEN FOUND");
       throw new AppError("Not authenticated", 401);
     }
+
+    console.log("EXTRACTED TOKEN:", token);
 
     // Verify token
     const decoded = jwt.verify(token, JWT_SECRET, { 
@@ -29,9 +41,9 @@ export function authMiddleware(req: AuthRequest, _res: Response, next: NextFunct
     }) as { id: string; email: string; username: string };
 
     req.user = decoded; 
-    console.log("REQ COOKIES:", req.cookies);
     next(); 
   } catch (error) {
+    console.log("AUTH FAILED - INVALID OR EXPIRED TOKEN");
     throw new AppError("Invalid or expired token", 401);
   }
 }
