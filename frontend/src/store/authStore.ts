@@ -33,20 +33,25 @@ export const useAuthStore = create<AuthState>((set) => ({
     
     checkAuth: async () => {
         try {
-            const res = await fetch(API.auth.me, {
-                method: "GET",
+            const refreshRes = await fetch(API.auth.refresh, {
+                method: "POST",
                 credentials: "include",
             });
 
-            if (res.ok) {
-                const data = await res.json();
-                set({ user: data.user });
-            } else {
-                console.warn("Auth check failed:", res.status);
-                set({ user: null });
+            if (!refreshRes.ok) {
+                set({ user: null, token: null });
+                return;
             }
+
+            const data = await refreshRes.json();
+
+            set({
+                user: data.user,
+                token: data.token,
+            });
+
         } catch {
-            set({ user: null });
+            set({ user: null, token: null });
         }
     },
 }));

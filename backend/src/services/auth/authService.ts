@@ -42,7 +42,7 @@ export const loginUser = async (email: string, password: string) => {
   const isPasswordCorrect = await bcrypt.compare(password, user.password);
   if (!isPasswordCorrect) throw new AppError("Invalid credentials", 401);
 
-  const token = jwt.sign(
+  const accessToken = jwt.sign(
     { id: user.id, email: user.email, username: user.username },
     JWT_SECRET,
     { 
@@ -52,5 +52,50 @@ export const loginUser = async (email: string, password: string) => {
     } as SignOptions 
   );
 
-  return { user: { id: user.id, username: user.username, email: user.email }, token };
+  const refreshToken = jwt.sign(
+    { id: user.id, email: user.email, username: user.username },
+    JWT_SECRET,
+    {
+      expiresIn: "7d",
+      issuer: "chat-app",
+      audience: "chat-app-users",
+    } as SignOptions
+  );
+
+  return { user: { id: user.id, username: user.username, email: user.email }, 
+    accessToken, refreshToken, };
+};
+
+export const refreshAccessToken = async (refreshToken: string) => {
+  const decoded = jwt.verify(refreshToken, JWT_SECRET, {
+    issuer: "chat-app",
+    audience: "chat-app-users",
+  }) as {
+    id: number;
+    email: string;
+    username: string;
+  };
+
+  const accessToken = jwt.sign(
+    {
+      id: decoded.id,
+      email: decoded.email,
+      username: decoded.username,
+    },
+    JWT_SECRET,
+    {
+      expiresIn: JWT_EXPIRES_IN,
+      issuer: "chat-app",
+      audience: "chat-app-users",
+    } as SignOptions 
+  );
+
+  return {
+    token: accessToken,
+    user: {
+      id: decoded.id,
+      email: decoded.email,
+      username: decoded.username,
+    },
+  };
 };

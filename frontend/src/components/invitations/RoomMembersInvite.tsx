@@ -120,11 +120,15 @@ const RoomMembersInvite = ({
 
             if (inviteeIds.length > 0) {
                 const newRoomId = inviteRoomId;
+                const token = useAuthStore.getState().token;
+                if (!token) return;
 
                 const res = await fetch(API.invitations, {
                     method: "POST",
-                    credentials: "include",
-                    headers: { "Content-Type": "application/json" },
+                    headers: {
+                    Authorization: `Bearer ${token}`,
+                        "Content-Type": "application/json",
+                    },
                     body: JSON.stringify({
                         roomId: newRoomId,
                         inviteeIds

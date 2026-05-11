@@ -26,8 +26,14 @@ export function useChatRooms(userId?: number) {
     if (!userId) return [];
 
     try {
+      const token = useAuthStore.getState().token;
+      if (!token) throw new Error("No auth token");
+
       const res = await fetch(`${API.rooms}/${userId}/rooms`, {
-        credentials: "include",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
       });
 
       if (!res.ok) {
@@ -49,8 +55,14 @@ export function useChatRooms(userId?: number) {
 
   const getRoomUsers = useCallback(async (roomId: number) => {
     try {
+      const token = useAuthStore.getState().token;
+      if (!token) return;
+
       const res = await fetch(`${API.rooms}/${roomId}/room-users`, {
-        credentials: "include",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        }
       });
 
       if (!res.ok) {
@@ -91,9 +103,15 @@ export function useChatRooms(userId?: number) {
     action: "join" | "leave"
   ) => {
     try {
+      const token = useAuthStore.getState().token;
+      if (!token) return;
+
       const res = await fetch(`${API.rooms}/${room.id}/${action}`, {
         method: "POST",
-        credentials: "include",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        }
       });
 
       if (!res.ok) {

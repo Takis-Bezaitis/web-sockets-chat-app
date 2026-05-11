@@ -3,6 +3,7 @@ import toast from "react-hot-toast";
 import RoomMembersInvite from "../invitations/RoomMembersInvite";
 import type { RoomWithMembershipDTO } from "../../types/custom";
 import { API } from "../../api/api";
+import { useAuthStore } from "../../store/authStore";
 
 type CreateNewRoomProps = {
   onClose: () => void;
@@ -23,10 +24,15 @@ const CreateNewRoom = ({ onClose }: CreateNewRoomProps) => {
     setError("");
 
     try {
+      const token = useAuthStore.getState().token;
+      if (!token) return;
+      
       const res = await fetch(`${API.rooms}/create-room`, {
         method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({
           name: name.trim(),
           isPrivate
@@ -63,9 +69,15 @@ const CreateNewRoom = ({ onClose }: CreateNewRoomProps) => {
     setError("");
 
     try {
+      const token = useAuthStore.getState().token;
+      if (!token) return;
+      
       const res = await fetch(`${API.rooms}/${newRoom?.id}`, {
         method: "DELETE",
-        credentials: "include",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        }
       });
 
       const deletedRoom = await res.json();

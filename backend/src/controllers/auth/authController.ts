@@ -1,13 +1,11 @@
 import { type Request, type Response } from "express";
-import jwt, { type SignOptions } from "jsonwebtoken";
-import ms, { type StringValue } from "ms";
+import ms from "ms";
 
-import { registerUser, loginUser } from "../../services/auth/authService.js";
+import { registerUser, loginUser, refreshAccessToken } from "../../services/auth/authService.js";
 import { type AuthRequest } from "../../types/custom.js";
 import { registerSchema, loginSchema } from "../../validation/authValidation.js";
 import { AppError } from "../../utils/AppError.js";
 
-const JWT_SECRET = process.env.JWT_SECRET!;
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN as string;
 
 if (!JWT_EXPIRES_IN) {
@@ -26,21 +24,33 @@ export const login = async (req: Request, res: Response) => {
     const parsed = loginSchema.parse(req.body);
     const { email, password } = parsed;
 
-    const { user, token } = await loginUser(email, password);
+    const { user, accessToken, refreshToken } = await loginUser(email, password);
 
-    res.cookie("token", token, {
+    res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-      maxAge: ms(JWT_EXPIRES_IN as StringValue), 
+      maxAge: ms("7d"), 
       path: "/",
     });
-console.log("LOGIN RESPONSE USER:", user);
-console.log("LOGIN TOKEN:", token);
+    console.log("LOGIN RESPONSE USER:", user);
+    console.log("ACCESS TOKEN:", accessToken);
     res.json({
       ...user,
-      token,
+      token: accessToken,
     });
+};
+
+export const refresh = async (req: Request, res: Response) => {
+  const refreshToken = req.cookies.refreshToken;
+
+  if (!refreshToken) {
+    throw new AppError("No refresh token", 401);
+  }
+
+  const result = await refreshAccessToken(refreshToken);
+
+  res.json(result);
 };
 
 export const getMe = async (req: AuthRequest, res: Response) => {
@@ -50,32 +60,17 @@ export const getMe = async (req: AuthRequest, res: Response) => {
     throw new AppError("Not authenticated", 401);
   }
 
-  const token = jwt.sign(
-    {
-      id: user.id,
-      email: user.email,
-      username: user.username,
-    },
-    JWT_SECRET,
-    {
-      expiresIn: JWT_EXPIRES_IN,
-      issuer: "chat-app",
-      audience: "chat-app-users",
-    } as SignOptions
-  );
-
   res.json({
     user: {
       id: user.id,
       email: user.email,
       username: user.username,
     },
-    token,
   });
 };
 
 export const logout = (_req: Request, res: Response) => {
-  res.clearCookie("token", {
+  res.clearCookie("refreshToken", {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",

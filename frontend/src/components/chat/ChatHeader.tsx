@@ -4,6 +4,7 @@ import MessageSearch from "../messages/MessageSearch";
 import { useMediaQuery } from "../../hooks/useMediaQuery";
 import { LogOut } from 'lucide-react';
 import { API } from "../../api/api";
+import { useAuthStore } from "../../store/authStore";
 
 type ChatHeaderProps = {
   user: User | null;
@@ -17,10 +18,15 @@ type ChatHeaderProps = {
 
 const ChatHeader = ({user, currentRoom, roomMessages, loading, showMembers, setShowMembers, onScrollToMessage}: ChatHeaderProps) => {
   const isSmall = useMediaQuery("(max-width: 768px)");
-
+  const token = useAuthStore.getState().token;
+  
   const handleLogout = async () => {
     await fetch(API.auth.logout, {
       method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
       credentials: "include",
     });
 

@@ -11,10 +11,15 @@ export const useInvitations = () => {
   
   const fetchInvitations = async () => {
     try {
-    const res = await fetch(API.invitations, {
-        credentials: "include",
-    });
-    const data = await res.json();
+      const token = useAuthStore.getState().token;
+      if (!token) return;
+      const res = await fetch(API.invitations, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          }
+      });
+      const data = await res.json();
 
     if (!res.ok) {
       throw new Error(data.error || "Failed to fetch invitations");
@@ -28,9 +33,15 @@ export const useInvitations = () => {
 
   const acceptInvitation = async (invitationId: number, roomId: number) => {
     try {
+        const token = useAuthStore.getState().token;
+        if (!token) return;
+
         const res = await fetch(`${API.invitations}/${invitationId}/accept`, {
           method: "POST",
-          credentials: "include",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          }
         });
 
         const data = await res.json();
@@ -38,7 +49,10 @@ export const useInvitations = () => {
 
         await fetch(`${API.rooms}/${roomId}/join`, {
           method: "POST",
-          credentials: "include",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          }
         });
         
         refetchRooms();
@@ -57,9 +71,15 @@ export const useInvitations = () => {
 
   const declineInvitation = async (invitationId: number) => {
     try {
+        const token = useAuthStore.getState().token;
+        if (!token) return;
+
         const res = await fetch(`${API.invitations}/${invitationId}/decline`, {
           method: "POST",
-          credentials: "include", 
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          }
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "Failed to decline invitation");

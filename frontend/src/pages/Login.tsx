@@ -42,9 +42,11 @@ const Login = () => {
     try {
       const res = await fetch(API.auth.login, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({ email: loginEmail, password: loginPassword, }),
-        credentials: "include", 
+        credentials: "include",
       });
 
       const data = await res.json();
