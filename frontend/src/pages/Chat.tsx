@@ -114,7 +114,7 @@ const Chat = () => {
   }, [users.length, fetchUsers]);
 
   return (
-    <div id="chat" className="flex flex-col h-full relative">
+    <div id="chat" className="flex flex-col h-[100dvh] relative overflow-hidden">
       {currentRoom && (
         <ChatHeader 
           user={user} 
@@ -149,7 +149,7 @@ const Chat = () => {
         </div>
       )}
 
-      <div className="flex flex-1 overflow-hidden min-h-0">
+      <div className="flex flex-1 overflow-hidden min-h-0 h-full">
 
         {/* ------- SIDEBAR (hidden on mobile) ------- */}
         {user && ((!inCall && callState==="idle") || (!inCall && !isCaller)) &&  (

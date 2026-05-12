@@ -56,9 +56,9 @@ const ChatHeader = ({user, currentRoom, roomMessages, loading, showMembers, setS
         <ThemeToggle />
         <button
           onClick={handleLogout}
-          className={`text-lg hover:opacity-70 hover:text-red-500 cursor-pointer ${isSmall ? 'mx-0.5' : 'mx-3'}`}
+          className={`shrink-0 flex items-center justify-center hover:opacity-70 hover:text-red-500 cursor-pointer ${isSmall ? 'mx-0.5 w-8 h-8' : 'mx-3 w-9 h-9'}`}
         >
-          <LogOut />
+          <LogOut size={20} />
         </button>
       </div>
     </div>
