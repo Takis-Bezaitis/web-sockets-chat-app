@@ -13,7 +13,7 @@ const MobileNavBar = ({ mobileView, setMobileView, videoOverlay, setVideoOverlay
   const isCaller = useWebRTCStore((state) => state.isCaller);
 
   return (
-    <div className="flex justify-center mobile-navbar-bg gap-x-16 text-xl border-t border-border-line">
+    <div className="flex justify-center mobile-navbar-bg gap-x-16 text-xl border-t border-border-line h-11 items-center">
       <button
         disabled={callState!='idle'}
         onClick={() => setMobileView("rooms")}

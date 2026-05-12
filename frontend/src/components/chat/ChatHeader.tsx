@@ -34,7 +34,7 @@ const ChatHeader = ({user, currentRoom, roomMessages, loading, showMembers, setS
   };
 
   return (
-    <div className={`bg-component-background text-foreground ${isSmall ? 'text-base' : 'text-xl'} h-14 flex items-center 
+    <div className={`shrink-0 bg-component-background text-foreground ${isSmall ? 'text-base' : 'text-xl'} h-14 flex items-center 
     p-1.5 justify-between border-b border-border-line`}>
       <div className="flex place-content-between  gap-2 bg-component-background text-foreground h-14 items-center border-b border-border-line">
         <div className={`flex gap-2 place-items-center overflow-hidden ${isSmall ? 'ml-1' : 'ml-4'}`}>

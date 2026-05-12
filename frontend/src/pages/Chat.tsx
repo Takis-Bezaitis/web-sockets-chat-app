@@ -114,7 +114,7 @@ const Chat = () => {
   }, [users.length, fetchUsers]);
 
   return (
-    <div id="chat" className="flex flex-col h-[100dvh] relative overflow-hidden">
+    <div id="chat" className="flex flex-col h-full overflow-hidden">
       {currentRoom && (
         <ChatHeader 
           user={user} 
@@ -127,7 +127,7 @@ const Chat = () => {
         />)}
 
       {/* ------- MOBILE NAV BAR (bottom) ------- */}
-      <div className="md:hidden w-full fixed bottom-0 z-20 bg-background">
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-background">
         <MobileNavBar 
         mobileView={mobileView} setMobileView={setMobileView} 
         videoOverlay={videoOverlay} setVideoOverlay={setVideoOverlay} />
