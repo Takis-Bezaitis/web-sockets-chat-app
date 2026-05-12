@@ -114,7 +114,7 @@ const Chat = () => {
   }, [users.length, fetchUsers]);
 
   return (
-    <div id="chat" className="flex flex-col h-[100dvh] relative">
+    <div id="chat" className="flex flex-col h-full relative">
       {currentRoom && (
         <ChatHeader 
           user={user} 
@@ -149,7 +149,7 @@ const Chat = () => {
         </div>
       )}
 
-      <div className="flex flex-1 overflow-hidden min-h-0 relative">
+      <div className="flex flex-1 overflow-hidden min-h-0">
 
         {/* ------- SIDEBAR (hidden on mobile) ------- */}
         {user && ((!inCall && callState==="idle") || (!inCall && !isCaller)) &&  (
@@ -209,7 +209,7 @@ const Chat = () => {
         {/* mobile */}
 
         {!isDesktop && mobileView === "chat" && ((!inCall && callState!=="ringing" && isCaller) || (!inCall && !isCaller)) && (
-          <div className="md:hidden flex flex-1 flex-col min-h-0 overflow-hidden">
+          <div className="md:hidden flex flex-1 flex-col">
             <ChatContent currentRoom={currentRoom} 
               user={user} roomMessages={roomMessages} loading={loading} 
               typingUserByRoom={typingUserByRoom}

@@ -34,10 +34,9 @@ const ChatHeader = ({user, currentRoom, roomMessages, loading, showMembers, setS
   };
 
   return (
-    <div className={`bg-component-background text-foreground ${isSmall ? 'text-base' : 'text-xl'} 
-    min-h-14 shrink-0 flex items-center p-1.5 justify-between border-b border-border-line`}>
-      <div className="flex place-content-between  gap-2 bg-component-background text-foreground 
-      h-14 items-center">
+    <div className={`bg-component-background text-foreground ${isSmall ? 'text-base' : 'text-xl'} h-14 flex items-center 
+    p-1.5 justify-between border-b border-border-line`}>
+      <div className="flex place-content-between  gap-2 bg-component-background text-foreground h-14 items-center border-b border-border-line">
         <div className={`flex gap-2 place-items-center overflow-hidden ${isSmall ? 'ml-1' : 'ml-4'}`}>
           <div className={`${isSmall ? 'text-2xl' : 'text-3xl'}`}>👤</div>
           <div className={`truncate ${isSmall ? 'text-base mr-1 max-w-16' : 'text-xl max-w-40'}`}>{user?.username}</div>
@@ -57,8 +56,7 @@ const ChatHeader = ({user, currentRoom, roomMessages, loading, showMembers, setS
         <ThemeToggle />
         <button
           onClick={handleLogout}
-          className={`text-lg hover:opacity-70 hover:text-red-500 cursor-pointer 
-            flex items-center justify-center shrink-0 ${isSmall ? 'mx-1 min-w-8' : 'mx-3'}`}
+          className={`text-lg hover:opacity-70 hover:text-red-500 cursor-pointer ${isSmall ? 'mx-0.5' : 'mx-3'}`}
         >
           <LogOut />
         </button>
