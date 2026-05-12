@@ -127,11 +127,7 @@ const Chat = () => {
         />)}
 
       {/* ------- MOBILE NAV BAR (bottom) ------- */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-background">
-        <MobileNavBar 
-        mobileView={mobileView} setMobileView={setMobileView} 
-        videoOverlay={videoOverlay} setVideoOverlay={setVideoOverlay} />
-      </div>
+      
       
       {showCreateRoom && (
         <CreateNewRoom onClose={() => setShowCreateRoom(false)} />
