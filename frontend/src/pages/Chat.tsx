@@ -7,7 +7,7 @@ import { useWebRTCStore } from "../store/webrtcStore";
 
 import ChatSidebar from "../components/chat/ChatSidebar";
 import UsersInRoom from "../components/chat/UsersInRoom";
-import MobileNavBar from "../components/layout/MobileNavBar";
+//import MobileNavBar from "../components/layout/MobileNavBar";
 import VideoCallWindow from "../components/video/VideoCallWindow";
 import ChatContent from "../components/chat/ChatContent";
 import IncomingCallModal from "../components/video/IncomingCallModal";
@@ -29,7 +29,7 @@ const Chat = () => {
 
   useChatSockets(currentRoom?.id);
 
-  const { mobileView, videoOverlay, showMembers, setMobileView, setVideoOverlay, setShowMembers, 
+  const { mobileView, videoOverlay, showMembers, setMobileView,  setShowMembers, 
     inCall, callState, isCaller } = useChatLayout();
 
   const { typingUserByRoom } = useTypingStore();
