@@ -114,179 +114,177 @@ const Chat = () => {
   }, [users.length, fetchUsers]);
 
   return (
-    <>
-      <div id="chat" className="flex flex-col h-full overflow-hidden">
-        {currentRoom && (
-          <ChatHeader 
-            user={user} 
-            currentRoom={currentRoom}
-            roomMessages={roomMessages}
-            loading={loading}
-            showMembers={showMembers} 
-            setShowMembers={setShowMembers}
-            onScrollToMessage={scrollToMessage}
-          />)}
+    <div id="chat" className="flex flex-col h-full overflow-hidden">
+      {currentRoom && (
+        <ChatHeader 
+          user={user} 
+          currentRoom={currentRoom}
+          roomMessages={roomMessages}
+          loading={loading}
+          showMembers={showMembers} 
+          setShowMembers={setShowMembers}
+          onScrollToMessage={scrollToMessage}
+        />)}
 
-        {showCreateRoom && (
-          <CreateNewRoom onClose={() => setShowCreateRoom(false)} />
-        )}
-
-        {inviteMembersVisible && inviteRoomId !== null && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-            <RoomMembersInvite
-              inviteRoomId={inviteRoomId}
-              roomName={inviteRoomName}
-              mode="manage"
-              currentRoomUsers={currentRoomUsers}
-              onCloseInviteMembers={closeInviteMembers}
-            />
-          </div>
-        )}
-
-        <div className="flex flex-1 overflow-hidden min-h-0 h-full">
-
-          {/* ------- SIDEBAR (hidden on mobile) ------- */}
-          {user && ((!inCall && callState==="idle") || (!inCall && !isCaller)) &&  (
-            <div className="hidden md:block md:w-3/5 md:max-w-xs">
-              <ChatSidebar
-                user={user}
-                rooms={rooms}
-                currentRoom={currentRoom}
-                onSelectRoom={onSelectRoom}
-                handleJoinLeaveRoom={handleJoinLeaveRoom}
-                onCreateRoom={handleCreateRoom}
-                onInviteMembers={handleInviteMembers}
-              />
-            </div>
-          )}
-          {(user && mobileView === "rooms" && callState==="idle") && (
-            <div className="w-full md:hidden">
-              <ChatSidebar
-                user={user}
-                rooms={rooms}
-                currentRoom={currentRoom}
-                onSelectRoom={onSelectRoom}
-                handleJoinLeaveRoom={handleJoinLeaveRoom}
-                onCreateRoom={handleCreateRoom}
-                onInviteMembers={handleInviteMembers}
-              />
-            </div>
-          )}
-
-          {(callState === "inCall" || (callState === "ringing" && isCaller)) && (
-            <div className="flex-1 w-2/3 lg:w-3/5">
-              <VideoCallWindow 
-                caller={incomingCaller?.username} 
-                callee={{id: outcomingCallee?.id, name: outcomingCallee?.username}} 
-                videoOverlay={videoOverlay}
-              />
-            </div>
-          )}
-
-          {isDesktop && (
-            <div className={chatLayoutClasses}>
-              <ChatContent
-                currentRoom={currentRoom}
-                user={user}
-                roomMessages={roomMessages}
-                loading={loading}
-                typingUserByRoom={typingUserByRoom}
-                handleSend={handleSend}
-                input={input}
-                setInput={setInput}
-                handleJoinLeaveRoom={handleJoinLeaveRoom}
-                onRegisterScroll={onRegisterScroll}
-              />
-            </div>
-          )}
-
-          {/* mobile */}
-
-          {!isDesktop && mobileView === "chat" && ((!inCall && callState!=="ringing" && isCaller) || (!inCall && !isCaller)) && (
-            <div className="md:hidden flex flex-1 flex-col">
-              <ChatContent currentRoom={currentRoom} 
-                user={user} roomMessages={roomMessages} loading={loading} 
-                typingUserByRoom={typingUserByRoom}
-                handleSend={handleSend} input={input} setInput={setInput} handleJoinLeaveRoom={handleJoinLeaveRoom}
-                onRegisterScroll={onRegisterScroll}/>
-            </div>
-          )}
-          
-          {!isDesktop && videoOverlay === "chat" && ((callState!="idle" && isCaller) || (inCall && !isCaller)) && (
-            <div
-              className="md:hidden fixed bottom-0 left-0 right-0 h-[63%] 
-                rounded-t-2xl shadow-xl flex flex-col"
-            >
-              <ChatContent currentRoom={currentRoom} 
-                user={user} roomMessages={roomMessages} loading={loading}
-                typingUserByRoom={typingUserByRoom}
-                handleSend={handleSend} input={input} setInput={setInput} handleJoinLeaveRoom={handleJoinLeaveRoom}
-                onRegisterScroll={onRegisterScroll}
-                videoAndChat={true}
-              />
-            </div>
-          )}
-
-          {/* Room members for mobile screens */}
-          {mobileView === "members" && (
-            <div className="w-full md:hidden">
-              <UsersInRoom 
-                user={user} 
-                currentRoomUsers={currentRoomUsers} 
-                currentRoom={currentRoom} 
-                mobileView={mobileView}
-                onStartVideoCall={() => setMobileView("video")}/>
-            </div>
-          )}
-          
-          {videoOverlay === "members" && ((callState!="idle" && isCaller) || (inCall && !isCaller)) && (
-            <div
-              className="md:hidden fixed bottom-0 left-0 right-0 h-[59%] mb-10
-                bg-background rounded-t-2xl shadow-xl flex flex-col"
-              >
-              <UsersInRoom 
-                user={user} 
-                currentRoomUsers={currentRoomUsers} 
-                currentRoom={currentRoom}
-                videoOverlay={videoOverlay} 
-                onStartVideoCall={() => setMobileView("video")}/>
-            </div>
-          )}
-
-          <IncomingCallModal
-              visible={(callState === "ringing" && !isCaller )}
-              caller={incomingCaller || undefined}
-              callee={outcomingCallee || undefined}
-          />
-          {showMembers && (
-            <div
-              className="
-                hidden md:flex top-14 right-0 bottom-0 z-40
-                md:w-fit lg:w-80 flex-col
-                bg-component-background
-                shadow-xl
-              "
-            >
-              <UsersInRoom
-                user={user}
-                currentRoomUsers={currentRoomUsers}
-                currentRoom={currentRoom}
-                setShowMembers={setShowMembers}
-              />
-            </div>
-          )}
-        </div>
-        {/* ------- MOBILE NAV BAR (bottom) ------- */}
+      {/* ------- MOBILE NAV BAR (bottom) ------- */}
       {!isDesktop && (
-        <div className="z-50 bg-background">
+        <div className="fixed bottom-0 left-0 right-0 z-50 bg-background">
           <MobileNavBar 
           mobileView={mobileView} setMobileView={setMobileView} 
           videoOverlay={videoOverlay} setVideoOverlay={setVideoOverlay} />
         </div>
       )}
-      </div>
       
-    </>
+      {showCreateRoom && (
+        <CreateNewRoom onClose={() => setShowCreateRoom(false)} />
+      )}
+
+      {inviteMembersVisible && inviteRoomId !== null && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <RoomMembersInvite
+            inviteRoomId={inviteRoomId}
+            roomName={inviteRoomName}
+            mode="manage"
+            currentRoomUsers={currentRoomUsers}
+            onCloseInviteMembers={closeInviteMembers}
+          />
+        </div>
+      )}
+
+      <div className="flex flex-1 overflow-hidden min-h-0 h-full">
+
+        {/* ------- SIDEBAR (hidden on mobile) ------- */}
+        {user && ((!inCall && callState==="idle") || (!inCall && !isCaller)) &&  (
+          <div className="hidden md:block md:w-3/5 md:max-w-xs">
+            <ChatSidebar
+              user={user}
+              rooms={rooms}
+              currentRoom={currentRoom}
+              onSelectRoom={onSelectRoom}
+              handleJoinLeaveRoom={handleJoinLeaveRoom}
+              onCreateRoom={handleCreateRoom}
+              onInviteMembers={handleInviteMembers}
+            />
+          </div>
+        )}
+        {(user && mobileView === "rooms" && callState==="idle") && (
+          <div className="w-full md:hidden">
+            <ChatSidebar
+              user={user}
+              rooms={rooms}
+              currentRoom={currentRoom}
+              onSelectRoom={onSelectRoom}
+              handleJoinLeaveRoom={handleJoinLeaveRoom}
+              onCreateRoom={handleCreateRoom}
+              onInviteMembers={handleInviteMembers}
+            />
+          </div>
+        )}
+
+        {(callState === "inCall" || (callState === "ringing" && isCaller)) && (
+          <div className="flex-1 w-2/3 lg:w-3/5">
+            <VideoCallWindow 
+              caller={incomingCaller?.username} 
+              callee={{id: outcomingCallee?.id, name: outcomingCallee?.username}} 
+              videoOverlay={videoOverlay}
+            />
+          </div>
+        )}
+
+        {isDesktop && (
+          <div className={chatLayoutClasses}>
+            <ChatContent
+              currentRoom={currentRoom}
+              user={user}
+              roomMessages={roomMessages}
+              loading={loading}
+              typingUserByRoom={typingUserByRoom}
+              handleSend={handleSend}
+              input={input}
+              setInput={setInput}
+              handleJoinLeaveRoom={handleJoinLeaveRoom}
+              onRegisterScroll={onRegisterScroll}
+            />
+          </div>
+        )}
+
+        {/* mobile */}
+
+        {!isDesktop && mobileView === "chat" && ((!inCall && callState!=="ringing" && isCaller) || (!inCall && !isCaller)) && (
+          <div className="md:hidden flex flex-1 flex-col">
+            <ChatContent currentRoom={currentRoom} 
+              user={user} roomMessages={roomMessages} loading={loading} 
+              typingUserByRoom={typingUserByRoom}
+              handleSend={handleSend} input={input} setInput={setInput} handleJoinLeaveRoom={handleJoinLeaveRoom}
+              onRegisterScroll={onRegisterScroll}/>
+          </div>
+        )}
+        
+        {!isDesktop && videoOverlay === "chat" && ((callState!="idle" && isCaller) || (inCall && !isCaller)) && (
+          <div
+            className="md:hidden fixed bottom-0 left-0 right-0 h-[63%] 
+              rounded-t-2xl shadow-xl flex flex-col"
+          >
+            <ChatContent currentRoom={currentRoom} 
+              user={user} roomMessages={roomMessages} loading={loading}
+              typingUserByRoom={typingUserByRoom}
+              handleSend={handleSend} input={input} setInput={setInput} handleJoinLeaveRoom={handleJoinLeaveRoom}
+              onRegisterScroll={onRegisterScroll}
+              videoAndChat={true}
+            />
+          </div>
+        )}
+
+        {/* Room members for mobile screens */}
+        {mobileView === "members" && (
+          <div className="w-full md:hidden">
+            <UsersInRoom 
+              user={user} 
+              currentRoomUsers={currentRoomUsers} 
+              currentRoom={currentRoom} 
+              mobileView={mobileView}
+              onStartVideoCall={() => setMobileView("video")}/>
+          </div>
+        )}
+        
+        {videoOverlay === "members" && ((callState!="idle" && isCaller) || (inCall && !isCaller)) && (
+          <div
+            className="md:hidden fixed bottom-0 left-0 right-0 h-[59%] mb-10
+              bg-background rounded-t-2xl shadow-xl flex flex-col"
+            >
+            <UsersInRoom 
+              user={user} 
+              currentRoomUsers={currentRoomUsers} 
+              currentRoom={currentRoom}
+              videoOverlay={videoOverlay} 
+              onStartVideoCall={() => setMobileView("video")}/>
+          </div>
+        )}
+
+        <IncomingCallModal
+            visible={(callState === "ringing" && !isCaller )}
+            caller={incomingCaller || undefined}
+            callee={outcomingCallee || undefined}
+        />
+        {showMembers && (
+          <div
+            className="
+              hidden md:flex top-14 right-0 bottom-0 z-40
+              md:w-fit lg:w-80 flex-col
+              bg-component-background
+              shadow-xl
+            "
+          >
+            <UsersInRoom
+              user={user}
+              currentRoomUsers={currentRoomUsers}
+              currentRoom={currentRoom}
+              setShowMembers={setShowMembers}
+            />
+          </div>
+        )}
+      </div>
+    </div>
   );
 };
 
