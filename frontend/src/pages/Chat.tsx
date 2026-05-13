@@ -276,15 +276,16 @@ const Chat = () => {
             </div>
           )}
         </div>
-      </div>
-      {/* ------- MOBILE NAV BAR (bottom) ------- */}
+        {/* ------- MOBILE NAV BAR (bottom) ------- */}
       {!isDesktop && (
-        <div className="fixed bottom-0 left-0 right-0 z-50 bg-background">
+        <div className="z-50 bg-background">
           <MobileNavBar 
           mobileView={mobileView} setMobileView={setMobileView} 
           videoOverlay={videoOverlay} setVideoOverlay={setVideoOverlay} />
         </div>
       )}
+      </div>
+      
     </>
   );
 };
