@@ -7,7 +7,7 @@ import { useWebRTCStore } from "../store/webrtcStore";
 
 import ChatSidebar from "../components/chat/ChatSidebar";
 import UsersInRoom from "../components/chat/UsersInRoom";
-//import MobileNavBar from "../components/layout/MobileNavBar";
+import MobileNavBar from "../components/layout/MobileNavBar";
 import VideoCallWindow from "../components/video/VideoCallWindow";
 import ChatContent from "../components/chat/ChatContent";
 import IncomingCallModal from "../components/video/IncomingCallModal";
@@ -29,7 +29,7 @@ const Chat = () => {
 
   useChatSockets(currentRoom?.id);
 
-  const { mobileView, videoOverlay, showMembers, setMobileView,  setShowMembers, 
+  const { mobileView, videoOverlay, showMembers, setMobileView, setVideoOverlay, setShowMembers, 
     inCall, callState, isCaller } = useChatLayout();
 
   const { typingUserByRoom } = useTypingStore();
@@ -127,7 +127,11 @@ const Chat = () => {
         />)}
 
       {/* ------- MOBILE NAV BAR (bottom) ------- */}
-      
+      <div className="fixed bottom-0 left-0 right-0 z-50 bg-background">
+        <MobileNavBar 
+        mobileView={mobileView} setMobileView={setMobileView} 
+        videoOverlay={videoOverlay} setVideoOverlay={setVideoOverlay} />
+      </div>
       
       {showCreateRoom && (
         <CreateNewRoom onClose={() => setShowCreateRoom(false)} />
