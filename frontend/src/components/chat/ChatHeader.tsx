@@ -33,7 +33,7 @@ const ChatHeader = ({user, mobileView, currentRoom, roomMessages, loading, showM
 
     window.location.reload();
   };
-
+  let myChat = document.getElementById("root")?.clientHeight;
   return (
     <div className={`shrink-0 bg-component-background text-foreground ${isSmall ? 'text-base' : 'text-xl'} h-14 flex items-center 
     p-1.5 justify-between border-b border-border-line`}>
@@ -45,7 +45,7 @@ const ChatHeader = ({user, mobileView, currentRoom, roomMessages, loading, showM
       </div>
 
       <div className={`relative overflow-hidden mx-5 ${isSmall && 'max-w-28'}`}>
-          <p className="truncate"># {currentRoom.name}</p>
+          <p className="truncate"># {currentRoom.name} {myChat}</p>
       </div>
 
       <div className={`flex gap-2 items-center ${isSmall && 'ml-2'}`}>

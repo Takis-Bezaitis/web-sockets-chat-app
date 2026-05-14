@@ -280,7 +280,7 @@ const Chat = () => {
         )}
       </div>
       {!isDesktop && (
-        <div className="absolute bottom-0 left-0 right-0 z-50 bg-background">
+        <div className="z-50 bg-background">
           <MobileNavBar 
           mobileView={mobileView} setMobileView={setMobileView} 
           videoOverlay={videoOverlay} setVideoOverlay={setVideoOverlay} />
