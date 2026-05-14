@@ -8,6 +8,7 @@ import { useAuthStore } from "../../store/authStore";
 
 type ChatHeaderProps = {
   user: User | null;
+  mobileView: "chat" | "rooms" | "members" | "video";
   currentRoom: RoomWithMembershipDTO;
   roomMessages: Message[];
   loading: boolean;
@@ -16,7 +17,7 @@ type ChatHeaderProps = {
   onScrollToMessage: (id: number) => void;
 };
 
-const ChatHeader = ({user, currentRoom, roomMessages, loading, showMembers, setShowMembers, onScrollToMessage}: ChatHeaderProps) => {
+const ChatHeader = ({user, mobileView, currentRoom, roomMessages, loading, showMembers, setShowMembers, onScrollToMessage}: ChatHeaderProps) => {
   const isSmall = useMediaQuery("(max-width: 768px)");
   const token = useAuthStore.getState().token;
   
@@ -48,12 +49,22 @@ const ChatHeader = ({user, currentRoom, roomMessages, loading, showMembers, setS
       </div>
 
       <div className={`flex gap-2 ${isSmall ? 'ml-2' : ''}`}>
-        <MessageSearch user={user} messages={roomMessages} loading={loading} onScrollToMessage={onScrollToMessage} />
+        {(isSmall && mobileView === "chat") || !isSmall &&
+          <MessageSearch 
+            user={user} 
+            messages={roomMessages} 
+            loading={loading} 
+            onScrollToMessage={onScrollToMessage} 
+          />
+        }
+
         <div className={`hidden md:block cursor-pointer hover:opacity-70`} 
             onClick={() => setShowMembers(!showMembers)}>
               👥
         </div>
+
         <ThemeToggle />
+        
         <button
           onClick={handleLogout}
           className={`shrink-0 flex items-center justify-center hover:opacity-70 hover:text-red-500 cursor-pointer ${isSmall ? 'mx-0.5 w-8 h-8' : 'mx-3 w-9 h-9'}`}

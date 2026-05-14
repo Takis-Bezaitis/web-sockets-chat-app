@@ -117,7 +117,8 @@ const Chat = () => {
     <div id="chat" className="flex flex-col h-full overflow-hidden">
       {currentRoom && (
         <ChatHeader 
-          user={user} 
+          user={user}
+          mobileView={mobileView}
           currentRoom={currentRoom}
           roomMessages={roomMessages}
           loading={loading}
