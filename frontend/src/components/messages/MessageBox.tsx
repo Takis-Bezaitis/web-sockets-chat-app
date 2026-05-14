@@ -4,8 +4,9 @@ import { useSocketStore } from "../../store/socketStore";
 import { type RoomWithMembershipDTO } from "../../types/custom";
 import InputEmoji from 'react-input-emoji';
 import { useMessageStore } from "../../store/messageStore";
-import { CircleX } from 'lucide-react';
+import { CircleX, SendHorizontal } from 'lucide-react';
 import { MESSAGE_MAX_LENGTH } from "../../constants/message";
+import { useMediaQuery } from "../../hooks/useMediaQuery";
 
 type MessageBoxProps = {
     handleSend: () => void;
@@ -37,6 +38,8 @@ const MessageBox = ({handleSend, input, setInput, currentRoom, handleJoinLeaveRo
   const tooLong = input.length > MESSAGE_MAX_LENGTH;
   const remainingChars = Math.max(MESSAGE_MAX_LENGTH - [...input].length, 0);
 
+  const isSmall = useMediaQuery("(max-width: 768px)");
+
   const handleTyping = () => {
     if (!socket || !user || !roomId) return;
     socket.emit("typing", { user: user.email, roomId: currentRoom.id.toString() });
@@ -53,18 +56,28 @@ const MessageBox = ({handleSend, input, setInput, currentRoom, handleJoinLeaveRo
     handleJoinLeaveRoom(currentRoom, "join");
   };
 
+  const handleMobileSend = () => {
+    handleSend();
+
+    // close keyboard on mobile
+    if (isSmall) {
+      const active = document.activeElement as HTMLElement | null;
+      active?.blur();
+    }
+  };
+
   useEffect(() => {
     setInput(draft);
   }, [currentRoom.id]);
 
   useEffect(() => {
-    if (window.innerWidth >= 768) {
+    if (!isSmall) {
       // prevent mobile keyboard issues
       if (showInput && inputRef.current) {
         inputRef.current.focus();
       }
     }
-  }, [roomId, showInput, replyingTo]);
+  }, [roomId, showInput, replyingTo, isSmall]);
 
   useEffect(() => {
     setShowInput(currentRoom?.isMember ?? false);
@@ -114,30 +127,36 @@ const MessageBox = ({handleSend, input, setInput, currentRoom, handleJoinLeaveRo
                   onChange={handleInputChange}
                   maxLength={MESSAGE_MAX_LENGTH}
                   cleanOnEnter
-                  onEnter={handleSend}
+                  onEnter={handleMobileSend}
                   placeholder={`Message #${currentRoom?.name}`}
                   shouldReturn={false} 
                   shouldConvertEmojiToImage={false}
                 />
               </div>
-           
 
-            <p className={`text-sm mr-2 
-              ${remainingChars < 11 ? 'text-red-700' : 'text-foreground'}`}
-            >
-              {remainingChars}
-            </p>
-            
-            <button
-                onClick={handleSend}
+              <p className={`text-sm mr-2 
+                ${remainingChars < 11 ? 'text-red-700' : 'text-foreground'}`}
+              >
+                {remainingChars}
+              </p>
+              
+              <button
+                onClick={handleMobileSend}
                 disabled={!canSend || tooLong}
-                className={`h-9 bg-button-main text-button px-4 rounded  
+                className={`
+                  ${isSmall 
+                    ? `text-foreground flex items-center justify-center ${canSend ? 'opacity-100' : 'opacity-70'}`
+                    : `h-9 bg-button-main text-button px-4 rounded ${canSend && 'hover:bg-button-hover'}`
+                  }
                   ${canSend 
-                    ? 'cursor-pointer hover:bg-button-hover' : 'cursor-default' }`}
-            >
-            Send
-            </button>
-             </div>
+                    ? 'cursor-pointer'
+                    : 'cursor-default'
+                  }
+                `}
+              >
+                {isSmall ? <SendHorizontal /> : 'Send'}
+              </button>
+            </div>
           </> 
           ) : (
           <div className="px-4 py-3 flex w-full items-center justify-center gap-2 text-foreground">
