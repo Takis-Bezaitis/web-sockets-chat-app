@@ -66,6 +66,12 @@ const MessageBox = ({handleSend, input, setInput, currentRoom, handleJoinLeaveRo
     }
   };*/
 
+   useEffect(() => {
+    if (isSmall) {
+      inputRef.current?.blur();
+    }
+  }, []);
+
   useEffect(() => {
     setInput(draft);
   }, [currentRoom.id]);
