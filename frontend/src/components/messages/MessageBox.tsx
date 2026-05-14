@@ -56,21 +56,18 @@ const MessageBox = ({handleSend, input, setInput, currentRoom, handleJoinLeaveRo
     handleJoinLeaveRoom(currentRoom, "join");
   };
 
-  /*const handleMobileSend = () => {
+  const handleMobileSend = () => {
     handleSend();
 
     // close keyboard on mobile
     if (isSmall) {
       const active = document.activeElement as HTMLElement | null;
       active?.blur();
+      requestAnimationFrame(() => {
+        window.scrollTo(0, 0);
+      });
     }
-  };*/
-
-   useEffect(() => {
-    if (isSmall) {
-      inputRef.current?.blur();
-    }
-  }, []);
+  };
 
   useEffect(() => {
     setInput(draft);
@@ -133,7 +130,7 @@ const MessageBox = ({handleSend, input, setInput, currentRoom, handleJoinLeaveRo
                   onChange={handleInputChange}
                   maxLength={MESSAGE_MAX_LENGTH}
                   cleanOnEnter
-                  onEnter={handleSend}
+                  onEnter={handleMobileSend}
                   placeholder={`Message #${currentRoom?.name}`}
                   shouldReturn={false} 
                   shouldConvertEmojiToImage={false}
@@ -147,7 +144,7 @@ const MessageBox = ({handleSend, input, setInput, currentRoom, handleJoinLeaveRo
               </p>
               
               <button
-                onClick={handleSend}
+                onClick={handleMobileSend}
                 disabled={!canSend || tooLong}
                 className={`
                   ${isSmall 
