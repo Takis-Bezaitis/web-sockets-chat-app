@@ -60,10 +60,10 @@ const MessageBox = ({handleSend, input, setInput, currentRoom, handleJoinLeaveRo
     handleSend();
 
     // close keyboard on mobile
-    if (isSmall) {
+    /*if (isSmall) {
       const active = document.activeElement as HTMLElement | null;
       active?.blur();
-    }
+    }*/
   };
 
   useEffect(() => {
