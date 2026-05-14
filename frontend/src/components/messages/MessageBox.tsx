@@ -58,8 +58,11 @@ const MessageBox = ({handleSend, input, setInput, currentRoom, handleJoinLeaveRo
   }, [currentRoom.id]);
 
   useEffect(() => {
-    if (showInput && inputRef.current) {
-      inputRef.current.focus();
+    if (window.innerWidth >= 768) {
+      // prevent mobile keyboard issues
+      if (showInput && inputRef.current) {
+        inputRef.current.focus();
+      }
     }
   }, [roomId, showInput, replyingTo]);
 
