@@ -44,12 +44,12 @@ const ChatHeader = ({user, mobileView, currentRoom, roomMessages, loading, showM
         </div>
       </div>
 
-      <div className={`relative overflow-hidden mx-5 ${isSmall ? 'max-w-28' : ''}`}>
+      <div className={`relative overflow-hidden mx-5 ${isSmall && 'max-w-28'}`}>
           <p className="truncate"># {currentRoom.name}</p>
       </div>
 
-      <div className={`flex gap-2 ${isSmall ? 'ml-2' : ''}`}>
-        {(isSmall && mobileView === "chat") || !isSmall &&
+      <div className={`flex gap-2 items-center ${isSmall && 'ml-2'}`}>
+        {((isSmall && mobileView === "chat") || !isSmall) &&
           <MessageSearch 
             user={user} 
             messages={roomMessages} 
