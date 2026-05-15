@@ -72,22 +72,17 @@ const MessageBox = ({handleSend, input, setInput, currentRoom, handleJoinLeaveRo
   }, [currentRoom?.isMember]);
 
   useEffect(() => {
-  let lastHeight = window.innerHeight;
+  const vv = window.visualViewport;
+
+  if (!vv) return;
 
   const handler = () => {
-      const current = window.innerHeight;
+    window.scrollTo(0, 0);
+  };
 
-      // keyboard closed (height increased)
-      if (current > lastHeight) {
-        window.scrollTo(0, 0);
-      }
-
-      lastHeight = current;
-    };
-
-    window.addEventListener("resize", handler);
-    return () => window.removeEventListener("resize", handler);
-  }, []);
+  vv.addEventListener("resize", handler);
+  return () => vv.removeEventListener("resize", handler);
+}, []);
 
   return (
     <div className="relative min-h-[80px] px-4 py-2 mb-2 rounded-lg border border-border-line bg-component-background flex-shrink-0 flex items-center justify-center">
@@ -139,7 +134,7 @@ const MessageBox = ({handleSend, input, setInput, currentRoom, handleJoinLeaveRo
                     shouldReturn={false} 
                     shouldConvertEmojiToImage={false}
                   />
-                
+               
               </div>
 
               <p className={`text-sm mr-2 
