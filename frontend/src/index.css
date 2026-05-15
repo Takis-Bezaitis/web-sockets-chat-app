@@ -10,15 +10,6 @@ html, body {
   overflow: hidden;
 }
 
-:root {
- --vh: 1dvh;
-}
-
-html.is-safari,
-html.is-safari body {
- height: calc(var(--vh, 1dvh) * 100);
-}
-
 #root {
   height: 100dvh;
   overflow: hidden;

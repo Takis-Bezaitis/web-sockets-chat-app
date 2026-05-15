@@ -72,7 +72,7 @@ const MessageBox = ({handleSend, input, setInput, currentRoom, handleJoinLeaveRo
   }, [currentRoom?.isMember]);
 
   return (
-    <div className="relative min-h-[80px] px-4 py-2 mb-2 rounded-lg border border-border-line bg-component-background flex-shrink-0 flex items-center justify-center">
+    <div className="relative min-h-[80px] w-[350px] px-4 py-2 mb-2 rounded-lg border border-border-line bg-component-background flex-shrink-0 flex items-center justify-center">
         {showInput || (currentRoom.creatorId === user?.id) ? (
           <>
 
