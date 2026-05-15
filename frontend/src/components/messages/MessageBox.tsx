@@ -71,6 +71,8 @@ const MessageBox = ({handleSend, input, setInput, currentRoom, handleJoinLeaveRo
     setShowInput(currentRoom?.isMember ?? false);
   }, [currentRoom?.isMember]);
 
+  const emoji = document.getElementsByClassName("emoji-wrapper")[0] as HTMLElement;
+
   return (
     <div className="relative min-h-[80px] px-4 py-2 mb-2 rounded-lg border border-border-line bg-component-background flex-shrink-0 flex items-center justify-center">
         {showInput || (currentRoom.creatorId === user?.id) ? (
@@ -105,19 +107,10 @@ const MessageBox = ({handleSend, input, setInput, currentRoom, handleJoinLeaveRo
               <div className="absolute bottom-full left-0 p-3.5 rounded-lg border border-border-line 
                 text-sm text-foreground bg-background text-center">{`This message exceeds ${MESSAGE_MAX_LENGTH} characters.`}</div>
             )}
-
+            <div className="text-fuchsia-500">{emoji?.offsetHeight}</div>
             <div className="grid grid-cols-[1fr_auto_auto] items-center gap-2 w-full">
               <div className={`emoji-wrapper ${input.length === 0 ? "empty" : "has-text"}`}>
-                {isSmall ? (
-                  <textarea
-                    value={input}
-                    maxLength={MESSAGE_MAX_LENGTH}
-                    onChange={(e) => handleInputChange(e.target.value)}
-                    placeholder={`Message #${currentRoom?.name}`}
-                    className="w-full resize-none rounded-lg p-2 text-foreground bg-component-background outline-1"
-                    rows={1}
-                  />
-                ) : (
+
                   <InputEmoji 
                     ref={inputRef}
                     key={roomId}
@@ -130,7 +123,7 @@ const MessageBox = ({handleSend, input, setInput, currentRoom, handleJoinLeaveRo
                     shouldReturn={false} 
                     shouldConvertEmojiToImage={false}
                   />
-                )}
+                
               </div>
 
               <p className={`text-sm mr-2 
