@@ -1,8 +1,8 @@
 import { useEffect, useState, useRef } from "react";
 import { useAuthStore } from "../../store/authStore";
-//import { useSocketStore } from "../../store/socketStore";
+import { useSocketStore } from "../../store/socketStore";
 import { type RoomWithMembershipDTO } from "../../types/custom";
-//import InputEmoji from 'react-input-emoji';
+import InputEmoji from 'react-input-emoji';
 import { useMessageStore } from "../../store/messageStore";
 import { CircleX, SendHorizontal } from 'lucide-react';
 import { MESSAGE_MAX_LENGTH } from "../../constants/message";
@@ -22,12 +22,12 @@ type MessageBoxProps = {
 const MessageBox = ({handleSend, input, setInput, currentRoom, handleJoinLeaveRoom}: MessageBoxProps) => {
   if (!currentRoom) return null;
 
-  //const { socket } = useSocketStore();
+  const { socket } = useSocketStore();
   const { user } = useAuthStore();
   
   const replyingTo = useMessageStore(s => s.replyingToByRoom[currentRoom.id]);
   const draft = useMessageStore(s => s.draftByRoom[currentRoom.id] ?? "");
-  //const setDraft = useMessageStore(s => s.setDraftForRoom);
+  const setDraft = useMessageStore(s => s.setDraftForRoom);
   const setReplyingTo = useMessageStore(s => s.setReplyingTo);
 
   const [showInput, setShowInput] = useState(currentRoom?.isMember ?? false);
@@ -40,47 +40,32 @@ const MessageBox = ({handleSend, input, setInput, currentRoom, handleJoinLeaveRo
 
   const isSmall = useMediaQuery("(max-width: 768px)");
 
-  /*const handleTyping = () => {
+  const handleTyping = () => {
     if (!socket || !user || !roomId) return;
     socket.emit("typing", { user: user.email, roomId: currentRoom.id.toString() });
-  };*/
+  };
 
-  /*const handleInputChange = (value: string) => {
+  const handleInputChange = (value: string) => {
     setInput(value);
     setDraft(currentRoom.id, value);
     handleTyping();
-  };*/
+  };
 
   const handleOptimisticJoin = () => {
     setShowInput(true);
     handleJoinLeaveRoom(currentRoom, "join");
   };
 
-  const handleMobileSend = () => {
-    handleSend();
-
-    // close keyboard on mobile
-    if (isSmall) {
-      const active = document.activeElement as HTMLElement | null;
-      active?.blur();
-      requestAnimationFrame(() => {
-        window.scrollTo(0, 0);
-      });
-    }
-  };
 
   useEffect(() => {
     setInput(draft);
   }, [currentRoom.id]);
 
   useEffect(() => {
-    if (!isSmall) {
-      // prevent mobile keyboard issues
-      if (showInput && inputRef.current) {
-        inputRef.current.focus();
-      }
+    if (showInput && inputRef.current) {
+      inputRef.current.focus();
     }
-  }, [roomId, showInput, replyingTo, isSmall]);
+  }, [roomId, showInput, replyingTo]);
 
   useEffect(() => {
     setShowInput(currentRoom?.isMember ?? false);
@@ -123,19 +108,18 @@ const MessageBox = ({handleSend, input, setInput, currentRoom, handleJoinLeaveRo
 
             <div className="grid grid-cols-[1fr_auto_auto] items-center gap-2 w-full">
               <div className={`emoji-wrapper ${input.length === 0 ? "empty" : "has-text"}`}>
-                <input />
-                {/*<InputEmoji 
-                  ref={inputRef}
-                  key={roomId}
-                  value={input}
-                  onChange={handleInputChange}
-                  maxLength={MESSAGE_MAX_LENGTH}
-                  cleanOnEnter
-                  onEnter={handleMobileSend}
-                  placeholder={`Message #${currentRoom?.name}`}
-                  shouldReturn={false} 
-                  shouldConvertEmojiToImage={false}
-                />*/}
+                  <InputEmoji 
+                    ref={inputRef}
+                    //key={roomId}
+                    value={input}
+                    onChange={handleInputChange}
+                    maxLength={MESSAGE_MAX_LENGTH}
+                    cleanOnEnter
+                    onEnter={handleSend}
+                    placeholder={`Message #${currentRoom?.name}`}
+                    shouldReturn={false} 
+                    shouldConvertEmojiToImage={false}
+                  />
               </div>
 
               <p className={`text-sm mr-2 
@@ -145,7 +129,7 @@ const MessageBox = ({handleSend, input, setInput, currentRoom, handleJoinLeaveRo
               </p>
               
               <button
-                onClick={handleMobileSend}
+                onClick={handleSend}
                 disabled={!canSend || tooLong}
                 className={`
                   ${isSmall 
