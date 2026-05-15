@@ -71,19 +71,6 @@ const MessageBox = ({handleSend, input, setInput, currentRoom, handleJoinLeaveRo
     setShowInput(currentRoom?.isMember ?? false);
   }, [currentRoom?.isMember]);
 
-  useEffect(() => {
-  const vv = window.visualViewport;
-
-  if (!vv) return;
-
-  const handler = () => {
-    window.scrollTo(0, 0);
-  };
-
-  vv.addEventListener("resize", handler);
-  return () => vv.removeEventListener("resize", handler);
-}, []);
-
   return (
     <div className="relative min-h-[80px] px-4 py-2 mb-2 rounded-lg border border-border-line bg-component-background flex-shrink-0 flex items-center justify-center">
         {showInput || (currentRoom.creatorId === user?.id) ? (
@@ -134,7 +121,7 @@ const MessageBox = ({handleSend, input, setInput, currentRoom, handleJoinLeaveRo
                     shouldReturn={false} 
                     shouldConvertEmojiToImage={false}
                   />
-               
+                
               </div>
 
               <p className={`text-sm mr-2 
