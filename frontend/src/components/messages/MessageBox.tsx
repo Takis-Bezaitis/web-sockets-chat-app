@@ -72,12 +72,21 @@ const MessageBox = ({handleSend, input, setInput, currentRoom, handleJoinLeaveRo
   }, [currentRoom?.isMember]);
 
   const emoji = document.getElementsByClassName("emoji-wrapper")[0] as HTMLElement;
+  const emoji2 = document.getElementsByClassName("empty")[0] as HTMLElement;
+  const emoji3 = document.getElementsByClassName("has-text")[0] as HTMLElement;
+  const root = document.getElementById("root")?.getBoundingClientRect().height;
+  const body = document.body.getBoundingClientRect().height;
+  const chat = document.getElementById("chat");
 
   return (
     <div className="relative min-h-[80px] px-4 py-2 mb-2 rounded-lg border border-border-line bg-component-background flex-shrink-0 flex items-center justify-center">
         {showInput || (currentRoom.creatorId === user?.id) ? (
           <>
-
+            <div className="text-fuchsia-500 bg-amber-200 p-2 absolute top-0 mt-[-50px]">
+              emoji-wrapper:{emoji?.offsetHeight}, empty:{emoji2?.offsetHeight},
+              has-text: {emoji3?.offsetHeight} <br />
+              root: {root} --- body: {body} --- chat: {chat?.getBoundingClientRect().height}
+            </div>
             {replyingTo && input.length <= MESSAGE_MAX_LENGTH && (
               <div 
                 className="absolute bottom-full left-0 p-2 rounded-lg border border-border-line 
@@ -107,7 +116,8 @@ const MessageBox = ({handleSend, input, setInput, currentRoom, handleJoinLeaveRo
               <div className="absolute bottom-full left-0 p-3.5 rounded-lg border border-border-line 
                 text-sm text-foreground bg-background text-center">{`This message exceeds ${MESSAGE_MAX_LENGTH} characters.`}</div>
             )}
-            <div className="text-fuchsia-500">{emoji?.offsetHeight}</div>
+
+            
             <div className="grid grid-cols-[1fr_auto_auto] items-center gap-2 w-full">
               <div className={`emoji-wrapper ${input.length === 0 ? "empty" : "has-text"}`}>
 
