@@ -108,9 +108,19 @@ const MessageBox = ({handleSend, input, setInput, currentRoom, handleJoinLeaveRo
 
             <div className="grid grid-cols-[1fr_auto_auto] items-center gap-2 w-full">
               <div className={`emoji-wrapper ${input.length === 0 ? "empty" : "has-text"}`}>
+                {isSmall ? (
+                  <textarea
+                    value={input}
+                    maxLength={MESSAGE_MAX_LENGTH}
+                    onChange={(e) => handleInputChange(e.target.value)}
+                    placeholder={`Message #${currentRoom?.name}`}
+                    className="w-full resize-none rounded-lg p-2 text-foreground bg-component-background outline-1"
+                    rows={1}
+                  />
+                ) : (
                   <InputEmoji 
                     ref={inputRef}
-                    //key={roomId}
+                    key={roomId}
                     value={input}
                     onChange={handleInputChange}
                     maxLength={MESSAGE_MAX_LENGTH}
@@ -120,6 +130,7 @@ const MessageBox = ({handleSend, input, setInput, currentRoom, handleJoinLeaveRo
                     shouldReturn={false} 
                     shouldConvertEmojiToImage={false}
                   />
+                )}
               </div>
 
               <p className={`text-sm mr-2 
