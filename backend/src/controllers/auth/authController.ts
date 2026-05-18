@@ -30,6 +30,8 @@ export const login = async (req: Request, res: Response) => {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+      domain: process.env.NODE_ENV === "production" ? ".onrender.com" : undefined,
+      partitioned: process.env.NODE_ENV === "production",
       maxAge: ms("7d"), 
       path: "/",
     });
@@ -74,6 +76,8 @@ export const logout = (_req: Request, res: Response) => {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+    domain: process.env.NODE_ENV === "production" ? ".onrender.com" : undefined, 
+    partitioned: process.env.NODE_ENV === "production",
     path: "/",
   });
   res.json({ message: "Logged out" });

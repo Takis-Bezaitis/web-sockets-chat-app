@@ -156,7 +156,7 @@ const MessageBox = ({handleSend, input, setInput, currentRoom, handleJoinLeaveRo
                 }}
                 placeholder={`Message #${currentRoom?.name}`}
                 className="w-full border border-border-line resize-none rounded-lg p-2 
-                  text-foreground placeholder-gray-600 bg-component-background focus:outline-none no-scrollbar"
+                  text-foreground placeholder-gray-500 bg-component-background focus:outline-none no-scrollbar"
                 rows={1}
               />
               <div 
