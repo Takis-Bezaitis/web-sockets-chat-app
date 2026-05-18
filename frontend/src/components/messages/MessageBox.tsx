@@ -29,11 +29,10 @@ const MessageBox = ({handleSend, input, setInput, currentRoom, handleJoinLeaveRo
   const draft = useMessageStore(s => s.draftByRoom[currentRoom.id] ?? "");
   const setDraft = useMessageStore(s => s.setDraftForRoom);
   const setReplyingTo = useMessageStore(s => s.setReplyingTo);
+  const roomId = currentRoom?.id;
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
   const [showInput, setShowInput] = useState(currentRoom?.isMember ?? false);
-  const roomId = currentRoom?.id;
-  const inputRef = useRef<HTMLInputElement | null>(null);
-  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState(false);
   
   const canSend = currentRoom?.isMember && input.length > 0 && input.length <= MESSAGE_MAX_LENGTH;
@@ -87,10 +86,10 @@ const MessageBox = ({handleSend, input, setInput, currentRoom, handleJoinLeaveRo
   }, [currentRoom.id]);
 
   useEffect(() => {
-    if (showInput && inputRef.current) {
-      inputRef.current.focus();
+    if (showInput && textareaRef.current && !isSmall) {
+      textareaRef.current.focus();
     }
-  }, [roomId, showInput, replyingTo]);
+  }, [roomId, showInput, replyingTo, isSmall]);
 
   useEffect(() => {
     setShowInput(currentRoom?.isMember ?? false);
@@ -141,7 +140,6 @@ const MessageBox = ({handleSend, input, setInput, currentRoom, handleJoinLeaveRo
               <textarea
                 ref={textareaRef}
                 value={input}
-                autoFocus
                 maxLength={MESSAGE_MAX_LENGTH}
                 onChange={(e) => handleInputChange(e.target.value)}
                 onKeyDown={(e) => {
