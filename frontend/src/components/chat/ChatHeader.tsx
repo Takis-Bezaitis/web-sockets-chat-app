@@ -20,6 +20,7 @@ type ChatHeaderProps = {
 const ChatHeader = ({user, mobileView, currentRoom, roomMessages, loading, showMembers, setShowMembers, onScrollToMessage}: ChatHeaderProps) => {
   const isSmall = useMediaQuery("(max-width: 768px)");
   const token = useAuthStore.getState().token;
+  const isMember = currentRoom?.isMember ?? false;
   
   const handleLogout = async () => {
     await fetch(API.auth.logout, {
@@ -44,9 +45,9 @@ const ChatHeader = ({user, mobileView, currentRoom, roomMessages, loading, showM
         </div>
       </div>
 
-      <div className={`relative overflow-hidden mx-5 ${isSmall && 'max-w-28'}`}>
+      {isMember && !isSmall && <div className={`relative overflow-hidden mx-5 ${isSmall && 'max-w-28'}`}>
           <p className="truncate"># {currentRoom.name}</p>
-      </div>
+      </div>}
 
       <div className={`flex gap-2 items-center ${isSmall && 'ml-2'}`}>
         {((isSmall && mobileView === "chat") || !isSmall) &&
