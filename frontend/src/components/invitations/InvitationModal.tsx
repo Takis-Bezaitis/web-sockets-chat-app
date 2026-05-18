@@ -11,7 +11,7 @@ const InvitationModal = ({ invitations }: InvitationModalProps) => {
   if (invitations.length === 0) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+    <div className="fixed inset-0 z-90 flex items-center justify-center bg-black/40">
       <div className="bg-surface text-foreground rounded-lg shadow-xl w-96 p-4">
         <h2 className="text-lg font-semibold mb-3">Room Invitations</h2>
 

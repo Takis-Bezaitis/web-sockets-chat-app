@@ -100,7 +100,7 @@ const CreateNewRoom = ({ onClose }: CreateNewRoomProps) => {
   }
 
   return (
-    <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/50">
+    <div className="fixed inset-0 z-80 flex items-center justify-center bg-black/50">
       {inviteMembersVisible && newRoom ? (
         <RoomMembersInvite inviteRoomId={newRoom.id} roomName={name} mode='create' onClose={onClose} onCloseInviteMembers={closeInviteMembers} />
       ) : (

@@ -29,16 +29,33 @@ const ChatContent = ({currentRoom,
   
   return (
     <>
-      <div id="messages-area" className={`flex flex-col flex-1 min-h-0 
+      <div id="messages-area" className={`relative flex flex-col flex-1 min-h-0 
       ${videoAndChat ? 'bg-component-background' : 'bg-background'} overflow-hidden px-2`}>
         <div className="flex-1 overflow-y-auto no-scrollbar flex flex-col">
             <Messages user={user} messages={roomMessages} currentRoom={currentRoom} 
             loading={loading} onRegisterScroll={onRegisterScroll} />
         </div>
         {currentRoom && typingUserByRoom[currentRoom.id] && (
-            <div className="text-sm text-gray-500 italic mb-1 px-4 flex items-center gap-2">
+          <div 
+            className="
+              absolute 
+              flex 
+              items-center
+              bottom-0
+              rounded
+              border
+              border-border-line
+              z-75 
+              mb-23 
+              text-sm 
+              bg-background 
+              text-foreground 
+              italic 
+              p-2 
+              gap-2"
+            >
             <span className="animate-pulse">💬 {typingUserByRoom[currentRoom.id]} is typing...</span>
-            </div>
+          </div>
         )}
         <MessageBox 
           handleSend={handleSend} 
