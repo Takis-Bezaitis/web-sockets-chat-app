@@ -47,7 +47,7 @@ const MessageSearch = ({user, messages, loading, onScrollToMessage}: MessageSear
         <span className="opacity-60 select-none">🔍</span>
         <input 
             disabled={loading}
-            autoFocus
+            
             placeholder="Search channel"
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}

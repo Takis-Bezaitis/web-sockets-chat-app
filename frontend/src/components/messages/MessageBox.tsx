@@ -31,6 +31,7 @@ const MessageBox = ({handleSend, input, setInput, currentRoom, handleJoinLeaveRo
   const setReplyingTo = useMessageStore(s => s.setReplyingTo);
   const roomId = currentRoom?.id;
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const didMountRef = useRef(false);
 
   const [showInput, setShowInput] = useState(currentRoom?.isMember ?? false);
   const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState(false);
@@ -86,6 +87,11 @@ const MessageBox = ({handleSend, input, setInput, currentRoom, handleJoinLeaveRo
   }, [currentRoom.id]);
 
   useEffect(() => {
+    if (!didMountRef.current) {
+      didMountRef.current = true;
+      return;
+    }
+
     if (showInput && textareaRef.current && !isSmall) {
       textareaRef.current.focus();
     }
