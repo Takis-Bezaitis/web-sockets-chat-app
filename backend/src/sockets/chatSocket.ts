@@ -231,8 +231,6 @@ export default function chatSocket(io: Server) {
     /* --------------- */
 
     customSocket.on("disconnect", async () => {
-      //console.log(`User disconnected: ${socket.id} (${reason})`);
-
       const userId = customSocket.data.userId;
 
       if (!userId) return;

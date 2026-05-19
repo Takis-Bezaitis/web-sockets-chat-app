@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { API } from "../api/api";
 import { useAuthStore } from "./authStore";
+import { apiFetch } from "../api/apiFetch";
 
 export type PublicUserDTO = {
   id: number;
@@ -28,7 +29,7 @@ export const useUsersStore = create<UsersStore>((set) => ({
       const token = useAuthStore.getState().token;
       if (!token) throw new Error("No auth token");
 
-      const res = await fetch(API.users, {
+      const res = await apiFetch(API.users, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",

@@ -82,13 +82,6 @@ export const getRoomUsers = async (req: Request<{ roomId: string }>, res: Respon
 };
 
 export const getUserRoomsWithMembership = async (req: AuthRequest & Request<{ userId: string}>, res: Response<ApiResponse<RoomWithMembershipDTO[]>>): Promise<void> => {
-    console.log(" ");
-    console.log("--------------------------------------------");
-    console.log("GET ROOMS USER:", req.user);
-    console.log("GET ROOMS COOKIES:", req.cookies);
-    console.log("GET ROOMS PARAM:", req.params.userId);
-    console.log("--------------------------------------------");
-    console.log(" ");
     const { userId } = req.params;
     const rooms = await roomService.getUserRoomsWithMembership(Number(userId));
     res.json({ data: rooms });

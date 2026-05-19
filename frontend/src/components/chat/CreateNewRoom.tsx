@@ -4,6 +4,7 @@ import RoomMembersInvite from "../invitations/RoomMembersInvite";
 import type { RoomWithMembershipDTO } from "../../types/custom";
 import { API } from "../../api/api";
 import { useAuthStore } from "../../store/authStore";
+import { apiFetch } from "../../api/apiFetch";
 
 type CreateNewRoomProps = {
   onClose: () => void;
@@ -27,7 +28,7 @@ const CreateNewRoom = ({ onClose }: CreateNewRoomProps) => {
       const token = useAuthStore.getState().token;
       if (!token) return;
       
-      const res = await fetch(`${API.rooms}/create-room`, {
+      const res = await apiFetch(`${API.rooms}/create-room`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -72,7 +73,7 @@ const CreateNewRoom = ({ onClose }: CreateNewRoomProps) => {
       const token = useAuthStore.getState().token;
       if (!token) return;
       
-      const res = await fetch(`${API.rooms}/${newRoom?.id}`, {
+      const res = await apiFetch(`${API.rooms}/${newRoom?.id}`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`,

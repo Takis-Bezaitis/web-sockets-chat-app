@@ -42,7 +42,6 @@ export const useSocketStore = create<SocketState>((set, get) => ({
     );
 
     socket.on("connect", () => {
-      console.log("✅ socket connected", socket.id);
       // Mark the local user as online locally
       const localUserId = useAuthStore.getState().user?.id;
       if (localUserId) {

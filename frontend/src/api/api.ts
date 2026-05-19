@@ -5,7 +5,6 @@ export const API = {
     base: `${BASE_URL}/api/auth`,
     login: `${BASE_URL}/api/auth/login`,
     refresh: `${BASE_URL}/api/auth/refresh`,
-    me: `${BASE_URL}/api/auth/me`,
     logout: `${BASE_URL}/api/auth/logout`,
   },
   rooms: `${BASE_URL}/api/rooms`,

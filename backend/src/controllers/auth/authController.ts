@@ -2,7 +2,6 @@ import { type Request, type Response } from "express";
 import ms from "ms";
 
 import { registerUser, loginUser, refreshAccessToken } from "../../services/auth/authService.js";
-import { type AuthRequest } from "../../types/custom.js";
 import { registerSchema, loginSchema } from "../../validation/authValidation.js";
 import { AppError } from "../../utils/AppError.js";
 
@@ -30,12 +29,10 @@ export const login = async (req: Request, res: Response) => {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-      partitioned: process.env.NODE_ENV === "production",
       maxAge: ms("7d"), 
       path: "/",
     });
-    console.log("LOGIN RESPONSE USER:", user);
-    console.log("ACCESS TOKEN:", accessToken);
+
     res.json({
       ...user,
       token: accessToken,
@@ -54,7 +51,8 @@ export const refresh = async (req: Request, res: Response) => {
   res.json(result);
 };
 
-export const getMe = async (req: AuthRequest, res: Response) => {
+// not used
+/*export const getMe = async (req: AuthRequest, res: Response) => {
   const user = req.user;
 
   if (!user) {
@@ -68,14 +66,13 @@ export const getMe = async (req: AuthRequest, res: Response) => {
       username: user.username,
     },
   });
-};
+};*/
 
 export const logout = (_req: Request, res: Response) => {
   res.clearCookie("refreshToken", {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-    partitioned: process.env.NODE_ENV === "production",
     path: "/",
   });
   res.json({ message: "Logged out" });

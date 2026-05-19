@@ -2,7 +2,7 @@ import { create } from "zustand";
 import type { Message, MessageReaction } from "../types/custom";
 import { MESSAGES_LIMIT } from "../constants/message";
 import { API } from "../api/api";
-import { useAuthStore } from "./authStore";
+import { apiFetch } from "../api/apiFetch";
 
 interface MessageState {
   messagesByRoom: Record<number, Message[]>;
@@ -110,19 +110,12 @@ export const useMessageStore = create<MessageState>((set, get) => ({
 
   try {
     const before = cursorByRoom[roomId];
+
     const url = before
       ? `${API.messages}/${roomId}/room-messages?before=${before}&limit=${MESSAGES_LIMIT}`
       : `${API.messages}/${roomId}/room-messages?limit=${MESSAGES_LIMIT}`;
 
-    const token = useAuthStore.getState().token;
-    if (!token) return;
-
-    const res = await fetch(url, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-    });
+    const res = await apiFetch(url);
 
     if (!res.ok) return;
 

@@ -4,6 +4,7 @@ import { useAuthStore } from "../../store/authStore";
 import { useUsersStore } from "../../store/usersStore";
 import type { RoomUsers } from "../../types/custom";
 import { API } from "../../api/api";
+import { apiFetch } from "../../api/apiFetch";
 
 type RoomMembersInviteProps = {
     inviteRoomId: number;
@@ -123,7 +124,7 @@ const RoomMembersInvite = ({
                 const token = useAuthStore.getState().token;
                 if (!token) return;
 
-                const res = await fetch(API.invitations, {
+                const res = await apiFetch(API.invitations, {
                     method: "POST",
                     headers: {
                     Authorization: `Bearer ${token}`,

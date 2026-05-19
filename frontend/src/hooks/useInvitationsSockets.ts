@@ -4,6 +4,7 @@ import { useSocketStore } from "../store/socketStore";
 import { useInvitationStore } from "../store/invitationStore";
 import { useChatRooms } from "./useChatRooms";
 import { API } from "../api/api";
+import { apiFetch } from "../api/apiFetch";
 
 export const useInvitations = () => {
   const { user } = useAuthStore();
@@ -13,7 +14,7 @@ export const useInvitations = () => {
     try {
       const token = useAuthStore.getState().token;
       if (!token) return;
-      const res = await fetch(API.invitations, {
+      const res = await apiFetch(API.invitations, {
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
@@ -36,7 +37,7 @@ export const useInvitations = () => {
         const token = useAuthStore.getState().token;
         if (!token) return;
 
-        const res = await fetch(`${API.invitations}/${invitationId}/accept`, {
+        const res = await apiFetch(`${API.invitations}/${invitationId}/accept`, {
           method: "POST",
           headers: {
             Authorization: `Bearer ${token}`,
@@ -47,7 +48,7 @@ export const useInvitations = () => {
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "Failed to accept invitation");
 
-        await fetch(`${API.rooms}/${roomId}/join`, {
+        await apiFetch(`${API.rooms}/${roomId}/join`, {
           method: "POST",
           headers: {
             Authorization: `Bearer ${token}`,
@@ -74,7 +75,7 @@ export const useInvitations = () => {
         const token = useAuthStore.getState().token;
         if (!token) return;
 
-        const res = await fetch(`${API.invitations}/${invitationId}/decline`, {
+        const res = await apiFetch(`${API.invitations}/${invitationId}/decline`, {
           method: "POST",
           headers: {
             Authorization: `Bearer ${token}`,

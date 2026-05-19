@@ -9,30 +9,17 @@ if (!JWT_SECRET) {
 }
 
 export function authMiddleware(req: AuthRequest, _res: Response, next: NextFunction) {
-  console.log(" ");
-  console.log(" ");
-  console.log(" ");
-  console.log("--- AUTH MIDDLEWARE HIT ---");
-  console.log("REQ COOKIES:", req.cookies);
-  console.log("REQ HEADERS COOKIE:", req.headers.cookie);
-  console.log("AUTH HEADER:", req.headers.authorization);
-  console.log(" ");
-  console.log(" ");
-  console.log(" ");
   try {
-    let token = req.cookies.token; // read cookie
+    let token: string | undefined;
 
-     // If no cookie token, try Authorization header (for Thunder Client, mobile apps, etc.)
-    if (!token && req.headers.authorization?.startsWith("Bearer ")) {
-      token = req.headers.authorization.split(" ")[1];
+    if (req.headers.authorization?.startsWith("Bearer ")) { 
+      token = req.headers.authorization.split(" ")[1]; 
     }
 
     if (!token) {
       console.log("AUTH FAILED - NO TOKEN FOUND");
       throw new AppError("Not authenticated", 401);
     }
-
-    console.log("EXTRACTED TOKEN:", token);
 
     // Verify token
     const decoded = jwt.verify(token, JWT_SECRET, { 

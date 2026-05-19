@@ -5,6 +5,7 @@ import { useSocketStore } from "../store/socketStore";
 import { useRoomStore } from "../store/roomStore";
 import { useAuthStore } from "../store/authStore";
 import { API } from "../api/api";
+import { apiFetch } from "../api/apiFetch";
 
 
 export function useChatRooms(userId?: number) {
@@ -29,7 +30,7 @@ export function useChatRooms(userId?: number) {
       const token = useAuthStore.getState().token;
       if (!token) throw new Error("No auth token");
 
-      const res = await fetch(`${API.rooms}/${userId}/rooms`, {
+      const res = await apiFetch(`${API.rooms}/${userId}/rooms`, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
@@ -58,7 +59,7 @@ export function useChatRooms(userId?: number) {
       const token = useAuthStore.getState().token;
       if (!token) return;
 
-      const res = await fetch(`${API.rooms}/${roomId}/room-users`, {
+      const res = await apiFetch(`${API.rooms}/${roomId}/room-users`, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
@@ -106,7 +107,7 @@ export function useChatRooms(userId?: number) {
       const token = useAuthStore.getState().token;
       if (!token) return;
 
-      const res = await fetch(`${API.rooms}/${room.id}/${action}`, {
+      const res = await apiFetch(`${API.rooms}/${room.id}/${action}`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
