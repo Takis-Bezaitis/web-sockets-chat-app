@@ -19,7 +19,7 @@ export async function apiFetch(
     ...init,
     headers,
   });
-console.log("API STATUS:", response.status);
+
   // accessToken expired
   if (response.status === 401) {
     const refreshRes = await fetch(API.auth.refresh, {

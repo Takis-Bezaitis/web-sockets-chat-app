@@ -45,10 +45,6 @@ app.use('/api/messages', messageRoutes);
 app.use('/api/invitations', invitationRoutes);
 app.use('/api/users', usersRoutes);
 
-app.get("/api/health", (_req, res) => {
-  res.status(200).send("OK");
-});
-
 // Global error handler
 app.use(errorHandler); 
 
