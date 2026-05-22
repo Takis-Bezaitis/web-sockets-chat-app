@@ -168,14 +168,14 @@ export function useChatRooms(userId?: number) {
     const socket = useSocketStore.getState().socket;
     if (!socket || !currentRoom?.id) return;
 
-    const handleMembershipJoined = ({ roomId, userLeft, }: { 
+    const handleMembershipJoined = ({ roomId, userJoined, }: { 
       roomId: number;
-      userLeft: { id: number; username: string };
+      userJoined: { id: number; username: string };
     }) => {
       if (roomId !== currentRoom.id) return;
 
      
-      toast(`${userLeft.username} joined #${currentRoom.name}`);
+      toast(`${userJoined.username} joined #${currentRoom.name}`);
       getRoomUsers(currentRoom.id);
     };
 

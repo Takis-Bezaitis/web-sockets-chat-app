@@ -17,6 +17,7 @@ const MobileNavBar = ({ mobileView, setMobileView, videoOverlay, setVideoOverlay
       <button
         disabled={callState!='idle'}
         onClick={() => setMobileView("rooms")}
+        className={callState==='idle' ? 'opacity-100' : 'opacity-50'}
       >
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="30" height="30"
           className={`${callState!='idle' ? 'cursor-default' : 'cursor-pointer'} 

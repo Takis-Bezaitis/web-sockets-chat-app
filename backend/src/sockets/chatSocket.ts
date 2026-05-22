@@ -86,7 +86,7 @@ export default function chatSocket(io: Server) {
       
       customSocket.to(`room:${roomId}`).emit("membership:joined", {
         roomId,
-        userLeft: {
+        userJoined: {
           id: Number(customSocket.user!.id),
           username: customSocket.user!.username,
         },

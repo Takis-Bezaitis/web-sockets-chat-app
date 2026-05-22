@@ -116,11 +116,11 @@ const Login = () => {
         </Button>
       </form>
 
-      <p className="text-center text-sm text-gray-500 mt-4">
+      <p className="text-center text-sm text-gray-500 mt-3">
         Initial load may take around 20 seconds while the server wakes up.
       </p>
 
-      <p className="text-center text-lg mt-8 mb-3">
+      <p className="text-center text-lg mt-6 mb-2">
         Demo accounts
       </p>
 
