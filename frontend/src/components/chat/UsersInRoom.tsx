@@ -17,7 +17,7 @@ interface UsersInRoomProps {
 const UsersInRoom = ({ user, currentRoomUsers, currentRoom, mobileView, videoOverlay, setShowMembers, onStartVideoCall }: UsersInRoomProps) => {
   const onlineUsers = usePresenceStore((state) => state.onlineUsers);
   const callState = useWebRTCStore((state) => state.callState);
-  const isCaller = useWebRTCStore((state) => state.isCaller);
+  const usersOnVideoChat = useWebRTCStore((state) => state.usersOnVideoChat);
 
   return (
     <div className="flex flex-col h-full bg-component-background">
@@ -36,7 +36,8 @@ const UsersInRoom = ({ user, currentRoomUsers, currentRoom, mobileView, videoOve
         {Array.isArray(currentRoomUsers) && currentRoomUsers.map((roomUser) => {
           if (user?.id === roomUser.id) return null;
 
-          const isPresent = onlineUsers[roomUser.id];
+          const isOnline = onlineUsers[roomUser.id];
+          const isOnVideoCall = usersOnVideoChat[roomUser.id];
 
           return (
             <div 
@@ -47,8 +48,9 @@ const UsersInRoom = ({ user, currentRoomUsers, currentRoom, mobileView, videoOve
                 <span>👤</span>
                 <span
                   className={`
-                    absolute bottom-0 right-0 block w-3 h-3 rounded-full translate-y-1
-                    ${isPresent ? "bg-green-500" : "bg-red-500"}
+                    absolute bottom-0 right-0 block w-3 h-3 rounded-full border-white border-1 translate-y-1
+                    ${(isOnline && !isOnVideoCall) ? "bg-green-500" : 
+                      (isOnline && isOnVideoCall) ? "bg-red-500" : 'bg-zinc-600'}
                   `}
                 />
               </div>
@@ -57,14 +59,20 @@ const UsersInRoom = ({ user, currentRoomUsers, currentRoom, mobileView, videoOve
                 <p className="text-lg truncate">{roomUser.username}</p>
               </div>
 
-              <div className={`min-w-fit ml-auto 
-                ${((isCaller && callState!=="idle") || (!isCaller && callState!=="idle")) ? 'pointer-events-none' : ''}`}>
+              <div
+                className={`min-w-fit ml-auto ${
+                  callState !== "idle" && !isOnVideoCall
+                    ? "pointer-events-none"
+                    : ""
+                }`}
+              >
                 <VideoCallButton
                   calleeId={roomUser.id}
                   calleeName={roomUser.username}
                   callerId={user!.id}
                   roomId={currentRoom?.id}
                   user={user}
+                  isOnVideoCall={isOnVideoCall}
                   onCallStarted={onStartVideoCall}
                 />
               </div>

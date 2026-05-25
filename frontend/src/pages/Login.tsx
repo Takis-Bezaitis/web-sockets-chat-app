@@ -78,9 +78,9 @@ const Login = () => {
       <form
         onSubmit={handleSubmit}
         autoComplete="off"
-        className="bg-white p-8 rounded-xl shadow-lg w-full max-w-sm"
+        className="bg-white px-8 py-6 rounded-xl shadow-lg w-full max-w-sm"
       >
-        <h1 className="text-2xl mb-6 text-center">Login</h1>
+        <h1 className="text-2xl mb-4 text-center">Login</h1>
 
         {error && <p className="text-red-500 mb-4">{error}</p>}
 

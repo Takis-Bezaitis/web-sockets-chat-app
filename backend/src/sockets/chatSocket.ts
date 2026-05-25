@@ -201,10 +201,22 @@ export default function chatSocket(io: Server) {
 
     customSocket.on("video:call-request", (data) => {
       io.to(`user:${data.calleeId}`).emit("video:call-request", data);
+      io.emit("video:user-onvideo-call", {
+        userOnVideoCall: data.callerId,
+        status: true,
+      });
     });
 
     customSocket.on("video:call-response", (data) => {
       io.to(`user:${data.callerId}`).emit("video:call-response", data);
+      io.emit("video:user-onvideo-call", {
+        userOnVideoCall: data.callerId,
+        status: data.accepted ? true : false,
+      });
+      io.emit("video:user-onvideo-call", {
+        userOnVideoCall: data.calleeId,
+        status: data.accepted ? true : false,
+      });
     });
 
     customSocket.on("video:webrtc-offer", (data) => {
@@ -220,7 +232,17 @@ export default function chatSocket(io: Server) {
     });
 
     customSocket.on("video:call-ended", (data) => {
-      io.to(`user:${data.targetUserId}`).emit("video:call-ended");
+      io.to(`user:${data.caller}`).emit("video:call-ended");
+      io.to(`user:${data.callee}`).emit("video:call-ended");
+      io.emit("video:user-onvideo-call", {
+        userOnVideoCall: data.caller,
+        status: false,
+      });
+      io.emit("video:user-onvideo-call", {
+        userOnVideoCall: data.callee,
+        status: false,
+      });
+
     });
 
     customSocket.on("video:media-state", ({ targetUserId, micMuted, cameraOff }) => {

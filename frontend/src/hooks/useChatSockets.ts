@@ -4,6 +4,7 @@ import { useWebRTCStore } from "../store/webrtcStore";
 
 import {
   handleCallRequest,
+  setCallerOnVideoCallStatus,
   handleCallResponse,
   handleOffer,
   handleAnswer,
@@ -33,6 +34,7 @@ export const useChatSockets = (currentRoomId?: number) => {
     if (!socket) return;
 
     socket.on("video:call-request", handleCallRequest);
+    socket.on("video:user-onvideo-call", setCallerOnVideoCallStatus);
     socket.on("video:call-response", handleCallResponse);
     socket.on("video:webrtc-offer", handleOffer);
     socket.on("video:webrtc-answer", handleAnswer);
@@ -48,6 +50,7 @@ export const useChatSockets = (currentRoomId?: number) => {
 
     return () => {
       socket.off("video:call-request", handleCallRequest);
+      socket.off("video:user-onvideo-call", setCallerOnVideoCallStatus);
       socket.off("video:call-response", handleCallResponse);
       socket.off("video:webrtc-offer", handleOffer);
       socket.off("video:webrtc-answer", handleAnswer);

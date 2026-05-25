@@ -30,6 +30,8 @@ interface WebRTCStore {
   isRemoteMicMuted: boolean;
   isRemoteCameraOff: boolean;
 
+  usersOnVideoChat: Record<number, boolean>;
+
   setLocalStream: (stream: MediaStream | null) => void;
   setRemoteStream: (stream: MediaStream | null) => void;
   setPeerConnection: (pc: RTCPeerConnection | null) => void;
@@ -47,6 +49,8 @@ interface WebRTCStore {
     micMuted: boolean;
     cameraOff: boolean;
   }) => void;
+
+  setUserOnVideoChatStatus: (userId: number, isOnline: boolean) => void;
 
   declineCall: () => void;
   cleanupCall: () => void;
@@ -69,6 +73,8 @@ export const useWebRTCStore = create<WebRTCStore>((set, get) => ({
 
   isRemoteMicMuted: false,
   isRemoteCameraOff: false,
+
+  usersOnVideoChat: {},
 
   setLocalStream: (stream) => set({ localStream: stream }),
   setRemoteStream: (stream) => set({ remoteStream: stream }),
@@ -126,6 +132,11 @@ export const useWebRTCStore = create<WebRTCStore>((set, get) => ({
       isRemoteMicMuted: micMuted,
       isRemoteCameraOff: cameraOff,
     }),
+
+  setUserOnVideoChatStatus: (userId, isOnVideoCall) =>
+    set((state) => ({
+      usersOnVideoChat: { ...state.usersOnVideoChat, [userId]: isOnVideoCall }
+    })),
 
   declineCall: () =>
     set({

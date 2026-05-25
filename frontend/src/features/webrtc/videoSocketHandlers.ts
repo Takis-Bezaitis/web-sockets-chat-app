@@ -1,3 +1,4 @@
+import toast from "react-hot-toast";
 import { useWebRTCStore } from "../../store/webrtcStore";
 import { useSocketStore } from "../../store/socketStore";
 
@@ -7,6 +8,11 @@ type CallRequestData = {
   calleeId: number;
   calleeName: string;
 };
+
+type CallerData = {
+  userOnVideoCall: number;
+  status: boolean;
+}
 
 type CallResponseData = {
   accepted: boolean;
@@ -29,7 +35,7 @@ type IceCandidateData = {
 };
 
 // =============================
-// 1. INCOMING CALL (callee)
+// INCOMING CALL (callee)
 // =============================
 export const handleCallRequest = (data: CallRequestData) => {
   const {
@@ -50,10 +56,12 @@ export const handleCallRequest = (data: CallRequestData) => {
   setRemoteUserId(data.callerId);
 };
 
-
+export const setCallerOnVideoCallStatus = async ({userOnVideoCall, status}: CallerData) => {
+  useWebRTCStore.getState().setUserOnVideoChatStatus(Number(userOnVideoCall), status);
+}
 
 // =============================
-// 2. CALL ACCEPTED BY CALLEE (caller side)
+// CALL ACCEPTED BY CALLEE (caller side)
 // =============================
 export const handleCallResponse = async (data: CallResponseData) => {
   if (!data.accepted) {
@@ -194,6 +202,10 @@ export const handleIceCandidate = async (data: IceCandidateData) => {
 };
 
 export const onCallEnded = () => {
-  const cleanupCall = useWebRTCStore.getState().cleanupCall;
+  const {
+    cleanupCall,
+  } = useWebRTCStore.getState();
+  
+  toast("Video call ended.");
   cleanupCall();
 };

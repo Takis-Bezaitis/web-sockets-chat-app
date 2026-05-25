@@ -28,6 +28,8 @@ const VideoCallWindow = ({caller, callee, videoOverlay }: VideoCallWindowProps) 
   const isRemoteMicMuted = useWebRTCStore((s) => s.isRemoteMicMuted);
   const isRemoteCameraOff = useWebRTCStore((s) => s.isRemoteCameraOff);
   const callState = useWebRTCStore((s) => s.callState);
+  const incomingCaller = useWebRTCStore((s) => s.incomingCaller);
+  const outcomingCallee = useWebRTCStore((s) => s.outcomingCallee);
 
   const getOnlineStatus = usePresenceStore((s) => s.onlineUsers)
 
@@ -56,7 +58,9 @@ const VideoCallWindow = ({caller, callee, videoOverlay }: VideoCallWindowProps) 
   const endCall = () => {
     if (socket?.connected && remoteUserId) {
       socket.emit("video:call-ended", {
+        caller: incomingCaller?.id,
         targetUserId: remoteUserId,
+        callee: outcomingCallee?.id,
       });
     }
     cleanupCall();

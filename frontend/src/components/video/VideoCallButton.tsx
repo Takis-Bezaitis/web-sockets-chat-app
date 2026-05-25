@@ -10,13 +10,21 @@ interface VideoCallButtonProps {
   callerId: number;
   roomId?: number | null;
   user: User | null;
+  isOnVideoCall: boolean;
   onCallStarted?: () => void;
 };
 
-const VideoCallButton = ({ calleeId, calleeName, roomId, callerId, user, onCallStarted }: VideoCallButtonProps) => {
+const VideoCallButton = ({ 
+    calleeId, 
+    calleeName, 
+    roomId, 
+    callerId, 
+    user, 
+    isOnVideoCall,
+    onCallStarted }: VideoCallButtonProps) => {
   const { socket } = useSocketStore();
   const callState = useWebRTCStore((s) => s.callState);
-
+  
   const setLocalStream = useWebRTCStore((s) => s.setLocalStream);
   const setCallState = useWebRTCStore((s) => s.setCallState);
   const setIsCaller = useWebRTCStore((s) => s.setIsCaller);
@@ -59,7 +67,7 @@ const VideoCallButton = ({ calleeId, calleeName, roomId, callerId, user, onCallS
     }
   };
 
-  const isDisabled = callState !== "idle";
+  const isDisabled = callState !== "idle" || isOnVideoCall;
 
   return (
     <div

@@ -1,23 +1,28 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useSocketStore } from "../../store/socketStore";
 import { useMessageStore } from "../../store/messageStore";
 import { type Message, type User } from "../../types/custom";
 import { formatDate } from "../../utils/formatDate";
 import MessageActions from "./MessageActions";
 import MessageReactions from "./MessageReactions";
+import EmojiPicker from "./EmojiPicker";
 
-type Props = {
+type MessageItemProps = {
   message: Message;
   user: User | null;
   depth?: number;
+  ensureVisible: (id: number) => void;
 };
 
-const MessageItem = ({ message, user, depth = 0 }: Props) => {
+const MessageItem = ({ message, user, depth = 0, ensureVisible }: MessageItemProps) => {
   const [hoveredMessageId, setHoveredMessageId] = useState<number | null>(null);
   const [editingMessageId, setEditingMessageId] = useState<number | null>(null);
   const [editingText, setEditingText] = useState("");
+  const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState(false);
+
   const socket = useSocketStore.getState().socket;
   const setReplyingTo = useMessageStore((s) => s.setReplyingTo);
+  const editTextRef = useRef<HTMLInputElement | null>(null);
   
   const submitEdit = (messageId: number, roomId: number) => {
     if (!socket) return;
@@ -39,6 +44,13 @@ const MessageItem = ({ message, user, depth = 0 }: Props) => {
   const cancelEdit = () => {
     setEditingMessageId(null);
     setEditingText("");
+    setIsEmojiPickerOpen(false);
+  };
+
+  const updateMessage = (emoji: string) => {
+    const newValue = editingText + emoji;
+    setEditingText(newValue);
+    editTextRef.current?.focus();
   };
 
   return (
@@ -70,22 +82,66 @@ const MessageItem = ({ message, user, depth = 0 }: Props) => {
         <div className="text-3xl">👤</div>
 
         <div>
-          <span className="font-semibold">
-            {message.userId === user?.id ? "You" : message.username}
-          </span>{" "}
-          {formatDate(message.createdAt)}
+          <div>
+            <span className="font-semibold">
+              {message.userId === user?.id ? "You" : message.username}
+            </span>{" "}
+            {formatDate(message.createdAt)}
+
+            {editingMessageId === message.id &&
+              <span
+                  className="cursor-pointer ml-3.5"
+                  onClick={() => {
+                    const next = !isEmojiPickerOpen;
+                    setIsEmojiPickerOpen(next);
+
+                    if (next) {
+                      requestAnimationFrame(() => {
+                        ensureVisible(message.id);
+                      });
+                    }
+
+                    editTextRef.current?.focus();
+                  }}
+                >😀
+              </span>
+            }
+          </div>
 
           {editingMessageId === message.id ? (
-            <input
-              className="w-full bg-transparent outline-none border-b"
-              value={editingText}
-              onChange={(e) => setEditingText(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") submitEdit(message.id, message.roomId);
-                if (e.key === "Escape") cancelEdit();
-              }}
-              autoFocus
-            />
+            <>
+              <input
+                ref={editTextRef}
+                className="w-full bg-transparent outline-none border p-2 rounded-md"
+                value={editingText}
+                onChange={(e) => setEditingText(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") submitEdit(message.id, message.roomId);
+                  if (e.key === "Escape") cancelEdit();
+                }}
+                autoFocus
+              />
+
+              {isEmojiPickerOpen && 
+                <div className="my-1 z-71">
+                  <EmojiPicker textSelect={updateMessage} />
+                </div>
+              }
+
+              <p className="mt-2 text-sm text-white">
+                escape to <button
+                    className="cursor-pointer font-bold text-sky-950 hover:underline"
+                    onClick={() => cancelEdit()}
+                  >
+                    cancel
+                  </button> - enter to <button 
+                    className="cursor-pointer font-bold text-sky-950 hover:underline"
+                    onClick={() => submitEdit(message.id, message.roomId)}
+                  >
+                    save
+                  </button>
+              </p>
+            </>
           ) : (
             <div>{message.text}</div>
           )}
@@ -113,7 +169,7 @@ const MessageItem = ({ message, user, depth = 0 }: Props) => {
               replying to {reply.replyTo.username}: {reply.replyTo.text}
             </div>
           )}
-          <MessageItem message={reply} user={user} depth={depth + 1} />
+          <MessageItem message={reply} user={user} depth={depth + 1} ensureVisible={ensureVisible} />
         </div>
       ))}    
 

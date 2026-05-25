@@ -9,12 +9,12 @@ interface IncomingCallModalProps {
 };
 
 export default function IncomingCallModal({ visible, caller, callee }: IncomingCallModalProps) {
-    const { socket } = useSocketStore();
-    const cleanupCall = useWebRTCStore((s) => s.cleanupCall);
+  const { socket } = useSocketStore();
+  const cleanupCall = useWebRTCStore((s) => s.cleanupCall);
 
-    if (!visible || !caller) return null;
+  if (!visible || !caller) return null;
 
-    const handleAccept = async () => {
+  const handleAccept = async () => {
     if (!socket) return;
 
     const {
@@ -73,8 +73,6 @@ export default function IncomingCallModal({ visible, caller, callee }: IncomingC
     // 8️⃣ Update call state to inCall
     setCallState("inCall");
   };
-
-
 
   const handleDecline = () => {
     if (!socket) return;

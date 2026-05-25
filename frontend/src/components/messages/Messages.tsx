@@ -29,9 +29,7 @@ const Messages = ({ user, messages, currentRoom, loading, onRegisterScroll }: Us
   const setAnchorOffset = useMessageStore((s) => s.setAnchorOffset);
   const getAnchorOffset = useMessageStore((s) => s.getAnchorOffset);
 
-  /* ----------------------------------
-     Scroll to specific message
-     ---------------------------------- */
+  /* Scroll to specific message */
   const scrollToMessage = (id: number) => {
     const el = document.getElementById(`message-${id}`);
     if (!el) return;
@@ -42,9 +40,31 @@ const Messages = ({ user, messages, currentRoom, loading, onRegisterScroll }: Us
     setTimeout(() => el.classList.remove("ring-2", "ring-yellow-400"), 1500);
   };
 
-  /* ----------------------------------
-     New message auto-scroll
-     ---------------------------------- */
+  /* Scroll in case the message is towards the bottom of the screen */
+  const ensureMessageVisible = (id: number) => {
+    const container = containerRef.current;
+    const el = document.getElementById(`message-${id}`);
+
+    if (!container || !el) return;
+
+    const containerRect = container.getBoundingClientRect();
+    const rect = el.getBoundingClientRect();
+
+    // extra space for emoji picker
+    const pickerHeight = 220;
+
+    const overflowBottom =
+      rect.bottom + pickerHeight - containerRect.bottom;
+
+    if (overflowBottom > 0) {
+      container.scrollBy({
+        top: overflowBottom + 16,
+        behavior: "smooth",
+      });
+    }
+  };
+
+  /* New message auto-scroll */
   useEffect(() => {
     if (!currentRoom) return;
 
@@ -247,7 +267,7 @@ const Messages = ({ user, messages, currentRoom, loading, onRegisterScroll }: Us
       {messages
         .filter((msg) => msg.replyToId === null)
         .map((msg) => (
-          <MessageItem key={msg.id} message={msg} user={user} />
+          <MessageItem key={msg.id} message={msg} user={user} ensureVisible={ensureMessageVisible} />
         ))}
 
       <div ref={bottomRef} />
