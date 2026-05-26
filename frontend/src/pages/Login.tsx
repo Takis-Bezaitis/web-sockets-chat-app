@@ -117,7 +117,7 @@ const Login = () => {
       </form>
 
       <p className="text-center text-sm text-gray-500 mt-3">
-        Initial load may take around 20 seconds while the server wakes up.
+        Initial load may take 20–30 seconds while the server wakes up.
       </p>
 
       <p className="text-center text-lg mt-6 mb-2">

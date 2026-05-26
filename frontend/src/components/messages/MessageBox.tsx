@@ -20,54 +20,82 @@ type MessageBoxProps = {
 }
 
 const MessageBox = ({handleSend, input, setInput, currentRoom, handleJoinLeaveRoom}: MessageBoxProps) => {
-  if (!currentRoom) return null;
-
   const { socket } = useSocketStore();
   const { user } = useAuthStore();
-  
-  const replyingTo = useMessageStore(s => s.replyingToByRoom[currentRoom.id]);
-  const draft = useMessageStore(s => s.draftByRoom[currentRoom.id] ?? "");
+
+  const roomId = currentRoom?.id ?? null;
+
+  const replyingTo = useMessageStore(
+    s => roomId ? s.replyingToByRoom[roomId] : null
+  );
+
+  const draft = useMessageStore(
+    s => roomId ? s.draftByRoom[roomId] ?? "" : ""
+  );
+
   const setDraft = useMessageStore(s => s.setDraftForRoom);
   const setReplyingTo = useMessageStore(s => s.setReplyingTo);
-  const roomId = currentRoom?.id;
+
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const didMountRef = useRef(false);
 
   const [showInput, setShowInput] = useState(currentRoom?.isMember ?? false);
   const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState(false);
-  
-  const canSend = currentRoom?.isMember && input.length > 0 && input.length <= MESSAGE_MAX_LENGTH;
+
+  const canSend =
+    currentRoom?.isMember &&
+    input.length > 0 &&
+    input.length <= MESSAGE_MAX_LENGTH;
+
   const tooLong = input.length > MESSAGE_MAX_LENGTH;
-  const remainingChars = Math.max(MESSAGE_MAX_LENGTH - [...input].length, 0);
+
+  const remainingChars = Math.max(
+    MESSAGE_MAX_LENGTH - [...input].length,
+    0
+  );
 
   const isSmall = useMediaQuery("(max-width: 768px)");
 
   const handleTyping = () => {
     if (!socket || !user || !roomId) return;
-    socket.emit("typing", { user: user.email, roomId: currentRoom.id.toString() });
+
+    socket.emit("typing", {
+      user: user.email,
+      roomId: roomId.toString(),
+    });
   };
 
   const handleInputChange = (value: string) => {
+    if (!roomId) return;
+
     setInput(value);
-    setDraft(currentRoom.id, value);
+    setDraft(roomId, value);
+
     handleTyping();
 
     if (textareaRef.current) {
       textareaRef.current.style.height = "auto";
       textareaRef.current.style.height =
-        Math.min(textareaRef.current.scrollHeight, MAX_AREA_TEXT_HEIGHT) + "px";
+        Math.min(
+          textareaRef.current.scrollHeight,
+          MAX_AREA_TEXT_HEIGHT
+        ) + "px";
     }
   };
 
   const handleOptimisticJoin = () => {
+    if (!currentRoom) return;
+
     setShowInput(true);
     handleJoinLeaveRoom(currentRoom, "join");
   };
 
   const handleTextareaSend = () => {
+    if (!roomId) return;
+
     handleSend();
 
-    setDraft(currentRoom.id, "");
+    setDraft(roomId, "");
     setIsEmojiPickerOpen(false);
 
     if (textareaRef.current) {
@@ -84,7 +112,7 @@ const MessageBox = ({handleSend, input, setInput, currentRoom, handleJoinLeaveRo
   useEffect(() => {
     setInput(draft);
     setIsEmojiPickerOpen(false);
-  }, [currentRoom.id]);
+  }, [roomId]);
 
   useEffect(() => {
     if (!didMountRef.current) {
@@ -100,6 +128,8 @@ const MessageBox = ({handleSend, input, setInput, currentRoom, handleJoinLeaveRo
   useEffect(() => {
     setShowInput(currentRoom?.isMember ?? false);
   }, [currentRoom?.isMember]);
+
+  if (!currentRoom) return null;
 
   return (
     <div className="relative min-h-[80px] px-4 py-2 mb-2 rounded-lg border border-border-line bg-component-background flex-shrink-0 flex items-center justify-center">

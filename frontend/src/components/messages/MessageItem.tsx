@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import { useSocketStore } from "../../store/socketStore";
 import { useMessageStore } from "../../store/messageStore";
+import { useMediaQuery } from "../../hooks/useMediaQuery";
 import { type Message, type User } from "../../types/custom";
 import { formatDate } from "../../utils/formatDate";
 import MessageActions from "./MessageActions";
@@ -23,6 +24,8 @@ const MessageItem = ({ message, user, depth = 0, ensureVisible }: MessageItemPro
   const socket = useSocketStore.getState().socket;
   const setReplyingTo = useMessageStore((s) => s.setReplyingTo);
   const editTextRef = useRef<HTMLInputElement | null>(null);
+
+  const isSmall = useMediaQuery("(max-width: 768px)");
   
   const submitEdit = (messageId: number, roomId: number) => {
     if (!socket) return;
@@ -45,12 +48,20 @@ const MessageItem = ({ message, user, depth = 0, ensureVisible }: MessageItemPro
     setEditingMessageId(null);
     setEditingText("");
     setIsEmojiPickerOpen(false);
+    if (isSmall) {
+      setHoveredMessageId(null);
+    }
   };
 
   const updateMessage = (emoji: string) => {
     const newValue = editingText + emoji;
     setEditingText(newValue);
-    editTextRef.current?.focus();
+    if (editTextRef.current && !isSmall) {
+      editTextRef.current?.focus();
+    }
+    if (isSmall) {
+      setHoveredMessageId(null);
+    }
   };
 
   return (
@@ -101,7 +112,9 @@ const MessageItem = ({ message, user, depth = 0, ensureVisible }: MessageItemPro
                       });
                     }
 
-                    editTextRef.current?.focus();
+                    if (editTextRef.current && !isSmall) {
+                      editTextRef.current?.focus();
+                    }
                   }}
                 >😀
               </span>

@@ -55,7 +55,7 @@ Supports chat rooms, private messaging, live typing indicators, and **peer-to-pe
 
 ## ⚠️ Notes
 
-* The backend is hosted on a free tier and may take around 20 seconds to wake up after inactivity (cold start). If the app takes time to load initially, this is expected behavior.
+* The backend is hosted on a free tier and may take 20–30 seconds to wake up after inactivity (cold start). If the app takes time to load initially, this is expected behavior.
 
 ---
 
