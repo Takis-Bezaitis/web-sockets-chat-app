@@ -50,15 +50,12 @@ const Messages = ({ user, messages, currentRoom, loading, onRegisterScroll }: Us
     const containerRect = container.getBoundingClientRect();
     const rect = el.getBoundingClientRect();
 
-    // extra space for emoji picker
-    const pickerHeight = 220;
-
     const overflowBottom =
-      rect.bottom + pickerHeight - containerRect.bottom;
+      rect.bottom - containerRect.bottom;
 
     if (overflowBottom > 0) {
       container.scrollBy({
-        top: overflowBottom + 16,
+        top: overflowBottom + 25,
         behavior: "smooth",
       });
     }
