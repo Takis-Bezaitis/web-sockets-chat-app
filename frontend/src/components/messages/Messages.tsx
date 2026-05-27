@@ -5,6 +5,7 @@ import Spinner from "../ui/Spinner";
 import { onNewMessage } from "../../store/messageStore";
 import MessageItem from "./MessageItem";
 import { AUTO_SCROLL_THRESHOLD_PX } from "../../constants/message";
+import { useMediaQuery } from "../../hooks/useMediaQuery";
 
 type UserProps = {
   user: User | null;
@@ -19,6 +20,7 @@ const Messages = ({ user, messages, currentRoom, loading, onRegisterScroll }: Us
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const shouldAutoScrollRef = useRef(true);
+  const isSmall = useMediaQuery("(max-width: 768px)");
 
   const fetchRoomMessages = useMessageStore((s) => s.fetchRoomMessages);
   const hasMore = useMessageStore(
@@ -53,9 +55,11 @@ const Messages = ({ user, messages, currentRoom, loading, onRegisterScroll }: Us
     const overflowBottom =
       rect.bottom - containerRect.bottom;
 
+    const msgPadding = isSmall ? 0 : 25;
+
     if (overflowBottom > 0) {
       container.scrollBy({
-        top: overflowBottom + 25,
+        top: overflowBottom + msgPadding,
         behavior: "smooth",
       });
     }

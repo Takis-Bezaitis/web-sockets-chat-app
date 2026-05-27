@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSocketStore } from "../../store/socketStore";
 import { useMessageStore } from "../../store/messageStore";
 import { useMediaQuery } from "../../hooks/useMediaQuery";
@@ -64,6 +64,15 @@ const MessageItem = ({ message, user, depth = 0, ensureVisible }: MessageItemPro
     }
   };
 
+  useEffect(() => {
+    console.log("useEffect")
+    console.log("isSmall:",isSmall)
+    console.log("editTextRef.current:",editTextRef.current)
+    if (editTextRef.current && !isSmall) {
+      editTextRef.current?.focus();
+    }
+  }, [editingText])
+
   return (
     <div className={`ml-${depth * 6}`} key={message.id}>
       <div
@@ -71,7 +80,7 @@ const MessageItem = ({ message, user, depth = 0, ensureVisible }: MessageItemPro
         className={`relative flex gap-2 max-w-fit text-left 
           ${message.replyToId ? 'mt-3' : 'mt-6'}
           ${message.replies && message?.replies.length > 0 ? 'mb-6' : 'mb-11'}  
-          px-3 py-2 rounded cursor-pointer ${
+          px-3 py-2 rounded ${
           message.userId === user?.id
             ? "bg-message-user"
             : "bg-message-other-user"
@@ -132,7 +141,7 @@ const MessageItem = ({ message, user, depth = 0, ensureVisible }: MessageItemPro
                   if (e.key === "Enter") submitEdit(message.id, message.roomId);
                   if (e.key === "Escape") cancelEdit();
                 }}
-                autoFocus
+                
               />
 
               {isEmojiPickerOpen && 

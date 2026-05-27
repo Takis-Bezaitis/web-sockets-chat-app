@@ -1,8 +1,12 @@
+import { useMediaQuery } from "../../hooks/useMediaQuery";
+
 type EmojiPickerProps = {
     textSelect: (e: string) => void;
 }
 
 const EmojiPicker = ({textSelect}: EmojiPickerProps) => {
+    const isSmall = useMediaQuery("(max-width: 768px)");
+
     const emojisArray = [
     "😀","😂","🤣","😊","😍",
     "😎","🥳","😭","😡","👍",
@@ -14,9 +18,9 @@ const EmojiPicker = ({textSelect}: EmojiPickerProps) => {
         <div 
             className="bg-component-background text-foreground rounded-lg
                 border border-border-line shadow-lg p-2
-                w-[220px] h-[175px] overflow-y-auto no-scrollbar"
+                 overflow-y-auto no-scrollbar"
             >
-            <div className="grid grid-cols-5 gap-2">
+            <div className={`grid ${isSmall ? 'grid-cols-8' : 'grid-cols-5'} gap-2`}>
                 {emojisArray.map((e, index) => (
                     <button
                         key={index}
