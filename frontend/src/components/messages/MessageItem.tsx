@@ -64,10 +64,15 @@ const MessageItem = ({ message, user, depth = 0, ensureVisible }: MessageItemPro
     }
   };
 
+  const handleMessageClick = () => {
+    if (!isSmall) return;
+
+    setHoveredMessageId((prev) =>
+      prev === message.id ? null : message.id
+    );
+  };
+
   useEffect(() => {
-    console.log("useEffect")
-    console.log("isSmall:",isSmall)
-    console.log("editTextRef.current:",editTextRef.current)
     if (editTextRef.current && !isSmall) {
       editTextRef.current?.focus();
     }
@@ -85,8 +90,17 @@ const MessageItem = ({ message, user, depth = 0, ensureVisible }: MessageItemPro
             ? "bg-message-user"
             : "bg-message-other-user"
         }`}
-        onMouseEnter={() => setHoveredMessageId(message.id)}
-        onMouseLeave={() => setHoveredMessageId(null)}
+        onMouseEnter={() => {
+          if (!isSmall) {
+            setHoveredMessageId(message.id);
+          }
+        }}
+        onMouseLeave={() => {
+          if (!isSmall) {
+            setHoveredMessageId(null);
+          }
+        }}
+        onClick={handleMessageClick}
       >
         {hoveredMessageId === message.id && (
           <MessageActions
