@@ -4,7 +4,7 @@ import { useSocketStore } from "../../store/socketStore";
 type MessageActionsProps = {
     userId: number | undefined;
     message: Message;
-    onEdit: (msg: Message) => void;
+    onEdit: (e: React.MouseEvent, msg: Message) => void;
 };
 
 const MessageActions = ({userId, message, onEdit}: MessageActionsProps) => {
@@ -30,14 +30,44 @@ const MessageActions = ({userId, message, onEdit}: MessageActionsProps) => {
     <div 
       className="absolute flex gap-1 top-0 right-0 -translate-y-6 secondary-border-line 
       border-1 bg-background p-0.5 rounded-[7px] shadow cursor-pointer">
-        <div onClick={() => handleReactionClick("👍")}>👍</div>
-        <div onClick={() => handleReactionClick("❤️")}>❤️</div>
-        <div onClick={() => handleReactionClick("😄")}>😄</div>
+        <div onClick={(e) => {
+          e.stopPropagation();
+          handleReactionClick("👍");
+        }}>
+          👍
+        </div>
+
+        <div onClick={(e) => {
+          e.stopPropagation();
+          handleReactionClick("❤️")
+        }}>
+          ❤️
+        </div>
+
+        <div onClick={(e) => { 
+          e.stopPropagation();
+          handleReactionClick("😄")
+        }}>
+          😄
+        </div>
 
         {userId === message.userId && (
           <div className="flex gap-1">
-              <div onClick={() => onEdit(message)}>✏️</div>
-              <div onClick={() => handleDeleteMessage(message.id, message.roomId)}>🗑</div>
+              <div
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onEdit(e, message);
+                }}
+              >
+                ✏️
+              </div>
+              
+              <div onClick={(e) => {
+                e.stopPropagation();
+                handleDeleteMessage(message.id, message.roomId)
+              }}>
+                🗑
+              </div>
           </div>
         )}
     </div>

@@ -106,7 +106,7 @@ const MessageItem = ({ message, user, depth = 0, ensureVisible }: MessageItemPro
           <MessageActions
             userId={user?.id}
             message={message}
-            onEdit={(m) => {
+            onEdit={(_, m) => {
               setEditingMessageId(m.id);
               setEditingText(m.text);
             }}
@@ -125,7 +125,9 @@ const MessageItem = ({ message, user, depth = 0, ensureVisible }: MessageItemPro
             {editingMessageId === message.id &&
               <span
                   className="cursor-pointer ml-3.5"
-                  onClick={() => {
+                  onClick={(e) => {
+                    e.stopPropagation();
+
                     const next = !isEmojiPickerOpen;
                     setIsEmojiPickerOpen(next);
 
@@ -150,6 +152,7 @@ const MessageItem = ({ message, user, depth = 0, ensureVisible }: MessageItemPro
                 ref={editTextRef}
                 className="w-full bg-transparent outline-none border p-2 rounded-md"
                 value={editingText}
+                onClick={(e) => e.stopPropagation()}
                 onChange={(e) => setEditingText(e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === "Enter") submitEdit(message.id, message.roomId);
@@ -189,9 +192,11 @@ const MessageItem = ({ message, user, depth = 0, ensureVisible }: MessageItemPro
 
         <div 
           className="absolute right-1 bottom-[-19px] text-sm text-foreground hover:opacity-80 cursor-pointer"
-          onClick={() => {
-              if (!message.roomId) return;
-              setReplyingTo(message.roomId, message);
+          onClick={(e) => {
+            e.stopPropagation();
+
+            if (!message.roomId) return;
+            setReplyingTo(message.roomId, message);
           }}
         >
           Reply
