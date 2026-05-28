@@ -73,10 +73,14 @@ const MessageItem = ({ message, user, ensureVisible }: MessageItemProps) => {
   };
 
   useEffect(() => {
-    if (editTextRef.current && !isSmall) {
-      editTextRef.current?.focus();
+    if (
+      editingMessageId === message.id &&
+      editTextRef.current &&
+      !isSmall
+    ) {
+      editTextRef.current.focus();
     }
-  }, [editingText])
+  }, [editingMessageId, isSmall, message.id]);
 
   return (
     <div className="mb-14" key={message.id}>
@@ -109,6 +113,10 @@ const MessageItem = ({ message, user, ensureVisible }: MessageItemProps) => {
             onEdit={(_, m) => {
               setEditingMessageId(m.id);
               setEditingText(m.text);
+
+              requestAnimationFrame(() => {
+                ensureVisible(m.id);
+              });
             }}
           />
         )}
