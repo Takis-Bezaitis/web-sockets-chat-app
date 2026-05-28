@@ -21,14 +21,17 @@ const EmojiPicker = ({textSelect}: EmojiPickerProps) => {
                  overflow-y-auto no-scrollbar"
             >
             <div className={`grid ${isSmall ? 'grid-cols-8' : 'grid-cols-5'} gap-2`}>
-                {emojisArray.map((e, index) => (
+                {emojisArray.map((emoji, index) => (
                     <button
                         key={index}
                         type="button"
                         className="text-2xl hover:scale-110 transition-transform cursor-pointer"
-                        onClick={() => textSelect(e)}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            textSelect(emoji);
+                        }}
                     >
-                      {e}
+                      {emoji}
                     </button>
                 ))}
             </div>

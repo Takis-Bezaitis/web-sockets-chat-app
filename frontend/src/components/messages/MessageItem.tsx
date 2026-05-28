@@ -158,7 +158,7 @@ const MessageItem = ({ message, user, ensureVisible }: MessageItemProps) => {
             <>
               <input
                 ref={editTextRef}
-                className="w-full bg-transparent outline-none border p-2 rounded-md"
+                className="w-full bg-transparent outline-none border p-2 rounded-md h-min[15px]"
                 value={editingText}
                 onClick={(e) => e.stopPropagation()}
                 onChange={(e) => setEditingText(e.target.value)}
@@ -178,12 +178,18 @@ const MessageItem = ({ message, user, ensureVisible }: MessageItemProps) => {
               <p className="mt-2 text-sm text-white">
                 escape to <button
                     className="cursor-pointer font-bold text-sky-950 hover:underline"
-                    onClick={() => cancelEdit()}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      cancelEdit();
+                    }}
                   >
                     cancel
                   </button> - enter to <button 
                     className="cursor-pointer font-bold text-sky-950 hover:underline"
-                    onClick={() => submitEdit(message.id, message.roomId)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      submitEdit(message.id, message.roomId);
+                    }}
                   >
                     save
                   </button>
