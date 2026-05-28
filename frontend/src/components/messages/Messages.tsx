@@ -42,41 +42,40 @@ const Messages = ({ user, messages, currentRoom, loading, onRegisterScroll }: Us
     setTimeout(() => el.classList.remove("ring-2", "ring-yellow-400"), 1500);
   };
 
-  /* Scroll in case the message is towards the bottom of the screen */
-const ensureMessageVisible = (id: number) => {
-  const container = containerRef.current;
-  const el = document.getElementById(`message-${id}`);
+  const ensureMessageVisible = (id: number) => {
+    const container = containerRef.current;
+    const el = document.getElementById(`message-${id}`);
 
-  if (!container || !el) return;
+    if (!container || !el) return;
 
-  const containerRect = container.getBoundingClientRect();
-  const rect = el.getBoundingClientRect();
+    const containerRect = container.getBoundingClientRect();
+    const rect = el.getBoundingClientRect();
 
-  const msgPadding = isSmall ? 8 : 25;
+    const msgPadding = isSmall ? 8 : 25;
 
-  // How far the message is outside the visible area
-  const overflowTop = rect.top - containerRect.top;
-  const overflowBottom = rect.bottom - containerRect.bottom;
+    // How far the message is outside the visible area
+    const overflowTop = rect.top - containerRect.top;
+    const overflowBottom = rect.bottom - containerRect.bottom;
 
-  let scrollDelta = 0;
+    let scrollDelta = 0;
 
-  // If message is above viewport
-  if (overflowTop < 0) {
-    scrollDelta = overflowTop - msgPadding;
-  }
+    // If message is above viewport
+    if (overflowTop < 0) {
+      scrollDelta = overflowTop - msgPadding;
+    }
 
-  // If message is below viewport
-  if (overflowBottom > 0) {
-    scrollDelta = overflowBottom + msgPadding;
-  }
+    // If message is below viewport
+    if (overflowBottom > 0) {
+      scrollDelta = overflowBottom + msgPadding;
+    }
 
-  if (scrollDelta !== 0) {
-    container.scrollBy({
-      top: scrollDelta,
-      behavior: "smooth",
-    });
-  }
-};
+    if (scrollDelta !== 0) {
+      container.scrollBy({
+        top: scrollDelta,
+        behavior: "smooth",
+      });
+    }
+  };
 
   /* New message auto-scroll */
   useEffect(() => {

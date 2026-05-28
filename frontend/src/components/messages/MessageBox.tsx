@@ -132,7 +132,7 @@ const MessageBox = ({handleSend, input, setInput, currentRoom, handleJoinLeaveRo
   if (!currentRoom) return null;
 
   return (
-    <div className="relative min-h-[80px] px-4 py-2 mb-2 rounded-lg border border-border-line bg-component-background flex-shrink-0 flex items-center justify-center">
+    <div className="relative px-2 py-2 mb-2 rounded-lg border border-border-line bg-component-background flex-shrink-0 flex items-center justify-center">
         {showInput || (currentRoom.creatorId === user?.id) ? (
           <>
 
@@ -185,7 +185,7 @@ const MessageBox = ({handleSend, input, setInput, currentRoom, handleJoinLeaveRo
                   }
                 }}
                 placeholder={`Message #${currentRoom?.name}`}
-                className="w-full border border-border-line resize-none rounded-lg p-2 
+                className="w-full resize-none rounded-lg p-2 
                   text-foreground placeholder-gray-500 bg-component-background focus:outline-none no-scrollbar"
                 rows={1}
               />
