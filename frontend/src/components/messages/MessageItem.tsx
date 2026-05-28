@@ -83,7 +83,7 @@ const MessageItem = ({ message, user, ensureVisible }: MessageItemProps) => {
   }, [editingMessageId, isSmall, message.id]);
 
   return (
-    <div className="mb-14" key={message.id}>
+    <div className="mb-14" key={message.id} style={{transformOrigin:'top left'}}>
       <div
         id={`message-${message.id}`}
         className={`relative flex gap-2 max-w-fit text-left 
@@ -114,9 +114,9 @@ const MessageItem = ({ message, user, ensureVisible }: MessageItemProps) => {
               setEditingMessageId(m.id);
               setEditingText(m.text);
 
-              requestAnimationFrame(() => {
+              /*requestAnimationFrame(() => {
                 ensureVisible(m.id);
-              });
+              });*/
             }}
           />
         )}
@@ -158,7 +158,7 @@ const MessageItem = ({ message, user, ensureVisible }: MessageItemProps) => {
             <>
               <input
                 ref={editTextRef}
-                className="w-full bg-transparent outline-none border p-2 rounded-md h-min[15px]"
+                className="w-full bg-transparent outline-none border p-2 rounded-md"
                 value={editingText}
                 onClick={(e) => e.stopPropagation()}
                 onChange={(e) => setEditingText(e.target.value)}
