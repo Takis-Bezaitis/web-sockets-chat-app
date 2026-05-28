@@ -1,5 +1,5 @@
 import prisma from "../../prismaClient.js";
-import { type MessageDTO, type MessageReaction } from "../../types/custom.js";
+import { type Message, type MessageDTO, type MessageReaction } from "../../types/custom.js";
 import { getCachedRoomMessages, setCachedRoomMessages, invalidateRoomMessagesCache } from "../../utils/cacheMessages.js";
 import { AppError } from "../../utils/AppError.js";
 
@@ -173,56 +173,59 @@ export const getMessagesByRoom = async (
       ...(before ? { id: { lt: before } } : {}),
     },
     include: {
-      user: { select: { email: true, username: true } },
+      user: {
+        select: {
+          email: true,
+          username: true,
+        },
+      },
       reactions: {
         include: {
-          user: { select: { id: true, username: true } },
+          user: {
+            select: {
+              id: true,
+              username: true,
+            },
+          },
         },
       },
       replyTo: {
         select: {
           id: true,
           text: true,
-          user: { select: { username: true } },
-        },
-      },
-      replies: {
-        include: {
-          user: { select: { email: true, username: true } },
-          reactions: { include: { user: { select: { id: true, username: true } } } },
-          replyTo: { select: { id: true, text: true, user: { select: { username: true } } } },
-          replies: {
-            include: {
-              user: { select: { email: true, username: true } },
-              reactions: { include: { user: { select: { id: true, username: true } } } },
-              replyTo: { select: { id: true, text: true, user: { select: { username: true } } } },
-              replies: true, 
+          user: {
+            select: {
+              username: true,
             },
           },
         },
       },
     },
-    orderBy: { id: "desc" },
+    orderBy: {
+      id: "desc",
+    },
     take: limit,
   });
 
-  const ordered = messages.reverse();
-
-  // Recursive mapping function
+  // Message mapper
   const mapMessage = (m: PrismaMessageWithRelations): MessageDTO => ({
     id: m.id,
     text: m.text,
     createdAt: m.createdAt.toISOString(),
     userId: m.userId,
-    email: m.user?.email ?? "",          
+    email: m.user?.email ?? "",
     username: m.user?.username ?? "Unknown",
     roomId: m.roomId,
-    reactions: m.reactions?.map((r) => ({
-      userId: r.userId,
-      username: r.user?.username ?? "Unknown",
-      emoji: r.emoji,
-    })) ?? [],
+
+    reactions:
+      m.reactions?.map((r) => ({
+        userId: r.userId,
+        username: r.user?.username ?? "Unknown",
+        emoji: r.emoji,
+      })) ?? [],
+
     replyToId: m.replyToId,
+
     replyTo: m.replyTo
       ? {
           id: m.replyTo.id,
@@ -230,15 +233,51 @@ export const getMessagesByRoom = async (
           username: m.replyTo.user?.username ?? "Unknown",
         }
       : null,
-    replies: m.replies?.map(mapMessage) ?? [],
+
+    replies: [],
   });
 
-  const dto = ordered.map(mapMessage);
+  const dto = messages.map(mapMessage);
 
-  // Cache result in Redis
-  await setCachedRoomMessages(cacheKey, dto);
+  // Build nested reply tree
+  const messageMap = new Map<number, MessageDTO>();
 
-  return dto;
+  dto.forEach((msg) => {
+    messageMap.set(msg.id, msg);
+  });
+
+  const rootMessages: MessageDTO[] = [];
+
+  dto.forEach((msg) => {
+    if (msg.replyToId) {
+      const parent = messageMap.get(msg.replyToId);
+
+      if (parent) {
+        (parent.replies ??= []).push(msg);
+      }
+    } else {
+      rootMessages.push(msg);
+    }
+  });
+
+  const orderedRootMessages = rootMessages.reverse();
+
+  const sortReplies = (messages: { id: number; replies?: Message[] }[]) => {
+    messages.sort((a, b) => a.id - b.id);
+
+    messages.forEach((msg) => {
+      if (msg.replies?.length) {
+        sortReplies(msg.replies);
+      }
+    });
+  };
+
+sortReplies(orderedRootMessages);
+
+// Cache result in Redis
+await setCachedRoomMessages(cacheKey, orderedRootMessages);
+
+return orderedRootMessages;
 };
 
 interface AddMessageReactionInput  {

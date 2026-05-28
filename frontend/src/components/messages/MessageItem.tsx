@@ -7,15 +7,15 @@ import { formatDate } from "../../utils/formatDate";
 import MessageActions from "./MessageActions";
 import MessageReactions from "./MessageReactions";
 import EmojiPicker from "./EmojiPicker";
+import ReplyConnectorSVG from "./ReplyConnectorSVG";
 
 type MessageItemProps = {
   message: Message;
   user: User | null;
-  depth?: number;
   ensureVisible: (id: number) => void;
 };
 
-const MessageItem = ({ message, user, depth = 0, ensureVisible }: MessageItemProps) => {
+const MessageItem = ({ message, user, ensureVisible }: MessageItemProps) => {
   const [hoveredMessageId, setHoveredMessageId] = useState<number | null>(null);
   const [editingMessageId, setEditingMessageId] = useState<number | null>(null);
   const [editingText, setEditingText] = useState("");
@@ -79,11 +79,11 @@ const MessageItem = ({ message, user, depth = 0, ensureVisible }: MessageItemPro
   }, [editingText])
 
   return (
-    <div className={`ml-${depth * 6}`} key={message.id}>
+    <div className="mb-14" key={message.id}>
       <div
         id={`message-${message.id}`}
         className={`relative flex gap-2 max-w-fit text-left 
-          ${message.replyToId ? 'mt-3' : 'mt-6'}
+          ${message.replyToId ? 'mt-0' : 'mt-6'}
           ${message.replies && message?.replies.length > 0 ? 'mb-6' : 'mb-11'}  
           px-3 py-2 rounded ${
           message.userId === user?.id
@@ -204,15 +204,20 @@ const MessageItem = ({ message, user, depth = 0, ensureVisible }: MessageItemPro
       </div>
       
       {message.replies?.map((reply) => (
-        <div key={reply.id} className="ml-6">
+        <div key={reply.id}>
           {reply.replyTo && (
-            <div className="text-sm text-foreground mb-1">
-              replying to {reply.replyTo.username}: {reply.replyTo.text}
+            <div className="flex gap-1 items-start text-foreground">
+              <div className="mt-2 ml-2">
+                <ReplyConnectorSVG />
+              </div>
+              <div className="text-sm">
+                replying to {reply.replyTo.username}: {reply.replyTo.text}
+              </div>
             </div>
           )}
-          <MessageItem message={reply} user={user} depth={depth + 1} ensureVisible={ensureVisible} />
+          <MessageItem message={reply} user={user} ensureVisible={ensureVisible} />
         </div>
-      ))}    
+      ))} 
 
     </div>
   );

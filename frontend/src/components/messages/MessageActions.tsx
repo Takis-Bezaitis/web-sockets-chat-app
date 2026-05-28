@@ -1,5 +1,6 @@
 import { type Message } from "../../types/custom";
 import { useSocketStore } from "../../store/socketStore";
+import { useMediaQuery } from "../../hooks/useMediaQuery";
 
 type MessageActionsProps = {
     userId: number | undefined;
@@ -9,7 +10,8 @@ type MessageActionsProps = {
 
 const MessageActions = ({userId, message, onEdit}: MessageActionsProps) => {
   const socket = useSocketStore.getState().socket;
-
+  const isSmall = useMediaQuery("(max-width: 768px)");
+  
   const handleReactionClick = (emoji: string) => {
     if (!socket) return;
 
@@ -28,8 +30,8 @@ const MessageActions = ({userId, message, onEdit}: MessageActionsProps) => {
 
   return (
     <div 
-      className="absolute flex gap-1 top-0 right-0 -translate-y-6 secondary-border-line 
-      border-1 bg-background p-0.5 rounded-[7px] shadow cursor-pointer">
+      className={`absolute flex ${isSmall ? 'gap-2' : 'gap-1'} top-0 right-0 -translate-y-6 secondary-border-line 
+      border-1 bg-background p-0.5 rounded-[7px] shadow cursor-pointer`}>
         <div onClick={(e) => {
           e.stopPropagation();
           handleReactionClick("👍");
@@ -61,7 +63,7 @@ const MessageActions = ({userId, message, onEdit}: MessageActionsProps) => {
               >
                 ✏️
               </div>
-              
+
               <div onClick={(e) => {
                 e.stopPropagation();
                 handleDeleteMessage(message.id, message.roomId)
