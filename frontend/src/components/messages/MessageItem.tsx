@@ -83,7 +83,7 @@ const MessageItem = ({ message, user, ensureVisible }: MessageItemProps) => {
   }, [editingMessageId, isSmall, message.id]);
 
   return (
-    <div className="mb-14" key={message.id} style={{transformOrigin:'top left'}}>
+    <div className="mb-14" key={message.id} >
       <div
         id={`message-${message.id}`}
         className={`relative flex gap-2 max-w-fit text-left 
@@ -114,9 +114,9 @@ const MessageItem = ({ message, user, ensureVisible }: MessageItemProps) => {
               setEditingMessageId(m.id);
               setEditingText(m.text);
 
-              /*requestAnimationFrame(() => {
+              requestAnimationFrame(() => {
                 ensureVisible(m.id);
-              });*/
+              });
             }}
           />
         )}
