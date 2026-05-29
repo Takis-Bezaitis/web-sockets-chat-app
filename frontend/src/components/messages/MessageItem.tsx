@@ -115,7 +115,9 @@ const MessageItem = ({ message, user, ensureVisible }: MessageItemProps) => {
               setEditingText(m.text);
 
               requestAnimationFrame(() => {
-                ensureVisible(m.id);
+                requestAnimationFrame(() => {
+                  ensureVisible(m.id);
+                });
               });
             }}
           />
