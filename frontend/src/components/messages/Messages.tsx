@@ -74,6 +74,13 @@ const Messages = ({ user, messages, currentRoom, loading, onRegisterScroll }: Us
         top: scrollDelta,
         behavior: "smooth",
       });
+    } else {
+      if (scrollDelta <=0 && overflowBottom < 0) {
+        container.scrollBy({
+          top: -scrollDelta,
+          behavior: "smooth",
+        });
+      }
     }
   };
 
