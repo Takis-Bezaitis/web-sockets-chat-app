@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback, memo } from "react";
+import { useEffect, useRef, useCallback, memo, useState } from "react";
 import { useMessageStore } from "../../store/messageStore";
 import { type User, type Message, type RoomDTO } from "../../types/custom";
 import Spinner from "../ui/Spinner";
@@ -16,6 +16,13 @@ type UserProps = {
 };
 
 const Messages = ({ user, messages, currentRoom, loading, onRegisterScroll }: UserProps) => {
+const [scrollDelta, setScrollDelta] = useState(0)
+const [containerRectTop, setContainerRectTop] = useState(0);
+const [containerRectBottom, setContainerRectBottom] = useState(0);
+const [rectTop, setRectTop] = useState(0);
+const [overflowTop, setOverflowTop] = useState(0);
+const [overflowBottom, setOverflowBottom] = useState(0);
+
   const topSentinelRef = useRef<HTMLDivElement | null>(null);
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -74,14 +81,13 @@ const Messages = ({ user, messages, currentRoom, loading, onRegisterScroll }: Us
         top: scrollDelta,
         behavior: "smooth",
       });
-    } else {
-      if (scrollDelta <=0 && overflowBottom < 0) {
-        container.scrollBy({
-          top: -scrollDelta,
-          behavior: "smooth",
-        });
-      }
     }
+    setScrollDelta(scrollDelta)
+    setContainerRectTop(containerRectTop);
+    setContainerRectBottom(containerRectBottom);
+    setRectTop(rectTop);
+    setOverflowTop(overflowTop);
+    setOverflowBottom(overflowBottom);
   };
 
   /* New message auto-scroll */
@@ -267,6 +273,14 @@ const Messages = ({ user, messages, currentRoom, loading, onRegisterScroll }: Us
       ref={containerRef}
       className="flex-1 px-4 pt-5 pb-4 space-y-2 overflow-y-auto min-h-0 place-content-end"
     >
+    <div className="absolute z-1">
+    <p className="text-emerald-300 ">scrollDelta: {scrollDelta}</p>
+    <p className="text-emerald-300 ">containerRectTop: {containerRectTop}</p>
+    <p className="text-emerald-300 ">containerRectBottom: {containerRectBottom}</p>
+    <p className="text-emerald-300 ">rectTop: {rectTop}</p>
+    <p className="text-emerald-300 ">overflowTop: {overflowTop}</p>
+    <p className="text-emerald-300 ">overflowBottom: {overflowBottom}</p>
+    </div>
       <div ref={topSentinelRef} />
 
       {!loading &&
