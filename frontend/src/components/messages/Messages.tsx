@@ -5,7 +5,6 @@ import Spinner from "../ui/Spinner";
 import { onNewMessage } from "../../store/messageStore";
 import MessageItem from "./MessageItem";
 import { AUTO_SCROLL_THRESHOLD_PX } from "../../constants/message";
-import { useMediaQuery } from "../../hooks/useMediaQuery";
 
 type UserProps = {
   user: User | null;
@@ -20,7 +19,6 @@ const Messages = ({ user, messages, currentRoom, loading, onRegisterScroll }: Us
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const shouldAutoScrollRef = useRef(true);
-  const isSmall = useMediaQuery("(max-width: 768px)");
 
   const fetchRoomMessages = useMessageStore((s) => s.fetchRoomMessages);
   const hasMore = useMessageStore(
@@ -51,7 +49,7 @@ const Messages = ({ user, messages, currentRoom, loading, onRegisterScroll }: Us
     const containerRect = container.getBoundingClientRect();
     const rect = el.getBoundingClientRect();
 
-    const msgPadding = isSmall ? 8 : 25;
+    const msgPadding = 25;
 
     // How far the message is outside the visible area
     const overflowTop = rect.top - containerRect.top;

@@ -5,6 +5,7 @@ import { Suspense } from "react";
 import { useAuthStore } from "./store/authStore";
 import { useInvitations } from "./hooks/useInvitationsSockets";
 import { Toaster } from "react-hot-toast";
+import OrientationGuard from "./components/layout/OrientationGuard";
 
 function App() {
   const { checkAuth, user } = useAuthStore();
@@ -22,6 +23,7 @@ function App() {
 
   return (
     <Suspense fallback={<div>Loading...</div>}>
+      <OrientationGuard />
       <Toaster position="top-right" reverseOrder={false} />
       <RouterProvider router={routes} />
     </Suspense>
