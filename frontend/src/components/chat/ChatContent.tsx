@@ -31,7 +31,7 @@ const ChatContent = ({currentRoom,
     <>
       <div id="messages-area" className={`relative flex flex-col flex-1 min-h-0 
       ${videoAndChat ? 'bg-component-background' : 'bg-background'} overflow-hidden px-2`}>
-        <div className="flex-1 overflow-y-auto no-scrollbar flex flex-col">
+        <div className="flex-1 flex flex-col min-h-0">
             <Messages user={user} messages={roomMessages} currentRoom={currentRoom} 
             loading={loading} onRegisterScroll={onRegisterScroll} />
         </div>
