@@ -258,7 +258,7 @@ const Messages = ({ user, messages, currentRoom, loading, onRegisterScroll }: Us
   return (
     <div
       ref={containerRef}
-      className="flex-1 px-4 pt-5 pb-4 space-y-2 overflow-y-auto place-content-end"
+      className="flex-1 px-4 pt-5 pb-4 space-y-2 overflow-y-auto"
     >
       <div ref={topSentinelRef} />
 
@@ -266,16 +266,18 @@ const Messages = ({ user, messages, currentRoom, loading, onRegisterScroll }: Us
         currentRoom &&
         messages.length === 0 &&
         currentRoom.hasUserMessages === false && (
-          <section className="py-6">
-            <h2 className="text-4xl font-bold text-foreground">
-              {currentRoom.isPrivate && "🔒"} #{currentRoom.name}
-            </h2>
-            <p className="text-lg text-foreground mt-2">
-              Welcome! This is the start of the{" "}
-              {currentRoom.isPrivate && "🔒"} #{currentRoom.name} channel.
-            </p>
-          </section>
-        )}
+          <div className="flex min-h-full items-end">
+            <section className="py-6">
+              <h2 className="text-4xl font-bold text-foreground">
+                {currentRoom.isPrivate && "🔒"} #{currentRoom.name}
+              </h2>
+              <p className="text-lg text-foreground mt-2">
+                Welcome! This is the start of the{" "}
+                {currentRoom.isPrivate && "🔒"} #{currentRoom.name} channel.
+              </p>
+            </section>
+          </div>
+      )}
 
       {messages
         .filter((msg) => msg.replyToId === null)
