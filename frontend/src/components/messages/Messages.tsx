@@ -271,7 +271,7 @@ const [overflowBottom, setOverflowBottom] = useState(0);
   return (
     <div
       ref={containerRef}
-      className="flex-1 px-4 pt-5 pb-4 space-y-2 overflow-y-auto min-h-0 place-content-end"
+      className="flex-1 px-4 pt-5 pb-4 space-y-2 overflow-y-auto min-h-dvh place-content-end"
     >
     <div className="fixed top-0 left-0 z-[9999] bg-black text-white p-2 text-xs">
     <p className="text-emerald-300 ">scrollDelta:: {scrollDelta}</p>

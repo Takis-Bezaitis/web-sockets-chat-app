@@ -158,7 +158,7 @@ const MessageItem = ({ message, user, ensureVisible }: MessageItemProps) => {
 
           {editingMessageId === message.id ? (
             <>
-              <input
+              {/*<input
                 ref={editTextRef}
                 className="w-full bg-transparent outline-none border p-2 rounded-md"
                 value={editingText}
@@ -169,7 +169,7 @@ const MessageItem = ({ message, user, ensureVisible }: MessageItemProps) => {
                   if (e.key === "Escape") cancelEdit();
                 }}
                 
-              />
+              />*/}
 
               {isEmojiPickerOpen && 
                 <div className="my-1 z-71">
