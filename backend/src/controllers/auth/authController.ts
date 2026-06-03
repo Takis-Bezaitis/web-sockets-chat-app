@@ -32,11 +32,7 @@ export const login = async (req: Request, res: Response) => {
       maxAge: ms("7d"), 
       path: "/",
     });
-console.log("refreshToken:",refreshToken)
-const checkSecure = process.env.NODE_ENV === "production";
-const checkSameSite = process.env.NODE_ENV === "production" ? "none" : "lax"
-console.log("checkSecure:",checkSecure )
-console.log("checkSameSite:",checkSameSite)
+
     res.json({
       ...user,
       token: accessToken,

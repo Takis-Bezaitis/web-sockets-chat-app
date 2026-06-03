@@ -35,15 +35,7 @@ app.use(cors({
   methods: ["GET", "POST", "PUT", "DELETE"],
 }));
 console.log("FRONTEND_URL:", process.env.FRONTEND_URL);
-app.use((_, res, next) => {
-  res.on("finish", () => {
-    console.log(
-      res.getHeader("Access-Control-Allow-Origin"),
-      res.getHeader("Access-Control-Allow-Credentials")
-    );
-  });
-  next();
-});
+console.log("------------------------------------")
 app.use(express.json());
 app.use(cookieParser());
 
