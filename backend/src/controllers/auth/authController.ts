@@ -29,7 +29,6 @@ export const login = async (req: Request, res: Response) => {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-      domain: ".onrender.com",
       maxAge: ms("7d"), 
       path: "/",
     });
@@ -76,7 +75,6 @@ export const logout = (_req: Request, res: Response) => {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-    domain: ".onrender.com",
     path: "/",
   });
   res.json({ message: "Logged out" });
