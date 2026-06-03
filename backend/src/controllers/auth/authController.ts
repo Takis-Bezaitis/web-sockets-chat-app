@@ -32,7 +32,11 @@ export const login = async (req: Request, res: Response) => {
       maxAge: ms("7d"), 
       path: "/",
     });
-
+console.log("refreshToken:",refreshToken)
+const checkSecure = process.env.NODE_ENV === "production";
+const checkSameSite = process.env.NODE_ENV === "production" ? "none" : "lax"
+console.log("checkSecure:",checkSecure )
+console.log("checkSameSite:",checkSameSite)
     res.json({
       ...user,
       token: accessToken,
@@ -41,8 +45,6 @@ export const login = async (req: Request, res: Response) => {
 
 export const refresh = async (req: Request, res: Response) => {
   const refreshToken = req.cookies.refreshToken;
-  console.log("🔁 refresh called");
-  console.log("🍪 refreshToken:", refreshToken);
 
   if (!refreshToken) {
     throw new AppError("No refresh token", 401);

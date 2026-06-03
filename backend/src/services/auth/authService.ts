@@ -51,7 +51,7 @@ export const loginUser = async (email: string, password: string) => {
       audience: "chat-app-users", 
     } as SignOptions 
   );
-console.log("accessToken:",accessToken)
+
   const refreshToken = jwt.sign(
     { id: user.id, email: user.email, username: user.username },
     JWT_SECRET,
