@@ -4,8 +4,10 @@ import { useInvitationStore } from "../../store/invitationStore";
 import InvitationModal from "../invitations/InvitationModal";
 
 const ProtectedLayout = () => {
-  const { user } = useAuthStore();
+  const { user, loading } = useAuthStore();
   const invitations = Object.values(useInvitationStore((s) => s.invitations));
+
+  if (loading) return null;
 
   if (!user) {
     return <Navigate to='/auth/login' replace/>

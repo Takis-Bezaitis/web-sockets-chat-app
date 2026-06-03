@@ -5,6 +5,7 @@ import { API } from "../api/api";
 interface AuthState {
     user: User | null;
     token: string | null;
+    loading: boolean;
     setUser: (user: User) => void;
     setToken: (token: string) => void;
     logout: () => void;
@@ -14,6 +15,7 @@ interface AuthState {
 export const useAuthStore = create<AuthState>((set) => ({
     user: null,
     token: null,
+    loading: true,
 
     setUser: (user) => 
         set(() => ({
@@ -32,6 +34,8 @@ export const useAuthStore = create<AuthState>((set) => ({
         })),
     
     checkAuth: async () => {
+        set({ loading: true });
+
         try {
             const refreshRes = await fetch(API.auth.refresh, {
                 method: "POST",
@@ -39,7 +43,7 @@ export const useAuthStore = create<AuthState>((set) => ({
             });
 
             if (!refreshRes.ok) {
-                set({ user: null, token: null });
+                set({ user: null, token: null, loading: false });
                 return;
             }
 
@@ -48,10 +52,11 @@ export const useAuthStore = create<AuthState>((set) => ({
             set({
                 user: data.user,
                 token: data.token,
+                loading: false,
             });
 
         } catch {
-            set({ user: null, token: null });
+            set({ user: null, token: null, loading: false, });
         }
     },
 }));
