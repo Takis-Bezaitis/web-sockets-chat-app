@@ -8,7 +8,8 @@ Supports chat rooms, private messaging, live typing indicators, and **peer-to-pe
 
 ## 🚀 Features
 
-* 🔐 **Authentication** (JWT + HTTP-only cookies)
+* 🔐 **Authentication** (Bearer access tokens stored in memory via Zustand, refresh tokens stored in        
+  HTTP-only cookies)
 * 💬 **Real-time messaging** with Socket.IO
 * 📡 **WebRTC video calls** (1-on-1)
 * 🏠 **Public & private chat rooms**
@@ -56,6 +57,8 @@ Supports chat rooms, private messaging, live typing indicators, and **peer-to-pe
 ## ⚠️ Notes
 
 * The backend is hosted on a free tier and may take 20–30 seconds to wake up after inactivity (cold start). If the app takes time to load initially, this is expected behavior.
+
+* Mobile devices are optimized for portrait orientation.
 
 ---
 

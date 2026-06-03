@@ -23,6 +23,10 @@ const MessageItem = ({ message, user, ensureVisible }: MessageItemProps) => {
 
   const socket = useSocketStore.getState().socket;
   const setReplyingTo = useMessageStore((s) => s.setReplyingTo);
+  const messages = useMessageStore((s) => message.roomId ? s.messagesByRoom[message.roomId] : [] );
+
+  const parentExists = messages?.some((m) => m.id === message.replyToId);
+ 
   const editTextRef = useRef<HTMLInputElement | null>(null);
 
   const isSmall = useMediaQuery("(max-width: 768px)");
@@ -84,13 +88,35 @@ const MessageItem = ({ message, user, ensureVisible }: MessageItemProps) => {
 
   return (
     <div className="mb-14" key={message.id} >
+
+      {message.replyToText && (
+        <>
+          {!parentExists ? (
+            <div className="flex gap-1 items-start text-foreground text-sm opacity-70 italic">
+              <div className="mt-1.5 ml-2">
+                <ReplyConnectorSVG />
+              </div>
+              <div>message was deleted</div>
+            </div>
+          ) : (
+            message.replyTo && (
+              <div className="flex gap-1 items-start text-foreground text-sm">
+                <div className="mt-1.5 ml-2">
+                  <ReplyConnectorSVG />
+                </div>
+                <div>
+                  replying to {message.replyTo.username}: {message.replyToText}
+                </div>
+              </div>
+            )
+          )}
+        </>
+      )}
+
       <div
         id={`message-${message.id}`}
         className={`relative flex gap-2 max-w-fit text-left 
-          ${message.replyToId ? 'mt-0' : 'mt-6'}
-          ${message.replies && message?.replies.length > 0 ? 'mb-6' : 'mb-11'}  
-          px-3 py-2 rounded ${
-          message.userId === user?.id
+          px-3 py-2 rounded ${message.userId === user?.id
             ? "bg-message-user"
             : "bg-message-other-user"
         }`}
@@ -218,23 +244,6 @@ const MessageItem = ({ message, user, ensureVisible }: MessageItemProps) => {
           Reply
         </div>
       </div>
-      
-      {message.replies?.map((reply) => (
-        <div key={reply.id}>
-          {reply.replyTo && (
-            <div className="flex gap-1 items-start text-foreground">
-              <div className="mt-2 ml-2">
-                <ReplyConnectorSVG />
-              </div>
-              <div className="text-sm">
-                replying to {reply.replyTo.username}: {reply.replyTo.text}
-              </div>
-            </div>
-          )}
-          <MessageItem message={reply} user={user} ensureVisible={ensureVisible} />
-        </div>
-      ))} 
-
     </div>
   );
 };

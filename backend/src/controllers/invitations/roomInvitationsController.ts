@@ -50,9 +50,6 @@ export const getMyInvitations = async (req: Request & AuthRequest, res: Response
     res.status(200).json({ data: invitations });
 };
 
-export const getRoomInvitations = async () => {
-};
-
 export const acceptRoomInvitation = async (req: Request<{ invitationId: string }> & AuthRequest, 
     res: Response<ApiResponse<InvitationDTO | null>>): Promise<void> => {
       const userId = req.user?.id;
@@ -76,6 +73,15 @@ export const declineRoomInvitation = async (req: Request<{ invitationId: string 
           throw new AppError("Unauthorized", 401);
       }
 
-      const invitation = await invitationService.declineRoomInvitation(Number(invitationId), Number(userId));
+      const invitation = await invitationService.declineRoomInvitation(
+        Number(invitationId), Number(userId)
+      );
+
+      if (invitation) {
+        io.to(`user:${invitation.inviter.id}`).emit("invitation:declined", {
+          inviteeUserName: invitation.invitee?.username,
+        });
+      }
+
       res.status(200).json({ data: invitation || null });
 };

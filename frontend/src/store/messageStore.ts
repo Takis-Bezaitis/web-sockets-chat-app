@@ -50,21 +50,6 @@ export const onNewMessage = (roomId: number, cb: (msg: Message) => void) => {
   };
 };
 
-const updateMessageInTree = (
-  messages: Message[],
-  messageId: number,
-  updater: (msg: Message) => Message
-): Message[] => {
-  return messages.map((msg) => {
-    if (msg.id === messageId) {
-      return updater(msg);
-    }
-    if (msg.replies?.length) {
-      return { ...msg, replies: updateMessageInTree(msg.replies, messageId, updater) };
-    }
-    return msg;
-  });
-};
 
 export const useMessageStore = create<MessageState>((set, get) => ({
   messagesByRoom: {},
@@ -163,31 +148,8 @@ appendMessage: (roomId, msg, options?: { notifyNew?: boolean }) => {
   set((state) => {
     const prev = state.messagesByRoom[roomId] ?? [];
 
-    // Prevent duplicate top-level messages
-    if (!msg.replyToId && prev.some(m => m.id === msg.id)) {
-      return state;
-    }
+    if (prev.some(m => m.id === msg.id)) return state;
 
-    // the message is a reply
-    if (msg.replyToId) {
-      const updated = updateMessageInTree(prev, msg.replyToId, (parent) => {
-        const existingReplies = parent.replies ?? [];
-
-        // Prevent duplicate replies
-        if (existingReplies.some(r => r.id === msg.id)) {
-          return parent;
-        }
-
-        return {
-          ...parent,
-          replies: [...existingReplies, msg],
-        };
-      });
-
-      return { messagesByRoom: { ...state.messagesByRoom, [roomId]: updated } };
-    }
-
-    // the message is a top-level message
     return {
       messagesByRoom: {
         ...state.messagesByRoom,
@@ -206,30 +168,33 @@ appendMessage: (roomId, msg, options?: { notifyNew?: boolean }) => {
       const updated = { ...state.messagesByRoom };
 
       for (const roomId in updated) {
-        updated[roomId] = updateMessageInTree(updated[roomId], updatedMsg.id, (msg) => ({
-          ...msg,
-          ...updatedMsg,
-          replies: msg.replies, 
-        }));
+        updated[roomId] = updated[roomId].map((msg) => {
+          // Update the edited message itself
+          if (msg.id === updatedMsg.id) {
+            return { ...msg, ...updatedMsg };
+          }
+
+          // Update reply snapshots
+          if (msg.replyToId === updatedMsg.id) {
+            return {
+              ...msg,
+              replyToText: updatedMsg.text,
+            };
+          }
+
+          return msg;
+        });
       }
 
       return { messagesByRoom: updated };
     }),
 
   deleteMessageFromRoom: (id, roomId) => {
-    const deleteMessageInTree = (messages: Message[], messageId: number): Message[] => {
-      return messages
-        .filter((msg) => msg.id !== messageId)
-        .map((msg) =>
-          msg.replies ? { ...msg, replies: deleteMessageInTree(msg.replies, messageId) } : msg
-        );
-    };
-
     set((state) => {
       const updated = { ...state.messagesByRoom };
 
       const messages = updated[roomId] ?? [];
-      updated[roomId] = deleteMessageInTree(messages, id);
+      updated[roomId] = messages.filter((msg) => msg.id !== id);
 
       return { messagesByRoom: updated };
     });
@@ -240,13 +205,16 @@ appendMessage: (roomId, msg, options?: { notifyNew?: boolean }) => {
       const updated = { ...state.messagesByRoom };
 
       for (const roomId in updated) {
-        updated[roomId] = updateMessageInTree(updated[roomId], messageId, (msg) => {
+        updated[roomId] = updated[roomId].map((msg) => {
+          if (msg.id !== messageId) return msg;
+
           const currentReactions = msg.reactions ?? [];
           const existingIndex = currentReactions.findIndex(
             (r) => r.userId === reaction.userId && r.emoji === reaction.emoji
           );
 
           let newReactions;
+
           if (existingIndex !== -1) {
             newReactions = [
               ...currentReactions.slice(0, existingIndex),

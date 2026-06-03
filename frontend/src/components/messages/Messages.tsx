@@ -278,7 +278,6 @@ const Messages = ({ user, messages, currentRoom, loading, onRegisterScroll }: Us
       )}
 
       {messages
-        .filter((msg) => msg.replyToId === null)
         .map((msg) => (
           <MessageItem key={msg.id} message={msg} user={user} ensureVisible={ensureMessageVisible} />
         ))}

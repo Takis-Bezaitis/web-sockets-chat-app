@@ -101,11 +101,20 @@ const CreateNewRoom = ({ onClose }: CreateNewRoomProps) => {
   }
 
   return (
-    <div className="fixed inset-0 z-80 flex items-center justify-center bg-black/50">
+    <div 
+      className="fixed inset-0 z-80 flex items-center justify-center bg-black/50"
+      onClick={(e) => {
+        e.stopPropagation();
+        onClose();
+      }}
+    >
       {inviteMembersVisible && newRoom ? (
         <RoomMembersInvite inviteRoomId={newRoom.id} roomName={name} mode='create' onClose={onClose} onCloseInviteMembers={closeInviteMembers} />
       ) : (
-      <div className="bg-create-room text-foreground rounded-lg w-96 p-5 shadow-lg">
+      <div 
+        className="bg-create-room text-foreground rounded-lg w-96 p-5 shadow-lg"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="flex justify-end">
           <span className="cursor-pointer" onClick={onClose}>✖</span>
         </div>

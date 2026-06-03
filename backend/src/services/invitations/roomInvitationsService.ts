@@ -261,6 +261,7 @@ export const declineRoomInvitation = async (invitationId: number, userId: number
     data: { status: "DECLINED", acceptedAt: null },
     include: {
       inviter: { select: { id: true, username: true } },
+      invitee: { select: { id: true, username: true } },
       room: { select: { id: true, name: true } },
     },
   });
@@ -274,6 +275,10 @@ export const declineRoomInvitation = async (invitationId: number, userId: number
     inviter: {
       id: updatedInvitation.inviter.id,
       username: updatedInvitation.inviter.username,
+    },
+    invitee: {
+      id: updatedInvitation.invitee.id,
+      username: updatedInvitation.invitee.username,
     },
     room: {
       id: updatedInvitation.room.id,

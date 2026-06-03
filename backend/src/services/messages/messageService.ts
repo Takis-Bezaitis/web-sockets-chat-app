@@ -1,5 +1,5 @@
 import prisma from "../../prismaClient.js";
-import { type Message, type MessageDTO, type MessageReaction } from "../../types/custom.js";
+import { type MessageDTO, type MessageReaction } from "../../types/custom.js";
 import { getCachedRoomMessages, setCachedRoomMessages, invalidateRoomMessagesCache } from "../../utils/cacheMessages.js";
 import { AppError } from "../../utils/AppError.js";
 
@@ -17,6 +17,7 @@ type PrismaMessageWithRelations = {
   userId: number;
   roomId: number;
   replyToId: number | null;
+  replyToText: string | null;
 
   user?: {
     email: string;
@@ -33,13 +34,11 @@ type PrismaMessageWithRelations = {
 
   replyTo?: {
     id: number;
-    text: string;
     user?: {
       username: string;
     };
   } | null;
-
-  replies?: PrismaMessageWithRelations[];
+  
 };
 
 export const getAllMessages = async (): Promise<MessageDTO[]> => {
@@ -66,17 +65,31 @@ export const createMessage = async (
 ): Promise<MessageDTO> => {
   // Create the message
   const message = await prisma.message.create({
-    data: { text, userId, roomId, replyToId: replyToId ?? null },
-    include: { 
+    data: {
+      text,
+      userId,
+      roomId,
+      replyToId: replyToId ?? null,
+      replyToText: replyToId
+        ? (
+            await prisma.message.findUnique({
+              where: { id: replyToId },
+              select: { text: true }
+            })
+          )?.text ?? null
+        : null,
+    },
+    include: {
       user: { select: { email: true, username: true } },
       replyTo: {
         select: {
           id: true,
-          text: true,
-          user: { select: { username: true } }
+          user: {
+            select: { username: true }
+          }
         }
       }
-    } 
+    }
   });
 
   await prisma.room.update({
@@ -87,7 +100,7 @@ export const createMessage = async (
    // Invalidate Redis cache for this room
   await invalidateRoomMessagesCache(roomId);
 
-  // Return a MessageDTO to the controller
+  // Return a MessageDTO to chatSocket.ts
   return {
     id: message.id,
     text: message.text,
@@ -98,10 +111,10 @@ export const createMessage = async (
     username: message.user.username,
     reactions: [],
     replyToId: message.replyToId,
+    replyToText: message.replyToText,
     replyTo: message.replyTo
       ? {
           id: message.replyTo.id,
-          text: message.replyTo.text,
           username: message.replyTo.user.username
         }
       : null
@@ -118,6 +131,16 @@ export const editMessage = async({id, roomId, text}: { id: number, roomId: numbe
     include: {
       user: true,
       reactions: true,
+    },
+  });
+
+  // update all replies that point to the edited message
+  await prisma.message.updateMany({
+    where: {
+      replyToId: id,
+    },
+    data: {
+      replyToText: text,
     },
   });
 
@@ -192,7 +215,6 @@ export const getMessagesByRoom = async (
       replyTo: {
         select: {
           id: true,
-          text: true,
           user: {
             select: {
               username: true,
@@ -225,59 +247,24 @@ export const getMessagesByRoom = async (
       })) ?? [],
 
     replyToId: m.replyToId,
-
+    replyToText: m.replyToText,
     replyTo: m.replyTo
       ? {
           id: m.replyTo.id,
-          text: m.replyTo.text,
           username: m.replyTo.user?.username ?? "Unknown",
         }
       : null,
 
-    replies: [],
   });
 
   const dto = messages.map(mapMessage);
 
-  // Build nested reply tree
-  const messageMap = new Map<number, MessageDTO>();
+  const orderedMessages = dto.reverse();
 
-  dto.forEach((msg) => {
-    messageMap.set(msg.id, msg);
-  });
+  // Cache result in Redis
+  await setCachedRoomMessages(cacheKey, orderedMessages);
 
-  const rootMessages: MessageDTO[] = [];
-
-  dto.forEach((msg) => {
-    if (msg.replyToId) {
-      const parent = messageMap.get(msg.replyToId);
-
-      if (parent) {
-        (parent.replies ??= []).push(msg);
-      }
-    } else {
-      rootMessages.push(msg);
-    }
-  });
-
-  const orderedRootMessages = rootMessages.reverse();
-
-  const sortReplies = (messages: { id: number; replies?: Message[] }[]) => {
-    messages.sort((a, b) => a.id - b.id);
-
-    messages.forEach((msg) => {
-      if (msg.replies?.length) {
-        sortReplies(msg.replies);
-      }
-    });
-  };
-
-sortReplies(orderedRootMessages);
-
-// Cache result in Redis
-await setCachedRoomMessages(cacheKey, orderedRootMessages);
-
-return orderedRootMessages;
+  return orderedMessages;
 };
 
 interface AddMessageReactionInput  {

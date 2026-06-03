@@ -1,5 +1,6 @@
 import { io, Socket } from "socket.io-client";
 import { create } from "zustand";
+import toast from "react-hot-toast";
 import { useAuthStore } from "./authStore";
 import type { Message } from "../types/custom";
 import { useMessageStore } from "./messageStore";
@@ -102,6 +103,10 @@ export const useSocketStore = create<SocketState>((set, get) => ({
 
     socket.on("room:invited", ({ invitation }) => {
       useInvitationStore.getState().addInvitation(invitation);
+    });
+
+    socket.on("invitation:declined", (payload) => {
+      toast(`${payload.inviteeUserName} declined your invitation.`);
     });
 
     // Central socket listeners

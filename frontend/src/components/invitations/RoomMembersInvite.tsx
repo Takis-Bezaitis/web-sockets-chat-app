@@ -161,80 +161,91 @@ const RoomMembersInvite = ({
     }
 
     return (
-        <div className="bg-create-room text-foreground rounded-lg w-lg m-5 p-5 shadow-lg">
-            <div className="flex justify-end">
-                <span className="cursor-pointer" onClick={onCloseInviteMembers}>✖</span>
-            </div>
-            <h2 className="text-lg font-semibold mb-4">Add members to #{roomName}</h2>
+        <div 
+            className="fixed inset-0 z-80 flex items-center justify-center"
+            onClick={(e) => {
+                e.stopPropagation();
+                onCloseInviteMembers();
+            }}
+        >
+            <div 
+                className="bg-create-room text-foreground rounded-lg w-lg m-5 p-5 shadow-lg"
+                onClick={(e) => e.stopPropagation()}
+            >
+                <div className="flex justify-end">
+                    <span className="cursor-pointer" onClick={onCloseInviteMembers}>✖</span>
+                </div>
+                <h2 className="text-lg font-semibold mb-4">Add members to #{roomName}</h2>
 
-            <label className="block relative mb-4">
-                {error && <p className="text-red-500 mb-4 text-center">{error}</p>}
+                <label className="block relative mb-4">
+                    {error && <p className="text-red-500 mb-4 text-center">{error}</p>}
 
-                <input
-                    type="text"
-                    autoFocus
-                    value={invites}
-                    onChange={(e) => setInvites(e.target.value)}
-                    onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                            e.preventDefault(); 
-                            if (!isSubmitting && hasValidInput) {
-                                handleSubmit();
+                    <input
+                        type="text"
+                        autoFocus
+                        value={invites}
+                        onChange={(e) => setInvites(e.target.value)}
+                        onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                                e.preventDefault(); 
+                                if (!isSubmitting && hasValidInput) {
+                                    handleSubmit();
+                                }
                             }
-                        }
-                    }}
-                    placeholder="ex. Juliet"
-                    className="w-full border rounded px-3 py-2"
-                />
+                        }}
+                        placeholder="ex. Juliet"
+                        className="w-full border rounded px-3 py-2"
+                    />
 
-                {(() => {
-                const lastPartial = invites.split(/[\s,]+/).pop()?.trim().replace("@", "").toLowerCase() || "";
-                const suggestions = lastPartial
-                    ? users.filter((u) => u.username.toLowerCase().startsWith(lastPartial))
-                    : [];
+                    {(() => {
+                    const lastPartial = invites.split(/[\s,]+/).pop()?.trim().replace("@", "").toLowerCase() || "";
+                    const suggestions = lastPartial
+                        ? users.filter((u) => u.username.toLowerCase().startsWith(lastPartial))
+                        : [];
 
-                if (suggestions.length === 0) return null; 
+                    if (suggestions.length === 0) return null; 
 
-                return (
-                    <ul className="absolute w-full bg-surface mt-4 border rounded h-11 overflow-auto text-sm">
-                    {suggestions.map((u) => (
-                        <li
-                            key={u.id}
-                            className="w-fit ml-0.5 mt-0.5 h-[2.4rem] px-3 py-2 bg-member-invite rounded cursor-pointer"
-                            onClick={() => {
-                                const parts = invites.split(/[\s,]+/);
-                                parts[parts.length - 1] = `@${u.username}`;
-                                setInvites(parts.join(", ") + ", ");
-                            }}
-                            >
-                            @{u.username}
-                        </li>
-                    ))}
-                    </ul>
-                );
-                })()}
-            </label>
+                    return (
+                        <ul className="absolute w-full bg-surface mt-4 border rounded h-11 overflow-auto text-sm">
+                        {suggestions.map((u) => (
+                            <li
+                                key={u.id}
+                                className="w-fit ml-0.5 mt-0.5 h-[2.4rem] px-3 py-2 bg-member-invite rounded cursor-pointer"
+                                onClick={() => {
+                                    const parts = invites.split(/[\s,]+/);
+                                    parts[parts.length - 1] = `@${u.username}`;
+                                    setInvites(parts.join(", ") + ", ");
+                                }}
+                                >
+                                @{u.username}
+                            </li>
+                        ))}
+                        </ul>
+                    );
+                    })()}
+                </label>
 
-            
-            <div className="flex justify-end gap-2">
-                {mode==="create" && (
+                
+                <div className="flex justify-end gap-2">
+                    {mode==="create" && (
+                        <button
+                            onClick={onCloseInviteMembers}
+                            className="w-24 px-4 py-2 rounded bg-button-secondary hover:bg-button-secondary-hover cursor-pointer"
+                        >
+                            Back
+                        </button>
+                    )}
+
                     <button
-                        onClick={onCloseInviteMembers}
-                        className="w-24 px-4 py-2 rounded bg-button-secondary hover:bg-button-secondary-hover cursor-pointer"
+                        onClick={handleSubmit}
+                        disabled={isSubmitting || !roomName.trim()}
+                        className="w-24 px-4 py-2 rounded bg-button-main text-white hover:bg-button-hover cursor-pointer"
                     >
-                        Back
+                        {!hasValidInput ? 'Skip' : mode === "create" ? 'Create' : 'Invite'}
                     </button>
-                )}
+                </div>
 
-                <button
-                    onClick={handleSubmit}
-                    disabled={isSubmitting || !roomName.trim()}
-                    className="w-24 px-4 py-2 rounded bg-button-main text-white hover:bg-button-hover cursor-pointer"
-                >
-                    {!hasValidInput ? 'Skip' : mode === "create" ? 'Create' : 'Invite'}
-                </button>
             </div>
-
         </div>
     )
 }

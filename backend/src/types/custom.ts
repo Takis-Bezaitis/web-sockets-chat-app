@@ -54,7 +54,6 @@ export interface Message {
 
 export type MessagePreview = {
   id: number;
-  text: string;
   username: string;
 };
 
@@ -68,8 +67,8 @@ export type MessageDTO = {
   username: string;
   reactions?: MessageReaction[];
   replyToId?: number | null;
+  replyToText?: string | null;
   replyTo?: MessagePreview | null;
-  replies?: Message[];
 };
 
 export type RoomWithMembershipDTO = {
@@ -89,6 +88,11 @@ export type InvitationDTO = {
   inviteeId: number;
 
   inviter: {
+    id: number;
+    username: string;
+  };
+
+  invitee?: {
     id: number;
     username: string;
   };

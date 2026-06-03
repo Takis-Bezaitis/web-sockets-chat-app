@@ -56,7 +56,9 @@ model Message {
   reactions MessageReaction[]
 
   replyToId Int?
-  replyTo   Message?          @relation("MessageReplies", fields: [replyToId], references: [id], onDelete: Cascade)
+  replyToText String?
+  
+  replyTo   Message?          @relation("MessageReplies", fields: [replyToId], references: [id], onDelete: SetNull)
   replies   Message[]         @relation("MessageReplies")
 }
 

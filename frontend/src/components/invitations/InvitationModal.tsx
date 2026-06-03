@@ -36,7 +36,7 @@ const InvitationModal = ({ invitations }: InvitationModalProps) => {
 
                 <button
                   onClick={() => declineInvitation(inv.id)}
-                  className="px-4 py-2 bg-button-secondary text-white hover:bg-button-secondary-hover rounded cursor-pointer"
+                  className="px-4 py-2 bg-button-secondary hover:bg-button-secondary-hover rounded cursor-pointer"
                 >
                   Decline
                 </button>
