@@ -60,7 +60,7 @@ Supports chat rooms, private messaging, live typing indicators, and **peer-to-pe
 
 * Mobile devices are optimized for portrait orientation.
 
-* Safari / iOS behavior: the app works on Safari, but due to modern privacy protections (ITP), cross-subdomain cookie handling may be restricted. This can affect refresh-token persistence after page reload in some cases. The app works as expected in Chromium-based browsers, and a future improvement would be deploying under a single domain or custom domain to fully eliminate this limitation.
+* Safari / iOS: Browser privacy protections may affect refresh-token persistence after a page reload in some environments. The application functions normally otherwise. This limitation can be resolved by deploying under a single domain or by using a custom domain configuration.
 
 ---
 
