@@ -34,8 +34,7 @@ app.use(cors({
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE"],
 }));
-console.log("FRONTEND_URL:", process.env.FRONTEND_URL);
-console.log("------------------------------------")
+
 app.use(express.json());
 app.use(cookieParser());
 
