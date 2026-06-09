@@ -76,7 +76,7 @@ const VideoCallWindow = ({caller, callee, videoOverlay }: VideoCallWindowProps) 
       `}
     >
 
-      <div className={`grid grid-cols-1 ${isSmall ? 'w-3/4 -mt-10' : 'w-full max-w-xl'}`}>
+      <div className="grid grid-cols-1 w-full max-w-xl">
 
         {/* Remote video */}
         <p className="text-foreground text-lg">{`${caller===user?.username ? callee.name : caller}`}</p>
