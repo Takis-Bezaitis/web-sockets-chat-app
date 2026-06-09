@@ -163,7 +163,7 @@ const Chat = () => {
           </div>
         )}
         {(user && mobileView === "rooms" && callState==="idle") && (
-          <div className="flex flex-1 flex-col w-full md:hidden">
+          <div className="w-full md:hidden">
             <ChatSidebar
               user={user}
               rooms={rooms}
@@ -173,11 +173,6 @@ const Chat = () => {
               onCreateRoom={handleCreateRoom}
               onInviteMembers={handleInviteMembers}
             />
-            <div className="z-100 bg-background">
-              <MobileNavBar 
-                mobileView={mobileView} setMobileView={setMobileView} 
-                videoOverlay={videoOverlay} setVideoOverlay={setVideoOverlay} />
-            </div>
           </div>
         )}
 
@@ -217,17 +212,12 @@ const Chat = () => {
               typingUserByRoom={typingUserByRoom}
               handleSend={handleSend} input={input} setInput={setInput} handleJoinLeaveRoom={handleJoinLeaveRoom}
               onRegisterScroll={onRegisterScroll}/>
-              <div className="z-100 bg-background">
-                <MobileNavBar 
-                  mobileView={mobileView} setMobileView={setMobileView} 
-                  videoOverlay={videoOverlay} setVideoOverlay={setVideoOverlay} />
-              </div>
           </div>
         )}
         
         {!isDesktop && videoOverlay === "chat" && ((callState!="idle" && isCaller) || (inCall && !isCaller)) && (
           <div
-            className="md:hidden fixed bottom-0 left-0 right-0 h-[54%] 
+            className="md:hidden fixed bottom-0 left-0 right-0 h-[57%] 
               rounded-t-2xl shadow-xl flex flex-col"
           >
             <ChatContent currentRoom={currentRoom} 
@@ -237,34 +227,24 @@ const Chat = () => {
               onRegisterScroll={onRegisterScroll}
               videoAndChat={true}
             />
-            <div className="z-100 bg-background">
-              <MobileNavBar 
-                mobileView={mobileView} setMobileView={setMobileView} 
-                videoOverlay={videoOverlay} setVideoOverlay={setVideoOverlay} />
-            </div>
           </div>
         )}
 
         {/* Room members for mobile screens */}
         {mobileView === "members" && (
-          <div className="flex flex-1 flex-col w-full md:hidden">
+          <div className="w-full md:hidden">
             <UsersInRoom 
               user={user} 
               currentRoomUsers={currentRoomUsers} 
               currentRoom={currentRoom} 
               mobileView={mobileView}
               onStartVideoCall={() => setMobileView("video")}/>
-              <div className="z-100 bg-background">
-                <MobileNavBar 
-                  mobileView={mobileView} setMobileView={setMobileView} 
-                  videoOverlay={videoOverlay} setVideoOverlay={setVideoOverlay} />
-              </div>
           </div>
         )}
         
         {videoOverlay === "members" && ((callState!="idle" && isCaller) || (inCall && !isCaller)) && (
           <div
-            className="md:hidden fixed bottom-0 left-0 right-0 h-[48%] mb-10
+            className="md:hidden fixed bottom-0 left-0 right-0 h-[52%] mb-10
               bg-background rounded-t-2xl shadow-xl flex flex-col"
             >
             <UsersInRoom 
@@ -273,11 +253,6 @@ const Chat = () => {
               currentRoom={currentRoom}
               videoOverlay={videoOverlay} 
               onStartVideoCall={() => setMobileView("video")}/>
-            <div className="z-100 bg-background">
-              <MobileNavBar 
-                mobileView={mobileView} setMobileView={setMobileView} 
-                videoOverlay={videoOverlay} setVideoOverlay={setVideoOverlay} />
-            </div>
           </div>
         )}
 
@@ -304,7 +279,7 @@ const Chat = () => {
           </div>
         )}
       </div>
-      {!isDesktop && (callState === "inCall" || (callState === "ringing" && isCaller)) && (
+      {!isDesktop && (
         <div className="z-100 bg-background">
           <MobileNavBar 
           mobileView={mobileView} setMobileView={setMobileView} 
