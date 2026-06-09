@@ -217,7 +217,7 @@ const Chat = () => {
         
         {!isDesktop && videoOverlay === "chat" && ((callState!="idle" && isCaller) || (inCall && !isCaller)) && (
           <div
-            className="md:hidden fixed bottom-0 left-0 right-0 h-[57%] 
+            className="md:hidden fixed bottom-[6.5%] left-0 right-0 h-[52%] 
               rounded-t-2xl shadow-xl flex flex-col"
           >
             <ChatContent currentRoom={currentRoom} 

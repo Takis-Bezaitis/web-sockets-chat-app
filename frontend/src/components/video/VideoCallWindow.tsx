@@ -71,12 +71,13 @@ const VideoCallWindow = ({caller, callee, videoOverlay }: VideoCallWindowProps) 
       className={`
         ${isSmall ? 'min-h-full' : 'h-full'}
         flex flex-col items-center
-        ${videoOverlay === "hidden" ? "justify-center" : "justify-start pt-16"}
-        p-4 bg-background border-r border-border-line
+        ${videoOverlay === "hidden" ? "justify-center" : "justify-start"}
+        bg-background border-r border-border-line
       `}
     >
 
-      <div className={`grid grid-cols-1 ${isSmall ? 'w-3/4 -mt-10' : 'w-full max-w-xl'}`}>
+      <div className={`grid grid-cols-1 ${isSmall ? 'w-dvw p-9' : 'w-full max-w-xl'}
+        ${isSmall && videoOverlay!="hidden" ? 'pt-0' : ''}`}>
 
         {/* Remote video */}
         <p className="text-foreground text-lg">{`${caller===user?.username ? callee.name : caller}`}</p>
