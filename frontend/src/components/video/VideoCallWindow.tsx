@@ -82,7 +82,7 @@ const VideoCallWindow = ({caller, callee, videoOverlay }: VideoCallWindowProps) 
         {/* Remote video */}
         <p className="text-foreground text-lg">{`${caller===user?.username ? callee.name : caller}`}</p>
         <div className="relative content-center bg-video-chat-callee w-full aspect-video 
-          rounded-xl overflow-hidden mb-7">
+          rounded-xl overflow-hidden mb-6">
           <video
             ref={remoteVideoRef}
             autoPlay
