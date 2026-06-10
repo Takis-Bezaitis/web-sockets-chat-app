@@ -76,7 +76,7 @@ const VideoCallWindow = ({caller, callee, videoOverlay }: VideoCallWindowProps) 
       `}
     >
 
-      <div className={`grid grid-cols-1 w-full max-w-lg ${!isSmall && 'p-5'}
+      <div className={`grid grid-cols-1 w-full max-w-xl ${isSmall ? 'p-2' : 'p-5'}
         ${isSmall && videoOverlay!="hidden" ? 'pt-0' : ''}`}>
 
         {/* Remote video */}
@@ -140,11 +140,12 @@ const VideoCallWindow = ({caller, callee, videoOverlay }: VideoCallWindowProps) 
               <span className="text-lg mt-2 text-foreground">Camera off</span>
             </div>
           )}
+          <div className="absolute bottom-0 w-full">
+            <VideoControls onEndCall={endCall} />
+          </div>
         </div>
 
-        <div className="flex items-center justify-center gap-6">
-          <VideoControls onEndCall={endCall} />
-        </div>
+        
         
       </div>
 
