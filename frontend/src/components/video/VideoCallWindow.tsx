@@ -93,21 +93,21 @@ const VideoCallWindow = ({caller, callee, videoOverlay }: VideoCallWindowProps) 
           {isRemoteCameraOff && (
             <div className="flex flex-col items-center justify-center align-middle text-6xl text-gray-300">
               <span>👤</span>
-              <span className="text-lg mt-2 text-foreground">Camera off</span>
+              <span className="text-lg mt-1 text-foreground">Camera off</span>
             </div>
           )}
 
           {!isCalleeOnline && (
             <div className="flex flex-col items-center justify-center align-middle text-6xl text-gray-300">
               <span>👤</span>
-              <span className="text-lg mt-2 text-foreground">{callee.name} is currently offline.</span>
+              <span className="text-lg mt-1 text-foreground">{callee.name} is currently offline.</span>
             </div>
           )}
 
           {isCalleeOnline && callState !== "inCall" && (
             <div className="flex flex-col items-center justify-center align-middle text-6xl text-gray-300">
               <span>👤</span>
-              <span className="text-lg mt-2 text-foreground">Waiting for {callee.name} to join…</span>
+              <span className="text-lg mt-1 text-foreground">Waiting for {callee.name} to join…</span>
             </div>
           )}
 
@@ -137,16 +137,13 @@ const VideoCallWindow = ({caller, callee, videoOverlay }: VideoCallWindowProps) 
           {isCameraOff && (
             <div className="flex flex-col items-center justify-center align-middle text-6xl text-gray-300">
               <span>👤</span>
-              <span className="text-lg mt-2 text-foreground">Camera off</span>
+              <span className="text-lg mt-1 text-foreground">Camera off</span>
             </div>
           )}
           <div className="absolute bottom-0 w-full">
             <VideoControls onEndCall={endCall} />
           </div>
         </div>
-
-        
-        
       </div>
 
     </div>

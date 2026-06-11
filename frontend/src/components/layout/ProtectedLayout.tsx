@@ -2,12 +2,13 @@ import { Outlet, Navigate } from "react-router";
 import { useAuthStore } from "../../store/authStore";
 import { useInvitationStore } from "../../store/invitationStore";
 import InvitationModal from "../invitations/InvitationModal";
+import LoadingScreen from "../common/LoadingScreen";
 
 const ProtectedLayout = () => {
   const { user, loading } = useAuthStore();
   const invitations = Object.values(useInvitationStore((s) => s.invitations));
 
-  if (loading) return null;
+  if (loading) return <LoadingScreen />;
 
   if (!user) {
     return <Navigate to='/auth/login' replace/>

@@ -6,6 +6,7 @@ import { useAuthStore } from "./store/authStore";
 import { useInvitations } from "./hooks/useInvitationsSockets";
 import { Toaster } from "react-hot-toast";
 import OrientationGuard from "./components/layout/OrientationGuard";
+import LoadingScreen from "./components/common/LoadingScreen";
 
 function App() {
   const { checkAuth, user } = useAuthStore();
@@ -22,9 +23,15 @@ function App() {
   }, [user]);
 
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <Suspense fallback={<LoadingScreen />}>
       <OrientationGuard />
-      <Toaster position="top-right" reverseOrder={false} />
+      <Toaster 
+        position="top-right" 
+        reverseOrder={false} 
+        toastOptions={{
+          duration: 2000,
+        }}
+      />
       <RouterProvider router={routes} />
     </Suspense>
   );

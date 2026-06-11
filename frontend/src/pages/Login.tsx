@@ -91,6 +91,7 @@ const Login = () => {
             autoComplete="off"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            disabled={demoLoading !== null}
             className="w-full p-2 border rounded mt-1 focus:outline-none focus:ring-2 focus:ring-blue-400"
             required
           />
@@ -103,6 +104,7 @@ const Login = () => {
             autoComplete="new-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            disabled={demoLoading !== null}
             className="w-full p-2 border rounded mt-1 focus:outline-none focus:ring-2 focus:ring-blue-400"
             required
           />
