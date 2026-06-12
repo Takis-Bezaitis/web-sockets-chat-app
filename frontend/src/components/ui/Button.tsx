@@ -29,6 +29,7 @@ const Button = ({
         transition
         cursor-pointer
         disabled:opacity-50
+        disabled:cursor-not-allowed
       `}
     >
       {children}
