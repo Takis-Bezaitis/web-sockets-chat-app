@@ -11,7 +11,7 @@ import messageRoutes from './routes/messages.js';
 import invitationRoutes from './routes/roomInvitations.js';
 import usersRoutes from './routes/users.js';
 import { errorHandler } from './middleware/errorHandler.js';
-
+ 
 const app = express();
 app.set("trust proxy", 1);
 
