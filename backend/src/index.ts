@@ -7,6 +7,8 @@ import chatSocket from './sockets/chatSocket.js';
 import { socketAuthMiddleware } from "./sockets/socketAuth.js";
 import prisma from "./prismaClient.js";
 
+console.log("Node.js version:", process.version);
+
 const PORT = process.env.PORT || 5000;
 
 const server = http.createServer(app);
