@@ -122,7 +122,7 @@ const Login = () => {
         Initial load may take 20–30 seconds while the server wakes up.
       </p>
 
-      <div className="text-center text-sm text-gray-500 mt-1.5 md:w-3/5 p-1.5">
+      <div className="text-center text-sm text-gray-500 mt-1.5 md:w-3/5 p-1">
         <strong>This is a portfolio demonstration. Please use the demo accounts for testing and
         avoid sharing any sensitive personal information.
         </strong>
@@ -132,7 +132,7 @@ const Login = () => {
         Demo accounts
       </p>
 
-      <div className="grid grid-cols-2 gap-2 mt-2">
+      <div className="grid grid-cols-2 gap-2">
         {demoUsers.map((user) => (
           <Button 
             key={user.email}
