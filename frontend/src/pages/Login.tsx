@@ -78,7 +78,7 @@ const Login = () => {
       <form
         onSubmit={handleSubmit}
         autoComplete="off"
-        className="bg-white px-7 py-5 rounded-xl shadow-lg w-full max-w-sm"
+        className="bg-white px-6 py-3.5 rounded-xl shadow-lg w-full max-w-sm"
       >
         <h1 className="text-2xl mb-2.5 text-center">Login</h1>
 
@@ -122,13 +122,13 @@ const Login = () => {
         Initial load may take 20–30 seconds while the server wakes up.
       </p>
 
-      <div className="text-center text-sm text-gray-500 mt-1.5 md:w-3/5 p-1">
+      <div className="text-center text-sm text-gray-500 mt-1 md:w-3/5 p-1">
         <strong>This is a portfolio demonstration. Please use the demo accounts for testing and
         avoid sharing any sensitive personal information.
         </strong>
       </div>
 
-      <p className="text-center text-lg mt-2 mb-1.5">
+      <p className="text-center text-lg mt-1 mb-1.5">
         Demo accounts
       </p>
 
